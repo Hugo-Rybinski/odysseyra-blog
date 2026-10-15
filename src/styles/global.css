@@ -1,0 +1,24 @@
+:root {
+  --bg: #fbfaf7;
+  --fg: #1f2933;
+  --muted: #6b7280;
+  --accent: #c2410c;
+  --max: 42rem;
+  --wide: 64rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #14171a; --fg: #e6e8ea; --muted: #9aa3ad; --accent: #fb923c; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 1.125rem/1.7 Georgia, 'Times New Roman', serif;
+}
+h1, h2, h3, nav, .meta { font-family: system-ui, sans-serif; line-height: 1.2; }
+a { color: var(--accent); }
+img { max-width: 100%; height: auto; display: block; }
+.container { max-width: var(--max); margin: 0 auto; padding: 0 1rem; }
+.wide { max-width: var(--wide); margin: 2rem auto; padding: 0 1rem; }
+.meta { color: var(--muted); font-size: 0.9rem; }
