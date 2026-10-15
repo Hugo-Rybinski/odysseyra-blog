@@ -1,18 +1,51 @@
 # Odysseyra
 
-A travel blog built with [Astro](https://astro.build), MDX and Leaflet/OpenStreetMap.
+A bilingual (FR/EN) travel blog built with [Astro](https://astro.build), MDX and Leaflet. Each trip is laid out as a topographic survey sheet: hero photo, title box, legend with route exports, trip map, then one section per region.
 
 ## Commands
 
-| Command           | Action                       |
-| ----------------- | ---------------------------- |
-| `npm run dev`     | Dev server on localhost:4321 |
-| `npm run build`   | Build static site to `dist/` |
-| `npm run preview` | Preview the build            |
+| Command           | Action                                                   |
+| ----------------- | -------------------------------------------------------- |
+| `npm run dev`     | Dev server at `localhost:4321/odysseyra-blog/`           |
+| `npm run build`   | Build the static site to `dist/`                         |
+| `npm run preview` | Preview the build                                        |
 
-## Writing a post
+Pushing to `main` deploys to GitHub Pages.
 
-Create `src/content/posts/<slug>.mdx` (see `lisbon-in-three-days.mdx`). Frontmatter: `title`, `description`, `date`, `cover`, `coverAlt`, optional `location`, `tags`, `draft`.
+## Adding a trip
 
-- **Photos:** put files in `src/assets/<trip>/`, import them in the MDX and use `<Figure src={img} alt="" caption="" />` (auto-resized, served as WebP).
-- **Maps:** `<Map markers={[{ lat, lng, label }]} route={[[lat, lng], ...]} />`.
+One folder per trip in `src/content/trips/<slug>/`:
+
+```
+src/content/trips/<slug>/
+├── trip.yaml   shared data: dates, regions, routes, points, photo list
+├── fr.mdx      French text
+├── en.mdx      English text
+└── photos/     3:2 or 2:3 JPEGs (never cropped)
+```
+
+`trip.yaml` holds everything both languages share. Short labels (region and place names, alt text, captions) are written as `{ fr: …, en: … }`. Point kinds: `stage` (overnight), `sight`, `pass`, `warning`.
+
+A region's `route` is a list of stretches. A recorded stretch (a GPS track, or a road traced through waypoints) is drawn as a solid line. Mark a stretch `approx: true` when only its two ends are known: it is drawn dashed, labelled "approximate" in the GPX and KML, and noted under the region map.
+
+```yaml
+route:
+  - { path: [[42.8746, 74.5698], [42.8886, 74.651], [42.9286, 74.6944]] }
+  - { approx: true, path: [[41.17, 75.81], [40.827, 75.287]] }
+```
+
+Both `fr.mdx` and `en.mdx` are required: the build fails if a published trip is missing one. Set `draft: true` in `trip.yaml` while writing.
+
+### Components available in the MDX files
+
+- `<Region id="…">…</Region>`: a region section with its map, its points table (coordinates, copy button, Google/Apple Maps links) and the text.
+- `<Photo id="…" />`: a photo plate with caption, camera settings and a link to the original.
+- `<Plates>…</Plates>`: puts photos side by side (two portraits per row; a landscape takes a full row).
+- `<Tip kind="road|fuel|water|money|border|sleep|info" at="point-id">…</Tip>`: a highlighted practical tip, optionally linked to a point. Tips with `at` also appear on that point's map marker and table row, and every tip in a region is listed in the region header. `road`, `border` and `fuel` tips get the stronger warning style.
+- `<Regrets>…</Regrets>`: the "what I would do differently" section.
+
+### Photos and camera data
+
+Camera settings (aperture, shutter speed, ISO, focal length, camera, lens) are read from each file's EXIF at build time. Export photos with their metadata included. If a file has no EXIF, the values can be written by hand under `exif:` for that photo in `trip.yaml`.
+
+GPX and KML files for each trip and language are generated at build time (`/<lang>/trips/<slug>/route.gpx` and `route.kml`).

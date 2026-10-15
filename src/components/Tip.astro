@@ -1,0 +1,56 @@
+---
+import Icon from './Icon.astro';
+import { t } from '../i18n';
+import { hazardKinds, tipId, type TipKind } from '../lib/trips';
+
+interface Props {
+  kind?: TipKind;
+  /** Id of a point in trip.yaml this tip refers to; links to its row in the region's points table. */
+  at?: string;
+}
+const { kind = 'info', at } = Astro.props;
+const trip = Astro.locals.trip;
+if (!trip) throw new Error('<Tip> must be rendered inside a trip page');
+const s = t(trip.lang);
+const point = at ? trip.points.find((p) => p.id === at) : undefined;
+if (at && !point) throw new Error(`[${trip.slug}] <Tip at="${at}">: no such point in trip.yaml`);
+const hazard = hazardKinds.includes(kind);
+---
+
+<aside class:list={['tip', { hazard }]} id={tipId(kind, at)} aria-label={s.tipKinds[kind]}>
+  <p class="head">
+    <span class="mark"><Icon name={kind} size={18} /></span>
+    <span class="label">{s.tipKinds[kind]}</span>
+    {point && <a class="at" href={`#pt-${point.id}`}>{point.n ? `${point.n}. ` : ''}{point.name}</a>}
+  </p>
+  <div class="body"><slot /></div>
+</aside>
+
+<style>
+  .tip {
+    margin: 2rem 0;
+    padding: 12px 16px 4px;
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    outline: 1px solid var(--hair);
+    outline-offset: 3px;
+  }
+  .head { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; flex-wrap: wrap; }
+  .mark { display: inline-grid; place-items: center; color: var(--gold-ink); }
+  .label { color: var(--ink); }
+  .at { margin-left: auto; display: inline-flex; align-items: center; min-height: 32px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+  .body :global(p) { margin-bottom: 0.7em; }
+  @media (pointer: coarse) { .at { min-height: 44px; } }
+
+  /* Road, border and fuel warnings: a gold title band, so they read before the informational tips. */
+  .hazard { padding-top: 0; }
+  .hazard .head { margin: 0 -16px 10px; padding: 6px 16px; background: var(--gold-wash); border-bottom: 1px solid var(--gold); }
+  .hazard .mark {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: var(--ink);
+  }
+  .hazard .label { color: var(--gold-ink); }
+
+  .tip:target { animation: located 2.4s cubic-bezier(0.16, 1, 0.3, 1); }
+  @keyframes located { from { outline-color: var(--gold); outline-width: 3px; } to { outline-color: var(--hair); outline-width: 1px; } }
+  @media (prefers-reduced-motion: reduce) { .tip:target { animation: none; outline-color: var(--gold); } }
+</style>

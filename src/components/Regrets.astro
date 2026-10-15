@@ -1,0 +1,25 @@
+---
+import { t } from '../i18n';
+const trip = Astro.locals.trip;
+if (!trip) throw new Error('<Regrets> must be rendered inside a trip page');
+const s = t(trip.lang);
+---
+
+<section class="regrets" id="regrets" aria-labelledby="regrets-title">
+  <header class="rhead">
+    <h2 id="regrets-title">{s.regrets}</h2>
+  </header>
+  <div class="body"><slot /></div>
+</section>
+
+<style>
+  .regrets { clear: both; padding-top: 4.5rem; }
+  .rhead { border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 18px var(--pad); display: grid; gap: 8px; }
+  h2 { font-size: var(--step-3); }
+  .body { max-width: var(--measure); margin: 2.5rem auto 0; padding-inline: var(--pad); }
+  .body :global(ul) { list-style: none; padding: 0; margin: 0; }
+  .body :global(li) { position: relative; padding: 0 0 1rem 32px; }
+  .body :global(li)::before {
+    content: ''; position: absolute; left: 0; top: 0.72em; width: 18px; height: 2px; background: var(--ink);
+  }
+</style>

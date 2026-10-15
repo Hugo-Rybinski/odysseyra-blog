@@ -1,0 +1,60 @@
+---
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import { t } from '../i18n';
+import { formatBytes } from '../lib/trips';
+
+interface Props {
+  id: string;
+  loading?: 'lazy' | 'eager';
+}
+const { id, loading = 'lazy' } = Astro.props;
+const trip = Astro.locals.trip;
+if (!trip) throw new Error('<Photo> must be rendered inside a trip page');
+const photo = trip.photos.get(id);
+if (!photo) throw new Error(`[${trip.slug}] <Photo id="${id}">: no such photo in trip.yaml`);
+const s = t(trip.lang);
+const { image, orientation, exif } = photo;
+const settings = [exif.aperture, exif.shutter, exif.iso, exif.focal].filter(Boolean);
+const gear = [exif.camera, exif.lens].filter(Boolean);
+const widths = orientation === 'landscape' ? [640, 960, 1440, 1920] : [480, 720, 960, 1280];
+const sizes =
+  orientation === 'landscape'
+    ? '(min-width: 1100px) 960px, 100vw'
+    : '(min-width: 1100px) 470px, (min-width: 640px) 50vw, 100vw';
+const plateNo = String(photo.plate).padStart(2, '0');
+---
+
+<figure class:list={['plate', orientation]}>
+  <a class="frame" href={image.src} aria-label={`${s.original} — ${photo.alt}`}>
+    <Image src={image} alt={photo.alt} widths={widths} sizes={sizes} loading={loading} fetchpriority={loading === 'eager' ? 'high' : undefined} />
+  </a>
+  <figcaption>
+    <p class="cap">
+      <span class="label">{s.plate} {plateNo}</span>
+      {photo.caption && <span class="text">{photo.caption}</span>}
+    </p>
+    <p class="exif data">
+      {settings.length > 0 && <span>{settings.join(' · ')}</span>}
+      {gear.length > 0 && <span>{gear.join(' · ')}</span>}
+      <a href={image.src} download class="orig">
+        <Icon name="download" size={14} />
+        {s.original} {image.width}×{image.height} · {formatBytes(trip.lang, photo.bytes)}
+      </a>
+    </p>
+  </figcaption>
+</figure>
+
+<style>
+  .plate { margin: 2.5rem 0; }
+  .frame { display: block; outline-offset: 4px; }
+  .frame img { width: 100%; height: auto; background: var(--field); }
+  figcaption { margin-top: 10px; display: grid; gap: 4px; }
+  .cap { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; font-size: 14px; line-height: 1.45; }
+  .cap .label { color: var(--ink); }
+  .cap .text { color: var(--ink-2); }
+  .exif { margin: 0; display: flex; flex-wrap: wrap; gap: 2px 16px; color: var(--ink-3); }
+  .orig { display: inline-flex; gap: 6px; align-items: center; color: var(--ink-2); font-family: var(--sans); font-weight: 600; text-decoration: none; }
+  .orig:hover { color: var(--gold-ink); }
+  @media (pointer: coarse) { .orig { min-height: 44px; } }
+</style>

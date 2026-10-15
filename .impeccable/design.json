@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-15T00:00:00Z",
+  "title": "Design System: Odysseyra",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Sheet White",
+        "canonical": "oklch(100% 0 0)",
+        "tonalRamp": [
+          "oklch(15% 0.004 258)",
+          "oklch(25% 0.004 258)",
+          "oklch(35% 0.004 258)",
+          "oklch(45% 0.004 258)",
+          "oklch(58% 0.004 258)",
+          "oklch(70% 0.004 258)",
+          "oklch(82% 0.004 258)",
+          "oklch(95% 0.004 258)"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Survey Navy",
+        "canonical": "oklch(28.5% 0.076 260)",
+        "tonalRamp": [
+          "oklch(15% 0.076 260)",
+          "oklch(25% 0.076 260)",
+          "oklch(35% 0.076 260)",
+          "oklch(45% 0.076 260)",
+          "oklch(58% 0.076 260)",
+          "oklch(70% 0.076 260)",
+          "oklch(82% 0.076 260)",
+          "oklch(95% 0.076 260)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "canonical": "oklch(43.2% 0.061 259)",
+        "tonalRamp": [
+          "oklch(15% 0.061 259)",
+          "oklch(25% 0.061 259)",
+          "oklch(35% 0.061 259)",
+          "oklch(45% 0.061 259)",
+          "oklch(58% 0.061 259)",
+          "oklch(70% 0.061 259)",
+          "oklch(82% 0.061 259)",
+          "oklch(95% 0.061 259)"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Margin Ink",
+        "canonical": "oklch(53.8% 0.051 260)",
+        "tonalRamp": [
+          "oklch(15% 0.051 260)",
+          "oklch(25% 0.051 260)",
+          "oklch(35% 0.051 260)",
+          "oklch(45% 0.051 260)",
+          "oklch(58% 0.051 260)",
+          "oklch(70% 0.051 260)",
+          "oklch(82% 0.051 260)",
+          "oklch(95% 0.051 260)"
+        ]
+      },
+      "hair": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "rgb(18 41 79 / 0.18)",
+        "tonalRamp": [
+          "rgb(18 41 79 / 0.06)",
+          "rgb(18 41 79 / 0.1)",
+          "rgb(18 41 79 / 0.14)",
+          "rgb(18 41 79 / 0.18)",
+          "rgb(18 41 79 / 0.25)",
+          "rgb(18 41 79 / 0.35)",
+          "rgb(18 41 79 / 0.45)",
+          "rgb(18 41 79 / 0.6)"
+        ]
+      },
+      "hair-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "rgb(18 41 79 / 0.45)",
+        "tonalRamp": [
+          "rgb(18 41 79 / 0.25)",
+          "rgb(18 41 79 / 0.3)",
+          "rgb(18 41 79 / 0.35)",
+          "rgb(18 41 79 / 0.4)",
+          "rgb(18 41 79 / 0.45)",
+          "rgb(18 41 79 / 0.55)",
+          "rgb(18 41 79 / 0.7)",
+          "rgb(18 41 79 / 0.85)"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Field Grey",
+        "canonical": "oklch(97.2% 0.005 258)",
+        "tonalRamp": [
+          "oklch(15% 0.005 258)",
+          "oklch(25% 0.005 258)",
+          "oklch(35% 0.005 258)",
+          "oklch(45% 0.005 258)",
+          "oklch(58% 0.005 258)",
+          "oklch(70% 0.005 258)",
+          "oklch(82% 0.005 258)",
+          "oklch(95% 0.005 258)"
+        ]
+      },
+      "gold": {
+        "role": "secondary",
+        "displayName": "Route Gold",
+        "canonical": "oklch(66.1% 0.106 85)",
+        "tonalRamp": [
+          "oklch(15% 0.106 85)",
+          "oklch(25% 0.106 85)",
+          "oklch(35% 0.106 85)",
+          "oklch(45% 0.106 85)",
+          "oklch(58% 0.106 85)",
+          "oklch(70% 0.106 85)",
+          "oklch(82% 0.106 85)",
+          "oklch(95% 0.106 85)"
+        ]
+      },
+      "gold-ink": {
+        "role": "secondary",
+        "displayName": "Gold Ink",
+        "canonical": "oklch(51.1% 0.086 85)",
+        "tonalRamp": [
+          "oklch(15% 0.086 85)",
+          "oklch(25% 0.086 85)",
+          "oklch(35% 0.086 85)",
+          "oklch(45% 0.086 85)",
+          "oklch(58% 0.086 85)",
+          "oklch(70% 0.086 85)",
+          "oklch(82% 0.086 85)",
+          "oklch(95% 0.086 85)"
+        ]
+      },
+      "gold-wash": {
+        "role": "secondary",
+        "displayName": "Gold Wash",
+        "canonical": "rgb(176 141 62 / 0.12)",
+        "tonalRamp": [
+          "rgb(176 141 62 / 0.04)",
+          "rgb(176 141 62 / 0.08)",
+          "rgb(176 141 62 / 0.12)",
+          "rgb(176 141 62 / 0.18)",
+          "rgb(176 141 62 / 0.25)",
+          "rgb(176 141 62 / 0.4)",
+          "rgb(176 141 62 / 0.6)",
+          "rgb(176 141 62 / 0.8)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Region and regrets sheet headers."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Trip title in the cartouche; smaller than Display by design."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose at 62ch."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "Cartouche description, ink-2, 52ch."
+      },
+      "ui": {
+        "displayName": "Ui",
+        "purpose": "Button titles, back link, tip point link, legend entries."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase tracked: plate numbers, tip kind, region meta, sheet number, language switch."
+      },
+      "label-sm": {
+        "displayName": "Label Sm",
+        "purpose": "Uppercase tracked 11px, ink-3: legend/export headings, fact names, table headers, pager."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Overpass Mono tabular: coordinates, EXIF, index numbers, map ticks."
+      }
+    },
+    "shadows": [
+      {
+        "name": "pin-lift",
+        "value": "0 1px 3px rgb(18 41 79 / 0.35)",
+        "purpose": "Stage markers over map tiles."
+      },
+      {
+        "name": "popup",
+        "value": "0 6px 18px rgb(18 41 79 / 0.14)",
+        "purpose": "Map popups only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Button fill and colour (160ms); located-row fade (2.4s)."
+      },
+      {
+        "name": "button-state",
+        "value": "160ms",
+        "purpose": "Export button hover."
+      },
+      {
+        "name": "located-flash",
+        "value": "2.4s",
+        "purpose": "Gold-wash fade on a targeted points-table row; static field fill under reduced motion."
+      },
+      {
+        "name": "map-fly",
+        "value": "0.8s",
+        "purpose": "Trip map flyToBounds on region highlight; 0 under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "xs",
+        "value": "560px"
+      },
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "table",
+        "value": "720px"
+      },
+      {
+        "name": "md",
+        "value": "960px"
+      },
+      {
+        "name": "lg",
+        "value": "1100px"
+      }
+    ],
+    "frame": {
+      "outer": "2px solid var(--ink)",
+      "gap": "6px",
+      "inner": "1px solid var(--ink)",
+      "mobile": "1.5px outer, 3px gap, 6px margin below 640px"
+    },
+    "mapTileFilter": "grayscale(1) sepia(0.35) hue-rotate(180deg) saturate(1.4) contrast(0.7) brightness(1.18)",
+    "focus": "outline: 2px solid var(--gold); outline-offset: 3px"
+  },
+  "components": [
+    {
+      "name": "Export Button",
+      "kind": "button",
+      "refersTo": "button-export",
+      "description": "Route export actions in the legend (GPX, KML, Maps, copy coordinates).",
+      "html": "<a class=\"ds-btn\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 4v11M7 10.5l5 5 5-5M5 20h14\"/></svg><span><strong>GPX</strong><small>Garmin, OsmAnd, Komoot</small></span></a>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); font-family: var(--sans); text-decoration: none; transition: background-color 160ms cubic-bezier(0.16, 1, 0.3, 1), color 160ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn span { display: grid; line-height: 1.2; } .ds-btn strong { font-size: 14px; } .ds-btn small { color: var(--ink-3); font-size: 12px; } .ds-btn:hover { background: var(--ink); color: #fff; } .ds-btn:hover small { color: rgb(255 255 255 / 0.75); } .ds-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }"
+    },
+    {
+      "name": "Running Head",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Map-sheet header: brand, sheet number, FR / EN switch, centre coordinates.",
+      "html": "<header class=\"ds-rhead\"><a class=\"ds-brand\" href=\"#\">Odysseyra</a><p class=\"ds-label ds-m\">Feuille 01 · Kirghizistan</p><nav class=\"ds-label ds-langs\"><span>FR</span><span>/</span><a href=\"#\">EN</a></nav><p class=\"ds-data ds-m\">42°N 76°E</p></header>",
+      "css": ".ds-rhead { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 12px 28px; padding: 12px 24px; border-bottom: 1px solid var(--ink); color: var(--ink); font-family: var(--sans); } .ds-rhead p { margin: 0; } .ds-brand { color: var(--ink); text-decoration: none; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; font-size: 14px; } .ds-label { font-size: var(--step--1); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; } .ds-m { color: var(--ink-3); } .ds-data { font-family: var(--mono); font-size: var(--step--1); letter-spacing: 0.02em; font-variant-numeric: tabular-nums; } .ds-langs { display: flex; gap: 8px; } .ds-langs a { color: var(--ink-3); text-decoration: none; } .ds-langs a:hover { color: var(--gold-ink); } .ds-langs a:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }"
+    },
+    {
+      "name": "Sheet Header",
+      "kind": "custom",
+      "refersTo": "sheet-header",
+      "description": "Opens every region on a 2px ink rule; the back link highlights the region on the trip map.",
+      "html": "<header class=\"ds-sh\"><h2>Son-Koul</h2><p class=\"ds-meta\">Région 2 / 6 · Jours 3–5</p><a class=\"ds-back\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 20V5M6 11l6-6 6 6\"/></svg>Voir sur la carte</a></header>",
+      "css": ".ds-sh { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 8px 24px; border-top: 2px solid var(--ink); padding: 18px 24px; color: var(--ink); font-family: var(--sans); } .ds-sh h2 { margin: 0; font-size: var(--step-3); font-weight: 700; line-height: 1.08; letter-spacing: -0.015em; } .ds-meta { margin: 0; grid-column: 1; color: var(--ink-3); font-size: var(--step--1); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; } .ds-back { grid-column: 2; grid-row: 1; display: inline-flex; gap: 6px; align-items: center; font-size: 14px; font-weight: 600; color: var(--ink-2); text-decoration-color: var(--hair-strong); text-underline-offset: 0.22em; } .ds-back:hover { color: var(--gold-ink); } .ds-back:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }"
+    },
+    {
+      "name": "Tip",
+      "kind": "card",
+      "refersTo": "tip",
+      "description": "Practical warning or advice, boxed like a legend note with a gold-ink mark.",
+      "html": "<aside class=\"ds-tip\"><p class=\"ds-head\"><span class=\"ds-mark\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 3 5 21M16 3l3 18M12 4v3M12 10.5v3M12 17v3\"/></svg></span><span class=\"ds-label\">Route</span><a href=\"#\">4. Col de Kalmak-Ashuu</a></p><p>Piste en tôle ondulée sur 40 km ; compter deux heures.</p></aside>",
+      "css": ".ds-tip { padding: 12px 16px 4px; background: var(--paper); color: var(--ink); border: 1px solid var(--ink); outline: 1px solid var(--hair); outline-offset: 3px; font-family: var(--sans); font-size: var(--step-0); line-height: 1.65; } .ds-tip p { margin: 0 0 0.7em; } .ds-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .ds-mark { display: inline-grid; color: var(--gold-ink); } .ds-label { font-size: var(--step--1); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; } .ds-head a { margin-left: auto; font-size: 14px; font-weight: 600; color: var(--ink-2); } .ds-head a:hover { color: var(--gold-ink); }"
+    },
+    {
+      "name": "Legend Symbols",
+      "kind": "custom",
+      "refersTo": "stage-marker",
+      "description": "Map legend: gold route swatch, navy square stage, ringed circle sight.",
+      "html": "<ul class=\"ds-sym\"><li><span class=\"ds-route\"></span>Itinéraire</li><li><span class=\"ds-sq\">1</span>Étape (nuit)</li><li><span class=\"ds-ci\">2</span>Arrêt</li></ul>",
+      "css": ".ds-sym { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font: 400 14px/1.4 var(--sans); color: var(--ink); } .ds-sym li { display: flex; align-items: center; gap: 8px; } .ds-route { width: 24px; height: 4px; background: var(--gold); } .ds-sq, .ds-ci { display: inline-grid; place-items: center; width: 22px; height: 22px; font: 700 11px/1 var(--sans); } .ds-sq { background: var(--ink); color: #fff; } .ds-ci { border: 2px solid var(--ink); border-radius: 50%; color: var(--ink); }"
+    },
+    {
+      "name": "Coordinate Copy",
+      "kind": "button",
+      "refersTo": null,
+      "description": "Mono coordinate in the points table; click copies.",
+      "html": "<button class=\"ds-copy\" type=\"button\"><span>42.87512, 74.60310</span><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 9h11v11H9zM5 15H4V4h11v1\"/></svg></button>",
+      "css": ".ds-copy { display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px; border: 0; background: none; color: var(--ink); cursor: pointer; font-family: var(--mono); font-size: var(--step--1); letter-spacing: 0.02em; font-variant-numeric: tabular-nums; } .ds-copy svg { color: var(--ink-3); } .ds-copy:hover svg { color: var(--gold-ink); } .ds-copy:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }"
+    },
+    {
+      "name": "Plate Caption",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Numbered plate caption with EXIF data line and original download.",
+      "html": "<figcaption class=\"ds-cap\"><p><span class=\"ds-label\">Planche 01</span><span class=\"ds-t\">Le lac Köl-Suu, au fond de sa gorge.</span></p><p class=\"ds-exif\"><span>f/8 · 1/250 s · ISO 100 · 24 mm</span><a href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 4v11M7 10.5l5 5 5-5M5 20h14\"/></svg>Original 4000×2667</a></p></figcaption>",
+      "css": ".ds-cap { display: grid; gap: 4px; font-family: var(--sans); color: var(--ink); } .ds-cap p { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; font-size: 15px; line-height: 1.45; } .ds-label { font-size: var(--step--1); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; } .ds-t { color: var(--ink-2); } .ds-exif { color: var(--ink-3); font-family: var(--mono); font-size: var(--step--1) !important; font-variant-numeric: tabular-nums; } .ds-exif a { display: inline-flex; gap: 6px; align-items: center; color: var(--ink-2); font-family: var(--sans); font-weight: 600; text-decoration: none; } .ds-exif a:hover { color: var(--gold-ink); }"
+    },
+    {
+      "name": "Regions Index",
+      "kind": "nav",
+      "refersTo": "index-cell-hover",
+      "description": "Ruled strip of region cells under the first viewport.",
+      "html": "<ol class=\"ds-idx\"><li><a href=\"#\"><span class=\"ds-n\">01</span><span>Bichkek</span><span class=\"ds-n\">Jour 1</span></a></li><li><a href=\"#\"><span class=\"ds-n\">02</span><span>Son-Koul</span><span class=\"ds-n\">Jours 3–5</span></a></li></ol>",
+      "css": ".ds-idx { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); border-block: 1px solid var(--ink); font-family: var(--sans); } .ds-idx li + li { border-left: 1px solid var(--hair); } .ds-idx a { display: grid; gap: 2px; padding: 12px 24px; color: var(--ink); text-decoration: none; font-weight: 600; line-height: 1.25; } .ds-idx a:hover { background: var(--field); } .ds-idx a:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; } .ds-n { color: var(--ink-3); font-weight: 400; font-size: 13px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Survey Sheet",
+    "overview": "Each trip is a printed topographic survey sheet in the manner of IGN or Swisstopo. The map and its legend are the document; the page is framed, ruled and numbered like a map sheet, with a running head carrying sheet number and coordinates, a title cartouche, a legend box with the export actions, and region sheets that each open on a heavy rule. The reading column inside that frame stays plain: one reading face, real contrast, a 62ch measure.\n\nThe world is navy ink on white paper. Ink draws every line, type and border. Gold is the route's colour and the warning's colour; it never decorates. Depth comes from rules, not surfaces: double borders, single 1px ink rules between cells, hairlines inside them. Corners are square because printed sheets are square; the only circles are the map's own sight symbols.\n\nDensity is that of a map margin: small tracked capitals for legend and field labels, tabular monospace for every coordinate and EXIF value, and generous whitespace only in the reading column. Photography is shown at native 3:2 or 2:3, never cropped, captioned as numbered plates.",
+    "keyCharacteristics": [
+      "Ruled double border frames the whole page (2px ink, 6px gap, 1px ink).",
+      "Navy ink for all line and type; gold reserved for route, warnings, tip marks, focus and the \"located\" flash.",
+      "Square corners everywhere; circles only as the sight map symbol.",
+      "Overpass for everything, Overpass Mono for coordinates and camera data.",
+      "Grid cells separated by 1px ink rules and 0.18-alpha ink hairlines, never by cards or shadows.",
+      "Map tiles (OpenTopoMap) desaturated and shifted toward navy by a CSS filter so the gold route is the only warm line."
+    ],
+    "rules": [
+      {
+        "name": "The Two-Ink Rule",
+        "body": "Navy draws; gold marks the way. If a gold element is not a route, a warning, a tip mark, a focus or a located state, it is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Gold-Ink Split Rule",
+        "body": "Raw gold (#b08d3e) never carries text. Any gold glyph or word at text size uses gold-ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tinted Tiles Rule",
+        "body": "Third-party map tiles are always filtered to the sheet (`grayscale(1) sepia(0.35) hue-rotate(180deg) saturate(1.4) contrast(0.7) brightness(1.18)`), so no tile colour competes with the gold route.",
+        "section": "colors"
+      },
+      {
+        "name": "The Copyable-Number Rule",
+        "body": "Any value a reader might copy or compare (coordinates, EXIF, map ticks) is set in Overpass Mono with tabular figures.",
+        "section": "typography"
+      },
+      {
+        "name": "The Label-Carries-Data Rule",
+        "body": "Tracked capitals name a field or carry data (sheet number, \"Région 2 / 6 · Jours 3–5\", \"Planche 04\"). A label that names nothing does not get set.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ruled-Not-Raised Rule",
+        "body": "Page surfaces never cast shadows; separate them with a rule of the right weight. Shadow is allowed only for map overlays.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do frame every trip page in the ruled double border (2px ink, 6px gap, 1px ink).",
+      "Do separate cells with 1px ink rules and hairlines (rgb(18 41 79 / 0.18)) rather than background tints.",
+      "Do set coordinates, EXIF and map ticks in Overpass Mono with tabular figures.",
+      "Do use gold-ink (#7d6224) for any gold text or small glyph; keep raw gold (#b08d3e) for lines, fills and the focus ring.",
+      "Do filter any map tiles to the navy sheet so the gold route is the only warm line.",
+      "Do show photos at native 3:2 or 2:3 with their plate number and EXIF line."
+    ],
+    "donts": [
+      "Don't round corners on boxes, buttons, tips or map controls; the circle belongs to the sight symbol only.",
+      "Don't put drop shadows on page surfaces; shadow is for map pins and popups.",
+      "Don't use gold for decoration, headings, backgrounds or body links.",
+      "Don't crop photos or force them into a uniform ratio.",
+      "Don't set a tracked-capital label above or below a heading unless it carries a field name or data."
+    ]
+  }
+}
