@@ -40,9 +40,11 @@ Both `fr.mdx` and `en.mdx` are required: the build fails if a published trip is 
 
 - `<Region id="…">…</Region>`: a region section with its map, its points table (coordinates, copy button, Google/Apple Maps links) and the text.
 - `<Photo id="…" />`: a photo plate with caption, camera settings and a link to the original.
+- `<Day n={8} title="Tash Rabat → Ton" />`: a day marker inside a region, "Jour 08 / 15" with its date (from `start` in `trip.yaml`) and an optional title. The text after it sits directly under the strip.
 - `<Plates>…</Plates>`: puts photos side by side (two portraits per row; a landscape takes a full row).
 - `<Tip kind="road|fuel|water|money|border|sleep|info" at="point-id">…</Tip>`: a highlighted practical tip, optionally linked to a point. Tips with `at` also appear on that point's map marker and table row, and every tip in a region is listed in the region header. `road`, `border` and `fuel` tips get the stronger warning style.
-- `<Regrets>…</Regrets>`: the "what I would do differently" section.
+- `<Before>…</Before>`: the "before you go" section, placed before the first region (text and tips).
+- `<Regrets>…</Regrets>`: "what I would do differently", placed at the end of a region (usually a short list).
 
 ### Photos and camera data
 

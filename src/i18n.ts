@@ -39,6 +39,8 @@ export const ui = {
     openApple: 'Plans',
     tipKinds: { road: 'Route', fuel: 'Carburant', water: 'Eau', money: 'Argent', border: 'Frontière', sleep: 'Nuit', info: 'Pratique' },
     regrets: 'Ce que je referais autrement',
+    before: 'Avant de partir',
+    beforeMeta: 'Préparation',
     plate: 'Planche',
     original: 'Original',
     previous: 'Voyage précédent',
@@ -53,8 +55,6 @@ export const ui = {
     regionsNav: 'Régions du voyage',
     legendApprox: 'Tracé approximatif',
     legendTip: 'Conseil pratique',
-    noTrack: 'Pas de tracé enregistré : seuls les points sont placés.',
-    partlyApprox: 'Tracé en partie approximatif (pointillés) : seuls le départ et l’arrivée sont connus.',
     toKnow: 'À savoir',
     tipsCount: (n: number) => `${n} conseil${n > 1 ? 's' : ''}`,
     goToRegion: 'Aller à la région',
@@ -103,6 +103,8 @@ export const ui = {
     openApple: 'Apple Maps',
     tipKinds: { road: 'Road', fuel: 'Fuel', water: 'Water', money: 'Money', border: 'Border', sleep: 'Night', info: 'Practical' },
     regrets: 'What I would do differently',
+    before: 'Before you go',
+    beforeMeta: 'Preparation',
     plate: 'Plate',
     original: 'Original',
     previous: 'Previous trip',
@@ -117,8 +119,6 @@ export const ui = {
     regionsNav: 'Trip regions',
     legendApprox: 'Approximate route',
     legendTip: 'Practical tip',
-    noTrack: 'No recorded track: only the points are placed.',
-    partlyApprox: 'Route partly approximate (dashed): only the start and end are known.',
     toKnow: 'Good to know',
     tipsCount: (n: number) => `${n} tip${n > 1 ? 's' : ''}`,
     goToRegion: 'Go to the region',
@@ -134,6 +134,12 @@ export const ui = {
 } as const;
 
 export const t = (lang: Lang) => ui[lang];
+
+/** Index numbers (regions, days, points, plates, sheets) always show two digits: 01, 02 … 28. */
+export const idx = (n: number) => String(n).padStart(2, '0');
+/** "Jour 03" or "Jours 08–10". */
+export const dayRange = (lang: Lang, [a, b]: readonly [number, number]) =>
+  a === b ? `${ui[lang].day} ${idx(a)}` : `${ui[lang].days} ${idx(a)}–${idx(b)}`;
 export const isLang = (v: string | undefined): v is Lang => languages.includes(v as Lang);
 export const otherLang = (lang: Lang): Lang => (lang === 'fr' ? 'en' : 'fr');
 

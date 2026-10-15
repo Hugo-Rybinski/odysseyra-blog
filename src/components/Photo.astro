@@ -46,10 +46,17 @@ const plateNo = String(photo.plate).padStart(2, '0');
 </figure>
 
 <style>
-  .plate { margin: 2.5rem 0; }
+  /* A mounted print: image, plate number and download link in one white box with a light border. Border plus padding
+     is exactly one grid square, so when the box sits on the grid, so does the image inside it. */
+  .plate {
+    margin: var(--gap) 0;
+    padding: calc(var(--grid-unit) - 1px) calc(var(--grid-unit) - 1px) 0;
+    border: 1px solid var(--hair-strong);
+    background: var(--paper);
+  }
   .frame { display: block; outline-offset: 4px; }
   .frame img { width: 100%; height: auto; background: var(--field); }
-  figcaption { margin-top: 10px; display: grid; gap: 4px; }
+  figcaption { padding: 10px 0 9px; display: grid; gap: 4px; }
   .cap { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; font-size: 14px; line-height: 1.45; }
   .cap .label { color: var(--ink); }
   .cap .text { color: var(--ink-2); }
@@ -58,3 +65,4 @@ const plateNo = String(photo.plate).padStart(2, '0');
   .orig:hover { color: var(--gold-ink); }
   @media (pointer: coarse) { .orig { min-height: 44px; } }
 </style>
+

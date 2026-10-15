@@ -2,7 +2,7 @@
 import SheetMap from './SheetMap.astro';
 import PointsTable from './PointsTable.astro';
 import Icon from './Icon.astro';
-import { t } from '../i18n';
+import { dayRange, idx, t } from '../i18n';
 import { hazardKinds, mapPoints } from '../lib/trips';
 
 interface Props {
@@ -17,20 +17,19 @@ const region = trip.data.regions[index];
 const s = t(trip.lang);
 const name = region.name[trip.lang];
 const [d1, d2] = region.days;
-const days = d1 === d2 ? `${s.day} ${d1}` : `${s.days} ${d1}–${d2}`;
+const days = dayRange(trip.lang, region.days);
 const points = mapPoints(trip).filter((p) => p.regionId === id);
 // Hazards first: the road, border and fuel warnings are what a planner scans the header for.
 const tips = trip.tips
   .filter((tip) => tip.regionId === id)
   .sort((a, b) => Number(hazardKinds.includes(b.kind)) - Number(hazardKinds.includes(a.kind)));
 const pointName = (at?: string) => trip.points.find((p) => p.id === at)?.name;
-const trackNote = region.route.length === 0 ? s.noTrack : region.route.some((seg) => seg.approx) ? s.partlyApprox : undefined;
 ---
 
 <section class="region" id={id} aria-labelledby={`${id}-title`}>
   <header class="rhead">
     <h2 id={`${id}-title`}>{name}</h2>
-    <p class="meta label">{s.region} {index + 1} / {trip.data.regions.length} · {days}</p>
+    <p class="meta label">{s.region} {idx(index + 1)} / {idx(trip.data.regions.length)} · {days}</p>
     <a class="back" href="#trip-map" data-highlight={id}><Icon name="arrow-up" size={16} />{s.backToMap}</a>
     {
       tips.length > 0 && (
@@ -61,7 +60,6 @@ const trackNote = region.route.length === 0 ? s.noTrack : region.route.some((seg
         routes={[{ id, name, href: `#${id}`, segments: region.route }]}
         points={points}
       />
-      {trackNote && <p class="track-note">{trackNote}</p>}
     </div>
     <PointsTable lang={trip.lang} points={points} />
   </div>
@@ -69,10 +67,10 @@ const trackNote = region.route.length === 0 ? s.noTrack : region.route.some((seg
 </section>
 
 <style>
-  .region { padding-top: 4.5rem; clear: both; }
+  .region { padding-top: var(--gap-section); clear: both; }
   .rhead {
     display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 8px 24px;
-    border-top: 2px solid var(--ink); padding: 18px var(--pad) 18px;
+    border-top: 2px solid var(--ink); padding: 18px var(--pad) 18px; background: var(--paper);
   }
   .rhead .meta { margin: 0; grid-column: 1; color: var(--ink-3); }
   .rhead .back { grid-column: 2; grid-row: 1; }
@@ -94,19 +92,10 @@ const trackNote = region.route.length === 0 ? s.noTrack : region.route.some((seg
   .know .hazard a { border-color: var(--gold); background: var(--gold-wash); }
   .know .hazard .icon { color: var(--gold-ink); }
 
-  .detail { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(420px, 1fr); border-block: 1px solid var(--ink); }
+  .detail { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(420px, 1fr); border-block: 1px solid var(--ink); background: var(--paper); }
   .map-cell { display: flex; flex-direction: column; min-width: 0; }
   .detail :global(.sheet-map.region) { flex: 1; min-height: clamp(260px, 34vh, 360px); }
-  .track-note { margin: 0; padding: 8px 12px; border-top: 1px solid var(--hair); font-size: 13px; line-height: 1.4; color: var(--ink-2); }
   .detail :global(.points) { align-self: start; }
-  .col { max-width: var(--measure); margin: 3rem auto 0; padding-inline: var(--pad); }
-  .col::after { content: ''; display: table; clear: both; }
-  /* In the reading column, landscape plates widen past the measure; a lone portrait sits beside the text. */
-  .col > :global(.plate.landscape) { width: min(960px, 100vw - 2 * var(--pad) - 2 * var(--sheet-pad)); position: relative; left: 50%; transform: translateX(-50%); }
-  .col > :global(.plate.portrait) { max-width: 420px; margin-inline: auto; }
-  @media (min-width: 1100px) {
-    .col > :global(.plate.portrait) { float: right; width: 340px; margin: 0.4rem -7rem 1.5rem 2rem; }
-  }
   @media (max-width: 960px) {
     .detail { grid-template-columns: 1fr; }
     .rhead { grid-template-columns: 1fr; }

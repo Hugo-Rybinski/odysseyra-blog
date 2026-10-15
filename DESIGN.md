@@ -12,6 +12,8 @@ colors:
   gold: "#b08d3e"
   gold-ink: "#7d6224"
   gold-wash: "rgb(176 141 62 / 0.12)"
+  grid-minor: "rgb(18 41 79 / 0.045)"
+  grid-major: "rgb(18 41 79 / 0.08)"
 typography:
   display:
     fontFamily: "'Overpass Variable', 'Overpass', system-ui, sans-serif"
@@ -106,14 +108,16 @@ components:
 
 **Creative North Star: "The Survey Sheet"**
 
-Each trip is a printed topographic survey sheet in the manner of IGN or Swisstopo. The map and its legend are the document; the page is framed, ruled and numbered like a map sheet, with a running head carrying sheet number and coordinates, a title cartouche, a legend box with the export actions, and region sheets that each open on a heavy rule. The reading column inside that frame stays plain: one reading face, real contrast, a 62ch measure.
+Each trip is a printed topographic survey sheet in the manner of IGN or Swisstopo, drawn the way an industrial technical drawing is: navy ink on white drafting paper with light 10px squares, a border scale in the frame, mounted photo prints, and maps printed on real paper and scanned. The map and its legend are the document; the page is framed, ruled and numbered like a map sheet, with a running head carrying sheet number and coordinates, a title cartouche, a legend box with the export actions, and region sheets that each open on a heavy rule. The reading column inside that frame stays plain: one reading face, real contrast, a 62ch measure.
 
-The world is navy ink on white paper. Ink draws every line, type and border. Gold is the route's colour and the warning's colour; it never decorates. Depth comes from rules, not surfaces: double borders, single 1px ink rules between cells, hairlines inside them. Corners are square because printed sheets are square; the only circles are the map's own sight symbols.
+The world is navy ink on white drafting paper. Ink draws every line, type and border. Gold is the route's colour and the warning's colour; it never decorates. Depth comes from rules, not surfaces: double borders, single 1px ink rules between cells, hairlines inside them. Corners are square because printed sheets are square; the only circles are the map's own sight symbols.
 
 Density is that of a map margin: small tracked capitals for legend and field labels, tabular monospace for every coordinate and EXIF value, and generous whitespace only in the reading column. Photography is shown at native 3:2 or 2:3, never cropped, captioned as numbered plates.
 
 **Key Characteristics:**
-- Ruled double border frames the whole page (2px ink, 6px gap, 1px ink).
+- Ruled double border frames the whole page (2px ink, 6px gap, 1px ink); the gap is a border scale counted from the drafting grid's origin: a tick on every grid line, a long tick on every major (50px) line.
+- The sheet is drafting paper: light 10px squares, a slightly stronger line every 50px, showing in the open areas (around text, photos and tips). Every ruled box (running head, title block and legend, regions index, region headers, map and table band, pager, footer) keeps a solid white fill. Every photo plate snaps to the grid: all four image edges on a line.
+- Maps carry a scanned-paper finish: a faint seamless paper texture (soft unevenness and fibre tooth, no creases), pinned to the map so it travels with the tiles when the reader drags.
 - Navy ink for all line and type; gold reserved for route, warnings, tip marks, focus and the "located" flash.
 - Square corners everywhere; circles only as the sight map symbol.
 - Overpass for everything, Overpass Mono for coordinates and camera data.
@@ -122,7 +126,7 @@ Density is that of a map margin: small tracked capitals for legend and field lab
 
 ## Colors
 
-A two-ink print palette: navy in three strengths plus hairline alphas, one gold with a darker text-safe sibling, on white.
+A two-ink print palette: navy in three strengths plus hairline alphas, one gold with a darker text-safe sibling, on white drafting paper.
 
 ### Primary
 - **Survey Navy** (ink): every border, rule, heading, body text, stage marker fill, and the casing under the route line. 14.4:1 on paper.
@@ -133,7 +137,8 @@ A two-ink print palette: navy in three strengths plus hairline alphas, one gold 
 - **Gold Wash** (gold-wash): text selection and the fading highlight on a targeted points-table row.
 
 ### Neutral
-- **Sheet White** (paper): the page and every button and tip at rest.
+- **Sheet White** (paper): the page, and the fill of every button, tip, popup and map control at rest (boxes sit on the grid; the grid does not run through them).
+- **Graph lines** (grid-minor, grid-major): the drafting squares on the sheet, inside the ruled border, wherever no ruled box covers them.
 - **Secondary Ink** (ink-2): lede, caption text, back and map links. 8.0:1.
 - **Margin Ink** (ink-3): field labels, metadata, sheet number and coordinates in the running head, EXIF line, attribution. 5.1:1 on paper, about 4.7:1 on field.
 - **Hairline** (hair): rules inside a cell (facts divider, table rows, index separators) and the map's 40px grid.
@@ -145,7 +150,19 @@ A two-ink print palette: navy in three strengths plus hairline alphas, one gold 
 
 **The Gold-Ink Split Rule.** Raw gold (#b08d3e) never carries text. Any gold glyph or word at text size uses gold-ink.
 
-**The Tinted Tiles Rule.** Third-party map tiles are always filtered to the sheet (`grayscale(1) sepia(0.35) hue-rotate(180deg) saturate(1.4) contrast(0.7) brightness(1.18)`), so no tile colour competes with the gold route.
+**The Tinted Tiles Rule.** Third-party map tiles are always filtered to the sheet (`grayscale(1) sepia(0.35) hue-rotate(180deg) saturate(1.4) contrast(0.7) brightness(1.18)`), so no tile colour competes with the gold route. Tiles overlap by half a pixel to hide seams.
+
+**The Scan Rule.** The paper finish applies to what is printed (tiles and routes) and never to the reader's tools. Two fixed Leaflet panes sit between the route (400) and the markers (600): one multiplies `fold-shade.webp`, one screens `fold-lit.webp` (`src/assets/textures/`, made by `generate.mjs`: broad soft unevenness and fibre tooth, no creases or folds). The texture tiles seamlessly at 600 × 400px, starts at a stable offset per map, and is pinned to a map point: panning drags it with the tiles; page scroll does not move it.
+
+**The Rhythm Rule.** Vertical gaps are grid squares: `--gap` (2 squares) between blocks inside a region, `--gap-section` (4) before each region. The sheet walk then rounds each gap up to a line.
+
+**The Grid-Snap Rule.** Every ruled line sits on the drafting grid. The grid is counted from the sheet's border box (`background-origin: border-box`, the sheet's own border is line zero, lines cover pixels [10k, 10k + 1)), and the sheet is a whole number of squares wide (`width: calc(round(down, 100% - 1px, 10px) + 1px)`). After layout, `src/scripts/sheet-grid.ts` walks the page top to bottom and moves each ruled edge forward onto the next line, never more than one square and only by growing a padding, a margin, a column, a row or a map's height, so nothing is cropped:
+- full-width blocks (running head, title block, regions index, section heads, pager, footer): top and bottom rules;
+- columns: the plate | cartouche rule, the region map | table rule, the regions index cell rules;
+- the export buttons and "À savoir" chips: whole-square boxes (≡ 1px) with 9px gaps;
+- table rows, tip boxes (and a hazard tip's band rule), text panels, photo plates (box on lines, image one square inside in steps of 30px for 3:2 or 20px for 2:3, paired plates matched);
+- maps: the outline's edges, by growing the map's height.
+It re-runs on font load and resize, and fires `sheet:snapped` so Leaflet re-measures.
 
 ## Typography
 
@@ -217,7 +234,7 @@ Each region opens with a 2px ink top rule, Display title, a label meta line in i
 Under a hairline, an "À savoir · n conseils" row lists the region's tips as 36px chips (44px on touch): kind icon, kind in 700, point name in ink-2, linking to the tip. Hazard chips (road, border, fuel) come first, with a gold border and gold-wash fill.
 
 ### Survey map (signature)
-Leaflet over filtered OpenTopoMap tiles, on a field ground with a 40px hairline grid. Routes are segments: a recorded stretch (GPS track or routed road) is a 3.5px gold line over a 7.5px navy casing; an approximate stretch (only its ends known) is a 3px gold line dashed 2/9 over a 6px white underlay, no casing, and carries a "Tracé approximatif" legend entry and a note under the region map. On the trip map an invisible 16px hit line per region names it on hover and links to its section. Graticule ticks on the frame in 11px mono on 90% white, with a 1px ink tick; scale bar in 11px mono. Square zoom controls with 1px ink border, metric scale bar bottom right.
+Leaflet over filtered OpenTopoMap tiles, on a field ground with a 40px hairline grid, framed by a flush 1px ink outline (drawn just outside the map, so it overlaps rather than doubles the ruled box edges it touches). Routes are segments: a recorded stretch (GPS track or routed road) is a 3.5px gold line over a 7.5px navy casing; an approximate stretch (only its ends known) is a 3px gold line dashed 2/9 over a 6px white underlay, no casing, and carries a "Tracé approximatif" legend entry (no note under the map: the legend explains it). On the trip map an invisible 16px hit line per region names it on hover and links to its section. Graticule ticks on the frame in 11px mono on 92% white, with a 1px ink tick; scale bar in 11px mono. Square zoom controls with 1px ink border, metric scale bar bottom right.
 
 Markers: stage = 24px navy square, white numeral, 2px white border; sight = 22px white circle, 2px navy ring; points at the same spot share one marker ("1 · 28"); markers closer than their own width fan out a few pixels. A point with a tip carries a 10px gold dot (1.5px navy ring) at its top right, the same dot as the legend's "Conseil pratique". The trip map shows stages, passes and warnings only; sights live on the region maps. Markers stay out of the tab order (the points tables carry the same actions); their accessible name is "n. Place, kind".
 
@@ -232,10 +249,22 @@ An aside boxed like a legend note: paper fill, 1px ink border plus 1px hairline 
 **Hazard tip** (road, border, fuel): the head becomes a full-width gold-wash band over a 1px gold rule, the icon sits in a 28px gold disc, and the kind label turns gold-ink.
 
 ### Plate (photo)
-Native-ratio image linking to the original, then a caption: label "Planche nn" in ink beside caption text in ink-2, and a data line in ink-3 with aperture · shutter · ISO · focal, camera · lens, and an "Original W×H · size" download link (size in Mo/MB). Missing EXIF values are omitted, not dashed.
+A mounted print: a white box with a 1px hair-strong border; border plus padding is exactly one grid square, so the image inside lands on the grid when the box does. Inside: the native-ratio image linking to the original, then a caption: label "Planche nn" in ink beside caption text in ink-2, and a data line in ink-3 with aperture · shutter · ISO · focal, camera · lens, and an "Original W×H · size" download link (size in Mo/MB). Missing EXIF values are omitted, not dashed.
 
-### Regrets list
-Ruled list: each item indented 32px behind an 18 × 2px navy dash.
+### Index numbers
+Every index number shows two digits (`idx()` in `src/i18n.ts`): sheets, regions ("Région 04 / 06"), days ("Jours 08–10", `dayRange()`), plates, and numbered points everywhere they appear (map pins, popups, points tables, tip links, legend samples, copied coordinates, GPX/KML names). Counts (15 days, 6 regions, 3 tips) stay plain numbers.
+
+### Day strip
+`<Day n title>` marks a day inside a region: a solid ink strip as wide as the text panels, vellum text, "JOUR" in tracked label caps, "08 / 15" in mono, the date (weekday, day, month, in the page language) at 75% and an optional title in 600. It sits directly on the text panel that follows (no gap, no top rule) and carries `id="day-08"`. When the sheet walk grows it to whole squares it grows its height, not its bottom padding, so the text stays vertically centred.
+
+### Text panel
+Running text never sits directly on the drafting grid. Each run of consecutive paragraphs (and lists) in the trip text reads as one solid white panel with a 1px hair-strong rule, exactly as wide as a landscape plate (the wide column, `--wide`), and the text runs the full width of the panel: paragraph spacing becomes padding so the panel is continuous, the run's first paragraph draws the top rule and its last the bottom rule (CSS sibling and `:has()` selectors, no extra markup). Border plus padding is two squares (one on phones), so text starts on a grid line; from 1100px a lone portrait and the text run after it sit as a pair: the portrait takes the right half (`--half`, the width of one plate of a pair), the text the left half, tops aligned; anything else clears below. Below 1100px the portrait is centred at half width and the text runs full width. The panel's edges are snapped like every other rule.
+
+### Regrets panel
+Each region closes with `<Regrets>`: a ruled panel as wide as the text panels, 1px ink border, a head row (redo icon, "Ce que je referais autrement" in small label caps) over a 1px ink rule, then a dashed list (16 × 2px ink dash, 28px indent). There is no trip-level regrets section any more.
+
+### Before-you-go section
+`<Before>` opens the trip text before the first region: a section head like a region's (2px ink rule, Display title "Avant de partir", checklist icon and "Préparation" in label caps) with no map, then a reading column of text panels and tips (permits, cash, connectivity).
 
 ## Do's and Don'ts
 

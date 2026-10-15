@@ -42,7 +42,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
 <div class:list={['sheet-map', variant]} id={id} data-map={config} role="region" aria-label={label}>
   <noscript>
     <ol class="fallback">
-      {points.map((p) => <li><a href={p.href}>{p.n ? `${p.n}. ` : ''}{p.name}</a> <span class="data">{p.at.join(', ')}</span></li>)}
+      {points.map((p) => <li><a href={p.href}>{p.ref}{p.name}</a> <span class="data">{p.at.join(', ')}</span></li>)}
     </ol>
   </noscript>
 </div>
@@ -52,6 +52,9 @@ const config = JSON.stringify({ routes, points, variant, strings });
     position: relative;
     z-index: 0;
     width: 100%;
+    /* Flush outline: drawn just outside the map, so it overlaps (never doubles) the ruled box edges it touches. */
+    outline: 1px solid var(--ink);
+    outline-offset: 0;
     background:
       repeating-linear-gradient(0deg, var(--hair) 0 1px, transparent 1px 40px),
       repeating-linear-gradient(90deg, var(--hair) 0 1px, transparent 1px 40px),
@@ -59,14 +62,29 @@ const config = JSON.stringify({ routes, points, variant, strings });
   }
   .trip { height: clamp(320px, 42vh, 460px); }
   .region { height: clamp(260px, 34vh, 360px); }
+
+  /* The map printed on real paper, then scanned: a seamless paper texture (soft unevenness, fibre tooth; no creases),
+     multiplied for its shadows and screened for its lit side. It sits over the tiles and the route (printed things)
+     and under markers, popups and controls (the reader's tools), and is pinned to the map: it travels with the tiles. */
+  .sheet-map :global(.fold) {
+    pointer-events: none;
+    background-repeat: repeat;
+    background-size: 600px 400px;
+    background-position: var(--fold-x, 0px) var(--fold-y, 0px);
+  }
+  .sheet-map :global(.fold-shade) { mix-blend-mode: multiply; }
+  .sheet-map :global(.fold-lit) { mix-blend-mode: screen; }
   .fallback { margin: 0; padding: 16px 16px 16px 36px; font-size: 14px; }
   .sheet-map :global(.leaflet-container) { font: inherit; background: var(--field); }
   .sheet-map :global(.leaflet-tile-pane) { filter: grayscale(1) sepia(0.35) hue-rotate(180deg) saturate(1.4) contrast(0.7) brightness(1.18); }
+  /* Tiles overlap by half a pixel: the filter otherwise leaves hairline seams between them. */
+  .sheet-map :global(.leaflet-tile) { width: 256.5px !important; height: 256.5px !important; }
   .sheet-map :global(.leaflet-control-attribution) {
-    font: 400 11px/1.4 var(--sans); color: var(--ink-3); background: rgb(255 255 255 / 0.85); padding: 3px 6px;
+    font: 400 11px/1.4 var(--sans); color: var(--ink-3); background: color-mix(in srgb, var(--paper) 88%, transparent); padding: 3px 6px;
   }
   .sheet-map :global(.leaflet-control-zoom a) { color: var(--ink); border-radius: 0; }
   .sheet-map :global(.leaflet-bar) { border: 1px solid var(--ink); border-radius: 0; box-shadow: none; }
+  .sheet-map :global(.leaflet-popup-content-wrapper), .sheet-map :global(.leaflet-popup-tip), .sheet-map :global(.leaflet-control-zoom a) { background: var(--paper); }
   .sheet-map :global(.leaflet-popup-content-wrapper) { border-radius: 0; border: 1px solid var(--ink); box-shadow: 0 6px 18px rgb(18 41 79 / 0.14); }
   .sheet-map :global(.leaflet-popup-tip) { border: 1px solid var(--ink); box-shadow: none; }
   .sheet-map :global(.leaflet-popup-content) { margin: 12px 16px; font-size: 14px; line-height: 1.4; color: var(--ink); display: grid; gap: 6px; min-width: 200px; }
@@ -83,7 +101,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
   .sheet-map :global(.pop-tip::before) { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 1.5px var(--ink); flex: none; }
   .sheet-map :global(.graticule) { position: absolute; inset: 0; z-index: 500; pointer-events: none; overflow: hidden; }
   .sheet-map :global(.tick) {
-    position: absolute; font: 400 11px/1 var(--mono); color: var(--ink); background: rgb(255 255 255 / 0.9); padding: 2px 3px;
+    position: absolute; font: 400 11px/1 var(--mono); color: var(--ink); background: color-mix(in srgb, var(--paper) 92%, transparent); padding: 2px 3px;
     font-variant-numeric: tabular-nums;
   }
   .sheet-map :global(.tick.x) { top: 0; transform: translateX(-50%); border-left: 1px solid var(--ink); border-right: 0; }
@@ -92,7 +110,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
   .sheet-map :global(.leaflet-top.leaflet-right) { top: 24px; right: 44px; }
   .sheet-map :global(.leaflet-bottom.leaflet-right) { display: flex; flex-direction: column; align-items: flex-end; }
   .sheet-map :global(.leaflet-control-scale-line) {
-    border: 1px solid var(--ink); border-top: 0; background: rgb(255 255 255 / 0.85); color: var(--ink); font: 400 11px/1.4 var(--mono);
+    border: 1px solid var(--ink); border-top: 0; background: color-mix(in srgb, var(--paper) 88%, transparent); color: var(--ink); font: 400 11px/1.4 var(--mono);
   }
 
   /* Markers. The inner box carries the look; the outer Leaflet element only positions it, so overlap nudges stay smooth. */
@@ -135,9 +153,11 @@ const config = JSON.stringify({ routes, points, variant, strings });
 <script>
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css';
+  import foldShade from '../assets/textures/fold-shade.webp?url';
+  import foldLit from '../assets/textures/fold-lit.webp?url';
 
   type Kind = 'stage' | 'sight' | 'pass' | 'warning';
-  type Pt = { id: string; n: number; kind: Kind; name: string; at: [number, number]; regionId: string; regionName: string; href: string; tips: { id: string; label: string }[] };
+  type Pt = { id: string; n: number; ref: string; kind: Kind; name: string; at: [number, number]; regionId: string; regionName: string; href: string; tips: { id: string; label: string }[] };
   type Route = { id: string; name: string; href: string; segments: { approx: boolean; path: [number, number][] }[] };
   type Strings = { goToRegion: string; readTip: string; showAll: string; onMap: string; explore: string; exploreDone: string; copy: string; copied: string; kinds: Record<Kind, string> };
 
@@ -167,7 +187,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
   function icon(ps: Pt[]) {
     const p = ps[0];
     const numbered = p.kind === 'stage' || p.kind === 'sight';
-    const html = numbered ? ps.map((q) => q.n).filter(Boolean).join(' · ') : p.kind === 'pass' ? triangle(INK, PAPER) : warning();
+    const html = numbered ? ps.filter((q) => q.n).map((q) => String(q.n).padStart(2, '0')).join(' · ') : p.kind === 'pass' ? triangle(INK, PAPER) : warning();
     const tip = ps.some((q) => q.tips.length) ? ' has-tip' : '';
     return L.divIcon({ className: `pin ${p.kind}${tip}`, html: `<b>${html}</b>`, iconSize: [24, 24], iconAnchor: [12, 12], popupAnchor: [0, -14] });
   }
@@ -178,7 +198,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
         const ll = `${p.at[0].toFixed(5)}, ${p.at[1].toFixed(5)}`;
         const tips = p.tips.map((tip) => `<a class="pop-tip" href="#${tip.id}">${esc(s.readTip)} · ${esc(tip.label)}</a>`).join('');
         const region = variant === 'trip' ? `<a href="#${p.regionId}">${esc(s.goToRegion)} : ${esc(p.regionName)}</a>` : '';
-        return `<p class="pop-kind">${esc(s.kinds[p.kind])}</p><p><strong>${p.n ? `${p.n}. ` : ''}${esc(p.name)}</strong></p>
+        return `<p class="pop-kind">${esc(s.kinds[p.kind])}</p><p><strong>${p.ref}${esc(p.name)}</strong></p>
           <button type="button" class="pop-copy" data-copy="${ll}" data-done="${esc(s.copied)}" aria-label="${esc(s.copy)} ${ll}">${ll}</button>${tips}${region}`;
       })
       .join('<hr style="border:0;border-top:1px solid var(--hair);margin:4px 0">');
@@ -211,6 +231,35 @@ const config = JSON.stringify({ routes, points, variant, strings });
     };
     map.on('moveend zoomend resize', draw);
     draw();
+  }
+
+  // The paper sheet: a pane between the route (400) and the markers (600). The pane itself always covers the
+  // frame; its texture is pinned to a point of the map, so panning drags the folds along with the tiles.
+  function folds(map: L.Map) {
+    // Each map shows a different, stable part of the sheet.
+    const hash = [...map.getContainer().id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+    const ox = hash % 600, oy = (hash >>> 10) % 400;
+    const anchor = map.getCenter();
+    const panes = (['shade', 'lit'] as const).map((name, i) => {
+      const pane = map.createPane(`fold-${name}`);
+      pane.classList.add('fold', `fold-${name}`);
+      pane.style.zIndex = String(450 + i);
+      pane.style.backgroundImage = `url(${name === 'shade' ? foldShade : foldLit})`;
+      return pane;
+    });
+    const place = () => {
+      const size = map.getSize();
+      const pin = map.latLngToContainerPoint(anchor);
+      for (const pane of panes) {
+        L.DomUtil.setPosition(pane, map.containerPointToLayerPoint([0, 0]));
+        pane.style.setProperty('--fold-x', `${Math.round(pin.x + ox)}px`);
+        pane.style.setProperty('--fold-y', `${Math.round(pin.y + oy)}px`);
+        pane.style.width = `${size.x}px`;
+        pane.style.height = `${size.y}px`;
+      }
+    };
+    map.on('move zoom viewreset zoomend resize', place);
+    place();
   }
 
   // Markers closer than their own size are fanned out a few pixels so every number stays readable.
@@ -331,7 +380,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
     const allMarkers: L.Marker[] = [];
     for (const ps of group(points)) {
       const p = ps[0];
-      const label = ps.map((q) => `${q.n ? `${q.n}. ` : ''}${q.name}, ${strings.kinds[q.kind]}`).join(' ; ');
+      const label = ps.map((q) => `${q.ref}${q.name}, ${strings.kinds[q.kind]}`).join(' ; ');
       // Not in the tab order: every point is listed, with the same actions, in the region tables.
       const m = L.marker(p.at, { icon: icon(ps), keyboard: false, title: label, alt: label, riseOnHover: true }).addTo(map);
       m.bindPopup(popup(ps, strings, variant));
@@ -344,6 +393,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
     else map.setView([20, 0], 2);
     L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map);
     graticule(el, map);
+    folds(map);
     declutter(map, allMarkers);
 
     const entry: Entry = { el, map, groups, markers, all, names };
@@ -383,6 +433,9 @@ const config = JSON.stringify({ routes, points, variant, strings });
     }
     registry.set(el.id, entry);
   });
+
+  // The sheet grid walk resizes maps to land their outlines on the drafting grid: let Leaflet re-measure.
+  document.addEventListener('sheet:snapped', () => registry.forEach((e) => e.map.invalidateSize({ pan: false })));
 
   // Signature cross-link: "show on the trip map" links light up their region on the trip map.
   document.addEventListener('click', (e) => {
