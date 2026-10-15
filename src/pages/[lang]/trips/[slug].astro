@@ -7,9 +7,11 @@ import Plates from '../../../components/Plates.astro';
 import Region from '../../../components/Region.astro';
 import Tip from '../../../components/Tip.astro';
 import Regrets from '../../../components/Regrets.astro';
+import Day from '../../../components/Day.astro';
+import Before from '../../../components/Before.astro';
 import Icon from '../../../components/Icon.astro';
 import { render } from 'astro:content';
-import { languages, t, tripUrl, otherLang, formatDateRange, base, type Lang } from '../../../i18n';
+import { languages, t, tripUrl, otherLang, formatDateRange, base, idx, dayRange, type Lang } from '../../../i18n';
 import { getPublishedTrips, getTripView, formatDegrees, mapPoints } from '../../../lib/trips';
 
 export async function getStaticPaths() {
@@ -51,7 +53,7 @@ const stages = view.points.filter((p) => p.kind === 'stage').map((p) => p.at.joi
 const via = stages.slice(1, -1);
 const step = Math.ceil(via.length / 9) || 1;
 const googleStages = `https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=${stages[0]}&destination=${stages.at(-1)}&waypoints=${via.filter((_, i) => i % step === 0).slice(0, 9).join('|')}`;
-const allCoords = view.points.map((p) => `${p.n ? `${p.n}. ` : ''}${p.name}\t${p.at[0].toFixed(5)}, ${p.at[1].toFixed(5)}`).join('\n');
+const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5)}, ${p.at[1].toFixed(5)}`).join('\n');
 ---
 
 <BaseLayout lang={lang} title={`${text.data.title} — Odysseyra`} description={text.data.description} alternates={alternates}>
@@ -80,8 +82,8 @@ const allCoords = view.points.map((p) => `${p.n ? `${p.n}. ` : ''}${p.name}\t${p
         <h2 class="label">{s.legend}</h2>
         <ul class="symbols">
           <li><span class="sym route" aria-hidden="true"></span>{s.legendRoute}</li>
-          <li><span class="sym sq" aria-hidden="true">1</span>{s.legendStage}</li>
-          <li><span class="sym ci" aria-hidden="true">2</span>{s.legendSight}</li>
+          <li><span class="sym sq" aria-hidden="true">01</span>{s.legendStage}</li>
+          <li><span class="sym ci" aria-hidden="true">02</span>{s.legendSight}</li>
           <li><span class="sym" aria-hidden="true"><Icon name="pass" size={18} /></span>{s.legendPass}</li>
           <li><span class="sym warn" aria-hidden="true"><Icon name="warning" size={18} /></span>{s.legendWarning}</li>
           <li><span class="sym approx" aria-hidden="true"></span>{s.legendApprox}</li>
@@ -114,10 +116,10 @@ const allCoords = view.points.map((p) => `${p.n ? `${p.n}. ` : ''}${p.name}\t${p
         {data.regions.map((r, i) => (
           <li>
             <a href={`#${r.id}`}>
-              <span class="data">{String(i + 1).padStart(2, '0')}</span>
+              <span class="data">{idx(i + 1)}</span>
               <span>{r.name[lang]}</span>
               <span class="days">
-                {r.days[0] === r.days[1] ? `${s.day} ${r.days[0]}` : `${s.days} ${r.days[0]}–${r.days[1]}`}
+                {dayRange(lang, r.days)}
                 {tipsIn(r.id) > 0 && <span class="tips"> · {s.tipsCount(tipsIn(r.id))}</span>}
               </span>
             </a>
@@ -127,7 +129,7 @@ const allCoords = view.points.map((p) => `${p.n ? `${p.n}. ` : ''}${p.name}\t${p
     </nav>
 
     <article class="prose">
-      <Content components={{ Region, Photo, Plates, Tip, Regrets }} />
+      <Content components={{ Before, Region, Day, Photo, Plates, Tip, Regrets }} />
     </article>
 
     {
@@ -153,6 +155,7 @@ const allCoords = view.points.map((p) => `${p.n ? `${p.n}. ` : ''}${p.name}\t${p
     grid-template-areas: 'plate cartouche' 'plate legend' 'map map';
     grid-template-rows: auto 1fr auto;
     border-bottom: 1px solid var(--ink);
+    background: var(--paper);
   }
   .top.portrait { grid-template-columns: minmax(0, 1fr) minmax(360px, 1.35fr); }
   .top > * { min-width: 0; }
@@ -193,7 +196,7 @@ const allCoords = view.points.map((p) => `${p.n ? `${p.n}. ` : ''}${p.name}\t${p
   .trip-map { grid-area: map; border-top: 1px solid var(--ink); }
   .trip-map :global(.sheet-map.trip) { height: clamp(300px, 40vh, 440px); }
 
-  .regions-index { border-bottom: 1px solid var(--ink); }
+  .regions-index { border-bottom: 1px solid var(--ink); background: var(--paper); }
   .regions-index ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
   .regions-index li + li { border-left: 1px solid var(--hair); }
   .regions-index a { display: grid; gap: 2px; height: 100%; padding: 12px var(--pad); text-decoration: none; font-weight: 600; line-height: 1.25; }
@@ -201,16 +204,17 @@ const allCoords = view.points.map((p) => `${p.n ? `${p.n}. ` : ''}${p.name}\t${p
   .regions-index .data, .regions-index .days { color: var(--ink-3); font-weight: 400; font-size: 13px; }
   .regions-index .tips { color: var(--gold-ink); font-weight: 600; }
 
-  .prose { padding-bottom: 4rem; }
-  .prose > :global(p) { max-width: var(--measure); margin-inline: auto; padding-inline: var(--pad); }
-  .prose > :global(p:first-child) { margin-top: 3rem; color: var(--ink-3); font-size: 14px; }
+  .prose { padding-bottom: var(--gap-section); }
+  /* The trip's opening text: a panel at the reading measure, centred under the regions index. */
+  .prose > :global(:is(p, ul, ol)) { margin-left: calc((100% - var(--wide)) / 2); }
+  .prose > :global(p:first-child) { margin-top: calc(3 * var(--grid-unit)); color: var(--ink-3); font-size: 14px; }
 
-  .pager { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--ink); }
+  .pager { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--ink); background: var(--paper); }
   .pager a { display: grid; gap: 4px; padding: 20px var(--pad); text-decoration: none; font-weight: 700; }
   .pager a[rel='next'] { text-align: right; grid-column: 2; border-left: 1px solid var(--hair); }
   .pager .label { color: var(--ink-3); font-size: 11px; }
 
-  .foot { display: flex; justify-content: space-between; align-items: center; padding: 14px var(--pad); border-top: 1px solid var(--ink); }
+  .foot { display: flex; justify-content: space-between; align-items: center; padding: 14px var(--pad); border-top: 1px solid var(--ink); background: var(--paper); }
   .foot p { margin: 0; color: var(--ink-3); }
   .foot a { text-decoration: none; }
   @media (pointer: coarse) { .foot a { display: inline-flex; align-items: center; min-height: 44px; } }
@@ -235,6 +239,9 @@ const allCoords = view.points.map((p) => `${p.n ? `${p.n}. ` : ''}${p.name}\t${p
 </style>
 
 <script>
+  import { watchSheet } from '../../../scripts/sheet-grid';
+  watchSheet();
+
   // Copy buttons anywhere on the page, map popups included (capture phase: Leaflet stops click bubbling in popups).
   async function copy(text: string) {
     try {

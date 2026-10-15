@@ -14,7 +14,7 @@ export function toGpx(trip: TripView, title: string) {
   const wpts = trip.points
     .map(
       (p) => `  <wpt lat="${p.at[0]}" lon="${p.at[1]}">
-    <name>${esc(`${p.n ? `${p.n}. ` : ''}${p.name}`)}</name>
+    <name>${esc(`${p.ref}${p.name}`)}</name>
     <type>${esc(pointLabel(lang, p.kind))}</type>
   </wpt>`,
     )
@@ -53,7 +53,7 @@ export function toKml(trip: TripView, title: string) {
         .filter((p) => p.regionId === r.id)
         .map(
           (p) => `      <Placemark>
-        <name>${esc(`${p.n ? `${p.n}. ` : ''}${p.name}`)}</name>
+        <name>${esc(`${p.ref}${p.name}`)}</name>
         <description>${esc(pointLabel(lang, p.kind))}</description>
         <styleUrl>#${p.kind}</styleUrl>
         <Point><coordinates>${p.at[1]},${p.at[0]},0</coordinates></Point>

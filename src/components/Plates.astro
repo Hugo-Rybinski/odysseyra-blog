@@ -7,11 +7,13 @@
 <style>
   .plates {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    /* minmax(0, …): a plate snapping a few pixels wider to the grid must not resize its column. */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 24px;
-    align-items: start;
+    /* stretch: the two boxes of a pair always end on the same line, whatever their captions. */
+    align-items: stretch;
     width: min(960px, 100vw - 2 * var(--pad) - 2 * var(--sheet-pad));
-    margin: 2.5rem 0;
+    margin: var(--gap) 0;
     position: relative;
     left: 50%;
     transform: translateX(-50%);
@@ -19,6 +21,6 @@
   .plates :global(.plate) { margin: 0; }
   .plates :global(.plate.landscape) { grid-column: 1 / -1; }
   @media (max-width: 640px) {
-    .plates { grid-template-columns: 1fr; }
+    .plates { grid-template-columns: minmax(0, 1fr); }
   }
 </style>

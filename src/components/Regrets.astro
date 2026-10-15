@@ -1,25 +1,34 @@
 ---
+import Icon from './Icon.astro';
 import { t } from '../i18n';
 const trip = Astro.locals.trip;
 if (!trip) throw new Error('<Regrets> must be rendered inside a trip page');
 const s = t(trip.lang);
 ---
 
-<section class="regrets" id="regrets" aria-labelledby="regrets-title">
-  <header class="rhead">
-    <h2 id="regrets-title">{s.regrets}</h2>
-  </header>
+<!-- A region's closing note: what I would change next time. A ruled panel, like a tip, in plain ink. -->
+<aside class="regrets" aria-label={s.regrets}>
+  <p class="head"><Icon name="redo" size={18} /><span class="label">{s.regrets}</span></p>
   <div class="body"><slot /></div>
-</section>
+</aside>
 
 <style>
-  .regrets { clear: both; padding-top: 4.5rem; }
-  .rhead { border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 18px var(--pad); display: grid; gap: 8px; }
-  h2 { font-size: var(--step-3); }
-  .body { max-width: var(--measure); margin: 2.5rem auto 0; padding-inline: var(--pad); }
+  .regrets {
+    width: var(--wide);
+    margin: var(--gap) 0 0 calc((100% - var(--wide)) / 2);
+    border: 1px solid var(--ink);
+    background: var(--paper);
+  }
+  .head {
+    display: flex; align-items: center; gap: 10px; margin: 0;
+    padding: calc(var(--grid-unit) - 1px) calc(2 * var(--grid-unit) - 1px);
+    border-bottom: 1px solid var(--ink); color: var(--ink);
+  }
+  .head .label { font-size: 11px; }
+  .body { padding: var(--grid-unit) calc(2 * var(--grid-unit) - 1px) 0; }
   .body :global(ul) { list-style: none; padding: 0; margin: 0; }
-  .body :global(li) { position: relative; padding: 0 0 1rem 32px; }
+  .body :global(li) { position: relative; padding: 0 0 0.6rem 28px; }
   .body :global(li)::before {
-    content: ''; position: absolute; left: 0; top: 0.72em; width: 18px; height: 2px; background: var(--ink);
+    content: ''; position: absolute; left: 0; top: 0.78em; width: 16px; height: 2px; background: var(--ink);
   }
 </style>

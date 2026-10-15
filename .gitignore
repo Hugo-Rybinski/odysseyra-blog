@@ -26,3 +26,6 @@ pnpm-debug.log*
 # Impeccable working files (screenshots, decision page payloads)
 .impeccable/review/
 .impeccable/payload.json
+
+# Reference images (third-party, not for publishing)
+paperexample/

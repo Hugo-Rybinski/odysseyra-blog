@@ -1,0 +1,44 @@
+---
+import { idx, t } from '../i18n';
+
+interface Props {
+  /** Day of the trip, from 1. */
+  n: number;
+  /** Optional short title for the day, e.g. "Bichkek → Son-Koul". */
+  title?: string;
+}
+const { n, title } = Astro.props;
+const trip = Astro.locals.trip;
+if (!trip) throw new Error('<Day> must be rendered inside a trip page');
+const total = Math.round((trip.data.end.valueOf() - trip.data.start.valueOf()) / 86_400_000) + 1;
+if (!Number.isInteger(n) || n < 1 || n > total) throw new Error(`[${trip.slug}] <Day n={${n}}>: the trip has days 1 to ${total}`);
+const s = t(trip.lang);
+const date = new Date(trip.data.start.valueOf() + (n - 1) * 86_400_000);
+const when = new Intl.DateTimeFormat(trip.lang, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(date);
+---
+
+<h3 class="day" id={`day-${idx(n)}`}>
+  <span class="no"><span class="k">{s.day}</span> <span class="data">{idx(n)}<span class="of"> / {idx(total)}</span></span></span>
+  <time class="when" datetime={date.toISOString().slice(0, 10)}>{when}</time>
+  {title && <span class="title">{title}</span>}
+</h3>
+
+<style>
+  /* A day marker inside a region: a solid ink strip, as wide as the text panels and plates. */
+  .day {
+    /* align-content: the grid walk may grow the strip to a whole number of squares; the text stays centred. */
+    display: flex; flex-wrap: wrap; align-items: baseline; align-content: center; gap: 4px 16px;
+    width: var(--wide);
+    margin: var(--gap) 0 0 calc((100% - var(--wide)) / 2);
+    padding: calc(var(--grid-unit) - 1px) calc(2 * var(--grid-unit) - 1px);
+    background: var(--ink); color: var(--paper); border: 1px solid var(--ink);
+    font-size: var(--step--1); line-height: 1.4; letter-spacing: 0; text-wrap: initial;
+  }
+  .no { font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+  .no .data { font-size: 1rem; letter-spacing: 0.04em; }
+  .of { opacity: 0.7; }
+  .when { color: rgb(255 255 255 / 0.75); }
+  .title { font-size: 1rem; font-weight: 600; }
+  /* The strip sits directly on the text panel that follows. */
+  .day + :global(:is(p, ul, ol)) { margin-top: 0; border-top-width: 0; }
+</style>

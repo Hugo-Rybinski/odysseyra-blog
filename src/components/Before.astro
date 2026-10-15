@@ -1,0 +1,26 @@
+---
+import Icon from './Icon.astro';
+import { t } from '../i18n';
+const trip = Astro.locals.trip;
+if (!trip) throw new Error('<Before> must be rendered inside a trip page');
+const s = t(trip.lang);
+---
+
+<!-- "Before you go": the practical prelude to the regions, laid out like a region sheet without a map. -->
+<section class="before" id="avant" aria-labelledby="before-title">
+  <header class="rhead">
+    <h2 id="before-title">{s.before}</h2>
+    <p class="meta label"><Icon name="checklist" size={16} />{s.beforeMeta}</p>
+  </header>
+  <div class="col"><slot /></div>
+</section>
+
+<style>
+  .before { padding-top: var(--gap-section); clear: both; }
+  .rhead {
+    display: grid; gap: 8px; padding: 18px var(--pad);
+    border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink); background: var(--paper);
+  }
+  .rhead h2 { font-size: var(--step-3); }
+  .meta { display: inline-flex; align-items: center; gap: 8px; margin: 0; color: var(--ink-3); }
+</style>

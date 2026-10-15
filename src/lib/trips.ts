@@ -3,7 +3,7 @@ import type { ImageMetadata } from 'astro';
 import path from 'node:path';
 import { statSync } from 'node:fs';
 import exifr from 'exifr';
-import { languages, t, type Lang } from '../i18n';
+import { idx, languages, t, type Lang } from '../i18n';
 
 export type Trip = CollectionEntry<'trips'>;
 export type TripData = Trip['data'];
@@ -39,6 +39,8 @@ export interface Photo {
 export interface NumberedPoint {
   id: string;
   n: number;
+  /** "07. " for numbered points (stages and sights), "" otherwise: the label prefix used everywhere. */
+  ref: string;
   kind: PointKind;
   name: string;
   at: [number, number];
@@ -105,32 +107,37 @@ function haversine([lat1, lng1]: [number, number], [lat2, lng2]: [number, number
 export function numberPoints(data: TripData, lang: Lang): NumberedPoint[] {
   let n = 0;
   return data.regions.flatMap((region) =>
-    region.points.map((p) => ({
-      id: p.id,
-      n: p.kind === 'stage' || p.kind === 'sight' ? ++n : 0,
-      kind: p.kind,
-      name: p.name[lang],
-      at: p.at,
-      regionId: region.id,
-    })),
+    region.points.map((p) => {
+      const num = p.kind === 'stage' || p.kind === 'sight' ? ++n : 0;
+      return { id: p.id, n: num, ref: num ? `${idx(num)}. ` : '', kind: p.kind, name: p.name[lang], at: p.at, regionId: region.id };
+    }),
   );
 }
 
+/** A short key from a tip's opening words, for tips not tied to a place (same result from MDX source or HTML). */
+export const textKey = (text: string) =>
+  text
+    .replace(/<[^>]*>/g, ' ')
+    .normalize('NFD')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '')
+    .slice(0, 16);
+
 /** Stable id for a tip, shared by the parser below and the <Tip> component. */
-export const tipId = (kind: string, at?: string) => `tip-${at ?? 'general'}-${kind}`;
+export const tipId = (kind: string, at?: string, text = '') => `tip-${at ?? textKey(text)}-${kind}`;
 
 /** Reads <Tip kind at> tags from the MDX source, with the <Region> each one sits in. */
 export function parseTips(body: string): TipRef[] {
   const tips: TipRef[] = [];
   let regionId: string | undefined;
-  const re = /<Region\s+id="([^"]+)"|<\/Region>|<Tip\b([^>]*)>/g;
+  const re = /<Region\s+id="([^"]+)"|<\/Region>|<Tip\b([^>]*)>([\s\S]*?)<\/Tip>/g;
   for (const m of body.matchAll(re)) {
     if (m[1]) regionId = m[1];
     else if (m[0] === '</Region>') regionId = undefined;
     else {
       const kind = (/kind="([^"]+)"/.exec(m[2])?.[1] ?? 'info') as TipKind;
       const at = /at="([^"]+)"/.exec(m[2])?.[1];
-      const id = tipId(kind, at);
+      const id = tipId(kind, at, m[3]);
       if (!tips.some((t) => t.id === id)) tips.push({ id, kind, at, regionId });
     }
   }

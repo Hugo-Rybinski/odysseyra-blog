@@ -1,4 +1,4 @@
-/* Odysseyra — Survey Sheet. Navy ink on a white sheet; gold is reserved for route, stages and tips. */
+/* Odysseyra — Survey Sheet. Navy ink on white drafting paper; gold is reserved for route, stages and tips. */
 :root {
   color-scheme: light;
   --paper: #ffffff;
@@ -61,16 +61,65 @@ a:hover { text-decoration-color: var(--gold); }
 }
 .data { font-family: var(--mono); font-size: var(--step--1); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 
-/* The printed sheet: a ruled double border around everything. */
+/* The printed sheet: a ruled double border around everything. The gap between the two rules is a border
+   scale, as on an engineering drawing: a tick on every grid line, a long one on every major (50px) line. The ticks
+   are counted from the same origin as the drafting grid inside (--rx, --ry: the inner sheet's offset, set by the
+   sheet walk), so each tick continues a grid line. */
 .sheet {
+  --tick: var(--hair-strong);
+  --rx: 6px;
+  --ry: 6px;
+  --major: linear-gradient(90deg, var(--ink) 1px, transparent 1px);
+  --minor: linear-gradient(90deg, var(--tick) 1px, transparent 1px);
+  --major-v: linear-gradient(180deg, var(--ink) 1px, transparent 1px);
+  --minor-v: linear-gradient(180deg, var(--tick) 1px, transparent 1px);
   position: relative;
   margin: var(--sheet-pad);
   border: 2px solid var(--ink);
   padding: 6px;
+  background:
+    var(--major) var(--rx) 0 / 50px 5px repeat-x,
+    var(--minor) var(--rx) 0 / 10px 3px repeat-x,
+    var(--major) var(--rx) 100% / 50px 5px repeat-x,
+    var(--minor) var(--rx) 100% / 10px 3px repeat-x,
+    var(--major-v) 0 var(--ry) / 5px 50px repeat-y,
+    var(--minor-v) 0 var(--ry) / 3px 10px repeat-y,
+    var(--major-v) 100% var(--ry) / 5px 50px repeat-y,
+    var(--minor-v) 100% var(--ry) / 3px 10px repeat-y,
+    var(--paper);
 }
-.sheet > .sheet-inner { --pad: clamp(16px, 2.5vw, 32px); border: 1px solid var(--ink); min-height: calc(100vh - 2 * var(--sheet-pad) - 16px); }
+.sheet > .sheet-inner {
+  --pad: clamp(16px, 2.5vw, 32px);
+  /* The wide column (landscape plates, text panels) and its halves (paired portraits). */
+  --wide: min(960px, 100vw - 2 * var(--pad) - 2 * var(--sheet-pad));
+  --pair-gap: 24px;
+  /* Vertical rhythm between blocks, in grid squares (the sheet walk then rounds each gap up to a line). */
+  --gap: calc(2 * var(--grid-unit));
+  --gap-section: calc(4 * var(--grid-unit));
+  --half: calc((var(--wide) - var(--pair-gap)) / 2);
+  /* A whole number of squares wide (border-box ≡ 1px mod 10), so the right border lands on a grid line like the left. */
+  width: calc(round(down, 100% - 1px, var(--grid-unit)) + 1px);
+  margin-inline: auto;
+  border: 1px solid var(--ink);
+  /* Drafting paper across the whole sheet; plates snap to its 10px squares (see Photo.astro). */
+  background: var(--graph), var(--paper);
+  /* Grid lines are counted from the border edge: the sheet's own border is line zero. */
+  background-origin: border-box;
+  min-height: calc(100vh - 2 * var(--sheet-pad) - 16px);
+}
+/* Drafting graph paper: light 10px squares, a slightly stronger line every 50px. */
+:root {
+  --grid-unit: 10px;
+  --grid-minor: rgb(18 41 79 / 0.045);
+  --grid-major: rgb(18 41 79 / 0.08);
+  --graph:
+    linear-gradient(var(--grid-major) 1px, transparent 1px) 0 0 / 50px 50px,
+    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px) 0 0 / 50px 50px,
+    linear-gradient(var(--grid-minor) 1px, transparent 1px) 0 0 / 10px 10px,
+    linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px) 0 0 / 10px 10px;
+}
 @media (max-width: 640px) {
-  .sheet { margin: 6px; border-width: 1.5px; padding: 3px; }
+  .sheet { margin: 6px; border-width: 1.5px; padding: 3px; background: var(--paper); }
 }
 
 .skip {
@@ -78,6 +127,65 @@ a:hover { text-decoration-color: var(--gold); }
   background: var(--ink); color: var(--paper); font-weight: 700; text-decoration: none; transform: translateY(-200%);
 }
 .skip:focus-visible { transform: none; }
+
+
+/* The reading column of a section (region or "before you go"): text panels, plates, tips. */
+/* flow-root: the first child's margin stays inside the column, so the sheet grid can nudge it (see sheet-grid.ts). */
+.col { display: flow-root; max-width: var(--measure); margin: var(--gap) auto 0; padding-inline: var(--pad); }
+.col > :first-child { margin-top: 0; }
+.col::after { content: ''; display: table; clear: both; }
+/* Landscape plates and text panels share the wide column; a lone portrait is half of it, like one of a pair. */
+.col > .plate.landscape { width: var(--wide); position: relative; left: 50%; transform: translateX(-50%); }
+.col > .plate.portrait { max-width: var(--half); margin-inline: auto; }
+/* Anything that is not running text starts below a floated portrait. */
+.col > :not(p, ul, ol, .plate.portrait) { clear: both; }
+@media (min-width: 1100px) {
+  /* Text | portrait, as a pair would sit: the portrait takes the right half of the wide column, the text run that
+     follows it the left half (see global.css). */
+  .col > .plate.portrait {
+    float: right; width: var(--half); max-width: none;
+    margin: var(--gap) calc((100% - var(--wide)) / 2) var(--gap) var(--pair-gap);
+  }
+}
+
+/* Running text on the sheet: each run of consecutive paragraphs (and lists) reads as one solid panel with a light
+   rule, like the photo plates, pasted over the drafting grid. Paragraph spacing becomes padding so the panel stays
+   continuous; the first paragraph of a run draws the top rule, the last one the bottom rule. Border plus padding is
+   two squares, so the text itself starts on a grid line. */
+:is(.col, .prose) > :is(p, ul, ol) {
+  /* flow-root: beside a floated plate the panel stops at the plate instead of running under it. */
+  display: flow-root;
+  /* As wide as a landscape plate, and the text uses all of it. */
+  width: var(--wide);
+  margin: 0 0 0 calc((100% - var(--wide)) / 2);
+  padding: 0 calc(2 * var(--grid-unit) - 1px) 1.1em;
+  background: var(--paper);
+  border-inline: 1px solid var(--hair-strong);
+}
+:is(.col, .prose) > :is(ul, ol) { padding-left: calc(4 * var(--grid-unit) - 1px); }
+/* The text run right after a lone portrait sits beside it, in the other half: a text | photo pair. */
+@media (min-width: 1100px) {
+  .col > .plate.portrait ~ :is(p, ul, ol):not(.plate.portrait ~ :not(p, ul, ol) ~ *) {
+    /* A plain block, already sized to its half: it sits beside the float without needing to avoid it. */
+    display: block;
+    width: var(--half);
+    padding-inline: calc(2 * var(--grid-unit) - 1px);
+  }
+}
+@media (max-width: 640px) {
+  :is(.col, .prose) > :is(p, ul, ol) { padding-inline: calc(var(--grid-unit) - 1px); }
+  :is(.col, .prose) > :is(ul, ol) { padding-left: calc(3 * var(--grid-unit) - 1px); }
+}
+:is(.col, .prose) > :is(p, ul, ol):not(:is(p, ul, ol) + *) {
+  margin-top: var(--gap);
+  padding-top: calc(2 * var(--grid-unit) - 1px);
+  border-top: 1px solid var(--hair-strong);
+}
+:is(.col, .prose) > :is(p, ul, ol):not(:has(+ :is(p, ul, ol))) {
+  margin-bottom: var(--gap);
+  padding-bottom: calc(2 * var(--grid-unit) - 1px);
+  border-bottom: 1px solid var(--hair-strong);
+}
 
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;

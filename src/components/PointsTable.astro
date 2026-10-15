@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import { t, type Lang } from '../i18n';
+import { idx, t, type Lang } from '../i18n';
 import { formatLatLng } from '../lib/trips';
 import type { MapPoint } from './SheetMap.astro';
 
@@ -29,8 +29,8 @@ const s = t(lang);
           return (
             <tr id={`pt-${p.id}`} class={p.kind}>
               <td class="n">
-                {p.kind === 'stage' && <span class="sq">{p.n}</span>}
-                {p.kind === 'sight' && <span class="ci">{p.n}</span>}
+                {p.kind === 'stage' && <span class="sq">{idx(p.n)}</span>}
+                {p.kind === 'sight' && <span class="ci">{idx(p.n)}</span>}
                 {p.kind === 'pass' && <Icon name="pass" size={18} label={s.legendPass} />}
                 {p.kind === 'warning' && <span class="warn"><Icon name="warning" size={18} label={s.legendWarning} /></span>}
               </td>
