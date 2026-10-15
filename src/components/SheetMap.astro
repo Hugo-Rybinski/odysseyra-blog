@@ -1,0 +1,394 @@
+---
+import type { NumberedPoint } from '../lib/trips';
+import { t, type Lang } from '../i18n';
+
+export interface MapRoute {
+  id: string;
+  name: string;
+  href: string;
+  segments: { approx: boolean; path: [number, number][] }[];
+}
+export type MapPoint = NumberedPoint & {
+  href: string;
+  regionName: string;
+  /** Tips attached to this point: links to their box in the text. */
+  tips: { id: string; label: string }[];
+};
+interface Props {
+  id: string;
+  lang: Lang;
+  label: string;
+  routes: MapRoute[];
+  points: MapPoint[];
+  /** 'trip' routes are clickable and highlightable; 'region' is a detail view. */
+  variant: 'trip' | 'region';
+}
+const { id, lang, label, routes, points, variant } = Astro.props;
+const s = t(lang);
+const strings = {
+  goToRegion: s.goToRegion,
+  readTip: s.readTip,
+  showAll: s.showAll,
+  onMap: s.onMap,
+  explore: s.explore,
+  exploreDone: s.exploreDone,
+  copy: s.copy,
+  copied: s.copied,
+  kinds: { stage: s.legendStage, sight: s.legendSight, pass: s.legendPass, warning: s.legendWarning },
+};
+const config = JSON.stringify({ routes, points, variant, strings });
+---
+
+<div class:list={['sheet-map', variant]} id={id} data-map={config} role="region" aria-label={label}>
+  <noscript>
+    <ol class="fallback">
+      {points.map((p) => <li><a href={p.href}>{p.n ? `${p.n}. ` : ''}{p.name}</a> <span class="data">{p.at.join(', ')}</span></li>)}
+    </ol>
+  </noscript>
+</div>
+
+<style>
+  .sheet-map {
+    position: relative;
+    z-index: 0;
+    width: 100%;
+    background:
+      repeating-linear-gradient(0deg, var(--hair) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(90deg, var(--hair) 0 1px, transparent 1px 40px),
+      var(--field);
+  }
+  .trip { height: clamp(320px, 42vh, 460px); }
+  .region { height: clamp(260px, 34vh, 360px); }
+  .fallback { margin: 0; padding: 16px 16px 16px 36px; font-size: 14px; }
+  .sheet-map :global(.leaflet-container) { font: inherit; background: var(--field); }
+  .sheet-map :global(.leaflet-tile-pane) { filter: grayscale(1) sepia(0.35) hue-rotate(180deg) saturate(1.4) contrast(0.7) brightness(1.18); }
+  .sheet-map :global(.leaflet-control-attribution) {
+    font: 400 11px/1.4 var(--sans); color: var(--ink-3); background: rgb(255 255 255 / 0.85); padding: 3px 6px;
+  }
+  .sheet-map :global(.leaflet-control-zoom a) { color: var(--ink); border-radius: 0; }
+  .sheet-map :global(.leaflet-bar) { border: 1px solid var(--ink); border-radius: 0; box-shadow: none; }
+  .sheet-map :global(.leaflet-popup-content-wrapper) { border-radius: 0; border: 1px solid var(--ink); box-shadow: 0 6px 18px rgb(18 41 79 / 0.14); }
+  .sheet-map :global(.leaflet-popup-tip) { border: 1px solid var(--ink); box-shadow: none; }
+  .sheet-map :global(.leaflet-popup-content) { margin: 12px 16px; font-size: 14px; line-height: 1.4; color: var(--ink); display: grid; gap: 6px; min-width: 200px; }
+  .sheet-map :global(.leaflet-popup-content p) { margin: 0; }
+  .sheet-map :global(.leaflet-popup-content a) { color: var(--ink); font-weight: 600; }
+  .sheet-map :global(.pop-kind) { color: var(--ink-3); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+  .sheet-map :global(.pop-copy) {
+    justify-self: start; display: inline-flex; gap: 8px; align-items: center; padding: 4px 8px; margin-left: -8px;
+    border: 0; background: none; color: var(--ink); font: 400 13px/1.3 var(--mono); cursor: pointer;
+  }
+  .sheet-map :global(.pop-copy:hover) { background: var(--field); }
+  .sheet-map :global(.pop-copy.done::after) { content: attr(data-done); font: 700 13px/1 var(--sans); color: var(--gold-ink); }
+  .sheet-map :global(.pop-tip) { display: inline-flex; gap: 8px; align-items: center; }
+  .sheet-map :global(.pop-tip::before) { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 1.5px var(--ink); flex: none; }
+  .sheet-map :global(.graticule) { position: absolute; inset: 0; z-index: 500; pointer-events: none; overflow: hidden; }
+  .sheet-map :global(.tick) {
+    position: absolute; font: 400 11px/1 var(--mono); color: var(--ink); background: rgb(255 255 255 / 0.9); padding: 2px 3px;
+    font-variant-numeric: tabular-nums;
+  }
+  .sheet-map :global(.tick.x) { top: 0; transform: translateX(-50%); border-left: 1px solid var(--ink); border-right: 0; }
+  .sheet-map :global(.tick.y) { right: 0; transform: translateY(-50%); border-top: 1px solid var(--ink); }
+  .sheet-map :global(.leaflet-top.leaflet-left) { top: 18px; }
+  .sheet-map :global(.leaflet-top.leaflet-right) { top: 24px; right: 44px; }
+  .sheet-map :global(.leaflet-bottom.leaflet-right) { display: flex; flex-direction: column; align-items: flex-end; }
+  .sheet-map :global(.leaflet-control-scale-line) {
+    border: 1px solid var(--ink); border-top: 0; background: rgb(255 255 255 / 0.85); color: var(--ink); font: 400 11px/1.4 var(--mono);
+  }
+
+  /* Markers. The inner box carries the look; the outer Leaflet element only positions it, so overlap nudges stay smooth. */
+  .sheet-map :global(.pin) { background: none; border: 0; }
+  .sheet-map :global(.pin > b) {
+    position: relative; display: grid; place-items: center; width: max-content; min-width: 24px; height: 24px; padding: 0 4px;
+    font: 700 12px/1 var(--sans); color: var(--paper); background: var(--ink); border: 2px solid var(--paper);
+    box-shadow: 0 1px 3px rgb(18 41 79 / 0.35); white-space: nowrap;
+    transform: translate(calc(-50% + 12px + var(--dx, 0px)), var(--dy, 0px));
+    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .sheet-map :global(.pin.sight > b) { min-width: 22px; height: 22px; border-radius: 50%; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); font-size: 11px; }
+  .sheet-map :global(.pin.pass > b), .sheet-map :global(.pin.warning > b) { background: none; border: 0; box-shadow: none; padding: 0; }
+  .sheet-map :global(.pin svg) { overflow: visible; }
+  /* A gold dot: this place has a practical tip in the text. */
+  .sheet-map :global(.pin.has-tip > b::after) {
+    content: ''; position: absolute; top: -6px; right: -6px; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--gold); border: 1.5px solid var(--ink);
+  }
+  .sheet-map :global(.pin.is-active > b) { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .sheet-map :global(.pin.is-dim) { opacity: 0.4; }
+
+  /* Region caption + reset, and the touch "explore" switch. */
+  .sheet-map :global(.map-note) {
+    display: flex; align-items: center; gap: 4px; margin: 0; background: var(--paper); border: 1px solid var(--ink);
+    font: 600 13px/1.2 var(--sans); color: var(--ink); max-width: min(420px, 70vw);
+  }
+  .sheet-map :global(.map-note[hidden]) { display: none; }
+  .sheet-map :global(.map-note span) { padding: 8px 4px 8px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sheet-map :global(.map-note .k) { flex: none; color: var(--ink-3); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding-right: 0; }
+  .sheet-map :global(.map-note button), .sheet-map :global(.explore) {
+    min-height: 36px; padding: 0 12px; border: 0; border-left: 1px solid var(--hair); background: none; color: var(--ink);
+    font: 700 13px/1 var(--sans); cursor: pointer; white-space: nowrap;
+  }
+  .sheet-map :global(.map-note button:hover), .sheet-map :global(.explore:hover) { background: var(--ink); color: var(--paper); }
+  .sheet-map :global(.explore) { min-height: 44px; border: 1px solid var(--ink); background: var(--paper); }
+  .sheet-map :global(.explore[aria-pressed='true']) { background: var(--ink); color: var(--paper); }
+</style>
+
+<script>
+  import L from 'leaflet';
+  import 'leaflet/dist/leaflet.css';
+
+  type Kind = 'stage' | 'sight' | 'pass' | 'warning';
+  type Pt = { id: string; n: number; kind: Kind; name: string; at: [number, number]; regionId: string; regionName: string; href: string; tips: { id: string; label: string }[] };
+  type Route = { id: string; name: string; href: string; segments: { approx: boolean; path: [number, number][] }[] };
+  type Strings = { goToRegion: string; readTip: string; showAll: string; onMap: string; explore: string; exploreDone: string; copy: string; copied: string; kinds: Record<Kind, string> };
+
+  const css = getComputedStyle(document.documentElement);
+  const GOLD = css.getPropertyValue('--gold').trim() || '#b08d3e';
+  const INK = css.getPropertyValue('--ink').trim() || '#12294f';
+  const PAPER = css.getPropertyValue('--paper').trim() || '#ffffff';
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const touch = matchMedia('(pointer: coarse)').matches;
+  const esc = (v: string) => v.replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]!);
+
+  const triangle = (fill: string, stroke: string) =>
+    `<svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 2 24.5 22h-23Z" fill="${fill}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/></svg>`;
+  const warning = () =>
+    `<svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 2 24.5 22h-23Z" fill="${GOLD}" stroke="${PAPER}" stroke-width="2" stroke-linejoin="round"/><path d="M13 9v6M13 18.2v.4" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+
+  // Points at the same spot (Bishkek, start and finish) share one marker: "1 · 28".
+  function group(points: Pt[]) {
+    const groups = new Map<string, Pt[]>();
+    for (const p of points) {
+      const key = `${p.at[0].toFixed(3)},${p.at[1].toFixed(3)}`;
+      groups.set(key, [...(groups.get(key) ?? []), p]);
+    }
+    return [...groups.values()];
+  }
+
+  function icon(ps: Pt[]) {
+    const p = ps[0];
+    const numbered = p.kind === 'stage' || p.kind === 'sight';
+    const html = numbered ? ps.map((q) => q.n).filter(Boolean).join(' · ') : p.kind === 'pass' ? triangle(INK, PAPER) : warning();
+    const tip = ps.some((q) => q.tips.length) ? ' has-tip' : '';
+    return L.divIcon({ className: `pin ${p.kind}${tip}`, html: `<b>${html}</b>`, iconSize: [24, 24], iconAnchor: [12, 12], popupAnchor: [0, -14] });
+  }
+
+  function popup(ps: Pt[], s: Strings, variant: 'trip' | 'region') {
+    return ps
+      .map((p) => {
+        const ll = `${p.at[0].toFixed(5)}, ${p.at[1].toFixed(5)}`;
+        const tips = p.tips.map((tip) => `<a class="pop-tip" href="#${tip.id}">${esc(s.readTip)} · ${esc(tip.label)}</a>`).join('');
+        const region = variant === 'trip' ? `<a href="#${p.regionId}">${esc(s.goToRegion)} : ${esc(p.regionName)}</a>` : '';
+        return `<p class="pop-kind">${esc(s.kinds[p.kind])}</p><p><strong>${p.n ? `${p.n}. ` : ''}${esc(p.name)}</strong></p>
+          <button type="button" class="pop-copy" data-copy="${ll}" data-done="${esc(s.copied)}" aria-label="${esc(s.copy)} ${ll}">${ll}</button>${tips}${region}`;
+      })
+      .join('<hr style="border:0;border-top:1px solid var(--hair);margin:4px 0">');
+  }
+
+  // Grid references on the frame, as on a survey sheet: whole or half degrees depending on the view.
+  function graticule(el: HTMLElement, map: L.Map) {
+    const layer = document.createElement('div');
+    layer.className = 'graticule';
+    layer.setAttribute('aria-hidden', 'true');
+    el.appendChild(layer);
+    const draw = () => {
+      const b = map.getBounds();
+      const span = Math.max(b.getEast() - b.getWest(), b.getNorth() - b.getSouth());
+      const step = span > 6 ? 2 : span > 2 ? 1 : span > 0.8 ? 0.5 : span > 0.3 ? 0.2 : 0.1;
+      const fmt = (v: number, pos: string, neg: string) => `${Math.abs(Number(v.toFixed(1)))}°${v >= 0 ? pos : neg}`;
+      let html = '';
+      for (let lng = Math.ceil(b.getWest() / step) * step; lng < b.getEast(); lng += step) {
+        const x = map.latLngToContainerPoint([b.getNorth(), lng]).x;
+        // Labels too close to the frame edge would be clipped: skip them.
+        if (x < 28 || x > el.clientWidth - 28) continue;
+        html += `<span class="tick x" style="left:${x}px">${fmt(lng, 'E', 'W')}</span>`;
+      }
+      for (let lat = Math.ceil(b.getSouth() / step) * step; lat < b.getNorth(); lat += step) {
+        const y = map.latLngToContainerPoint([lat, b.getWest()]).y;
+        if (y < 24 || y > el.clientHeight - 24) continue;
+        html += `<span class="tick y" style="top:${y}px">${fmt(lat, 'N', 'S')}</span>`;
+      }
+      layer.innerHTML = html;
+    };
+    map.on('moveend zoomend resize', draw);
+    draw();
+  }
+
+  // Markers closer than their own size are fanned out a few pixels so every number stays readable.
+  function declutter(map: L.Map, markers: L.Marker[]) {
+    const run = () => {
+      const placed: { x: number; y: number; w: number }[] = [];
+      for (const m of markers) {
+        const el = m.getElement()?.firstElementChild as HTMLElement | null;
+        if (!el) continue;
+        const pt = map.latLngToLayerPoint(m.getLatLng());
+        const w = Math.max(26, el.offsetWidth + 2);
+        const hits = (dx: number, dy: number) => placed.some((q) => Math.abs(q.x - (pt.x + dx)) < (q.w + w) / 2 && Math.abs(q.y - (pt.y + dy)) < 26);
+        let dx = 0, dy = 0, tries = 0;
+        while (tries < 12 && hits(dx, dy)) {
+          tries++;
+          const angle = (tries * Math.PI) / 4 - Math.PI / 4;
+          const r = 28 * Math.ceil(tries / 8) + (w - 26) / 2;
+          dx = Math.round(Math.cos(angle) * r);
+          dy = Math.round(Math.sin(angle) * Math.min(r, 30));
+        }
+        el.style.setProperty('--dx', `${dx}px`);
+        el.style.setProperty('--dy', `${dy}px`);
+        placed.push({ x: pt.x + dx, y: pt.y + dy, w });
+      }
+    };
+    map.on('zoomend', run);
+    run();
+  }
+
+  type Entry = { el: HTMLElement; map: L.Map; groups: Map<string, L.FeatureGroup>; markers: Map<string, L.Marker[]>; all: L.LatLngBounds; note?: HTMLElement; names: Map<string, string> };
+  const registry = new Map<string, Entry>();
+  const fitOpts = (pad: number) => ({ paddingTopLeft: [pad + 28, pad] as [number, number], paddingBottomRight: [pad, pad] as [number, number], maxZoom: 11, duration: reduced ? 0 : 0.8 });
+
+  function reset(entry: Entry) {
+    entry.groups.forEach((g) => g.eachLayer((l) => (l as L.Polyline).setStyle?.({ opacity: (l as any).options.baseOpacity ?? 1 })));
+    entry.markers.forEach((ms) => ms.forEach((m) => m.getElement()?.classList.remove('is-active', 'is-dim')));
+    entry.map.flyToBounds(entry.all, fitOpts(36));
+    if (entry.note) entry.note.hidden = true;
+  }
+
+  function highlight(mapId: string, regionId: string) {
+    const entry = registry.get(mapId);
+    if (!entry) return;
+    const bounds = L.latLngBounds([]);
+    entry.groups.forEach((g, id) => {
+      const on = id === regionId;
+      g.eachLayer((l) => {
+        const line = l as L.Polyline & { options: { baseOpacity?: number } };
+        line.setStyle({ opacity: on ? line.options.baseOpacity ?? 1 : 0.25 });
+      });
+      if (on && g.getLayers().length) bounds.extend(g.getBounds());
+    });
+    entry.markers.forEach((ms, id) =>
+      ms.forEach((m) => {
+        const el = m.getElement();
+        el?.classList.toggle('is-active', id === regionId);
+        el?.classList.toggle('is-dim', id !== regionId);
+        if (id === regionId) bounds.extend(m.getLatLng());
+      }),
+    );
+    // A region with a single point (no track) still gets a view around it.
+    if (bounds.isValid()) {
+      if (bounds.getNorthEast().equals(bounds.getSouthWest())) entry.map.flyTo(bounds.getCenter(), 10, { duration: reduced ? 0 : 0.8 });
+      else entry.map.flyToBounds(bounds, fitOpts(40));
+    }
+    if (entry.note) {
+      entry.note.hidden = false;
+      entry.note.querySelector('.name')!.textContent = entry.names.get(regionId) ?? '';
+    }
+  }
+
+  document.querySelectorAll<HTMLElement>('.sheet-map[data-map]').forEach((el) => {
+    const { routes, points, variant, strings } = JSON.parse(el.dataset.map!) as { routes: Route[]; points: Pt[]; variant: 'trip' | 'region'; strings: Strings };
+    // Touch screens: one finger scrolls the page until the reader asks to explore the map.
+    const map = L.map(el, { scrollWheelZoom: false, dragging: !touch, zoomSnap: 0.25, attributionControl: true, keyboardPanDelta: 120 });
+    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      maxZoom: 17,
+      subdomains: 'abc',
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, SRTM · <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
+    }).addTo(map);
+
+    const all = L.latLngBounds([]);
+    const groups = new Map<string, L.FeatureGroup>();
+    const names = new Map<string, string>();
+    for (const r of routes) {
+      names.set(r.id, r.name);
+      const g = L.featureGroup();
+      for (const seg of r.segments) {
+        const style = { lineCap: 'round', lineJoin: 'round' } as const;
+        if (seg.approx) {
+          // Only the ends are known: a dashed gold line on a white underlay, no navy casing.
+          L.polyline(seg.path, { ...style, color: PAPER, weight: 6, opacity: 0.9, interactive: false, baseOpacity: 0.9 } as L.PolylineOptions).addTo(g);
+          L.polyline(seg.path, { ...style, color: GOLD, weight: 3, dashArray: '2 9', interactive: false, baseOpacity: 1 } as L.PolylineOptions).addTo(g);
+        } else {
+          // A navy casing under the gold line keeps the recorded route the strongest line over any tile.
+          L.polyline(seg.path, { ...style, color: INK, weight: 7.5, opacity: 0.9, interactive: false, baseOpacity: 0.9 } as L.PolylineOptions).addTo(g);
+          L.polyline(seg.path, { ...style, color: GOLD, weight: 3.5, interactive: false, baseOpacity: 1 } as L.PolylineOptions).addTo(g);
+        }
+      }
+      if (variant === 'trip' && r.segments.length) {
+        // An invisible, wider hit line per region: hover names it, click goes to its section.
+        for (const seg of r.segments) {
+          const hit = L.polyline(seg.path, { color: INK, weight: 16, opacity: 0, interactive: true }).addTo(map);
+          hit.bindTooltip(r.name, { sticky: true });
+          hit.on('click', () => (location.hash = r.href.split('#')[1] ?? ''));
+          hit.on('add', () => hit.getElement()?.setAttribute('tabindex', '-1'));
+          hit.getElement()?.setAttribute('tabindex', '-1');
+        }
+      }
+      // Added once filled: a group joining the map before its lines confuses Leaflet's renderer order.
+      g.addTo(map);
+      groups.set(r.id, g);
+      if (r.segments.length) all.extend(g.getBounds());
+    }
+
+    const markers = new Map<string, L.Marker[]>();
+    const allMarkers: L.Marker[] = [];
+    for (const ps of group(points)) {
+      const p = ps[0];
+      const label = ps.map((q) => `${q.n ? `${q.n}. ` : ''}${q.name}, ${strings.kinds[q.kind]}`).join(' ; ');
+      // Not in the tab order: every point is listed, with the same actions, in the region tables.
+      const m = L.marker(p.at, { icon: icon(ps), keyboard: false, title: label, alt: label, riseOnHover: true }).addTo(map);
+      m.bindPopup(popup(ps, strings, variant));
+      for (const q of ps) markers.set(q.regionId, [...(markers.get(q.regionId) ?? []), m]);
+      allMarkers.push(m);
+      all.extend(p.at);
+    }
+    // Extra room on the left: the zoom buttons sit over that edge.
+    if (all.isValid()) map.fitBounds(all, { paddingTopLeft: [64, 36], paddingBottomRight: [36, 36], maxZoom: 11 });
+    else map.setView([20, 0], 2);
+    L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map);
+    graticule(el, map);
+    declutter(map, allMarkers);
+
+    const entry: Entry = { el, map, groups, markers, all, names };
+    if (variant === 'trip') {
+      const Note = L.Control.extend({
+        onAdd() {
+          const box = L.DomUtil.create('p', 'map-note');
+          box.hidden = true;
+          box.innerHTML = `<span class="k">${esc(strings.onMap)}</span><span class="name"></span><button type="button">${esc(strings.showAll)}</button>`;
+          box.querySelector('button')!.addEventListener('click', () => reset(entry));
+          L.DomEvent.disableClickPropagation(box);
+          return box;
+        },
+      });
+      const note = new Note({ position: 'topright' });
+      note.addTo(map);
+      entry.note = note.getContainer();
+    }
+    if (touch) {
+      const Explore = L.Control.extend({
+        onAdd() {
+          const btn = L.DomUtil.create('button', 'explore') as HTMLButtonElement;
+          btn.type = 'button';
+          btn.textContent = strings.explore;
+          btn.setAttribute('aria-pressed', 'false');
+          btn.addEventListener('click', () => {
+            const on = !map.dragging.enabled();
+            on ? map.dragging.enable() : map.dragging.disable();
+            btn.setAttribute('aria-pressed', String(on));
+            btn.textContent = on ? strings.exploreDone : strings.explore;
+          });
+          L.DomEvent.disableClickPropagation(btn);
+          return btn;
+        },
+      });
+      new Explore({ position: 'topright' }).addTo(map);
+    }
+    registry.set(el.id, entry);
+  });
+
+  // Signature cross-link: "show on the trip map" links light up their region on the trip map.
+  document.addEventListener('click', (e) => {
+    const a = (e.target as Element).closest<HTMLAnchorElement>('a[data-highlight]');
+    if (!a) return;
+    const target = a.getAttribute('href')?.slice(1);
+    if (target) setTimeout(() => highlight(target, a.dataset.highlight!), 350);
+  });
+</script>

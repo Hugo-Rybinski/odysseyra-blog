@@ -1,24 +1,85 @@
+/* Odysseyra — Survey Sheet. Navy ink on a white sheet; gold is reserved for route, stages and tips. */
 :root {
-  --bg: #fbfaf7;
-  --fg: #1f2933;
-  --muted: #6b7280;
-  --accent: #c2410c;
-  --max: 42rem;
-  --wide: 64rem;
+  color-scheme: light;
+  --paper: #ffffff;
+  --ink: #12294f;
+  --ink-2: #3c5172;
+  --ink-3: #5d6f8c;
+  --hair: rgb(18 41 79 / 0.18);
+  --hair-strong: rgb(18 41 79 / 0.45);
+  --field: #f4f6f9;
+  --gold: #b08d3e;
+  --gold-ink: #7d6224;
+  --gold-wash: rgb(176 141 62 / 0.12);
+
+  --sans: 'Overpass Variable', 'Overpass', system-ui, sans-serif;
+  --mono: 'Overpass Mono', ui-monospace, monospace;
+
+  --sheet-pad: clamp(16px, 3vw, 40px);
+  --measure: 62ch;
+  --step--1: 0.8125rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.3125rem;
+  --step-2: 1.75rem;
+  --step-3: clamp(2.25rem, 1.6rem + 2.4vw, 3.5rem);
 }
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #14171a; --fg: #e6e8ea; --muted: #9aa3ad; --accent: #fb923c; }
-}
-* { box-sizing: border-box; }
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scrollbar-color: var(--hair-strong) var(--paper); }
+/* Smooth only once the page has landed (set by BaseLayout), so arriving on a #hash from another page jumps. */
+@media (prefers-reduced-motion: no-preference) { html.settled { scroll-behavior: smooth; } }
+/* Jump targets keep a little sheet above them instead of touching the window edge. */
+[id] { scroll-margin-top: 1.5rem; }
+
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font: 1.125rem/1.7 Georgia, 'Times New Roman', serif;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 var(--step-0) / 1.65 var(--sans);
+  font-feature-settings: 'kern', 'liga';
+  text-rendering: optimizeLegibility;
 }
-h1, h2, h3, nav, .meta { font-family: system-ui, sans-serif; line-height: 1.2; }
-a { color: var(--accent); }
-img { max-width: 100%; height: auto; display: block; }
-.container { max-width: var(--max); margin: 0 auto; padding: 0 1rem; }
-.wide { max-width: var(--wide); margin: 2rem auto; padding: 0 1rem; }
-.meta { color: var(--muted); font-size: 0.9rem; }
+
+::selection { background: var(--gold-wash); color: var(--ink); }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 1px; }
+
+h1, h2, h3 { margin: 0; line-height: 1.08; font-weight: 700; letter-spacing: -0.015em; text-wrap: balance; }
+p { margin: 0 0 1.1em; text-wrap: pretty; }
+img { display: block; max-width: 100%; height: auto; }
+
+a { color: inherit; text-decoration-color: var(--hair-strong); text-decoration-thickness: 1px; text-underline-offset: 0.22em; }
+a:hover { text-decoration-color: var(--gold); }
+
+.label {
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.data { font-family: var(--mono); font-size: var(--step--1); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+
+/* The printed sheet: a ruled double border around everything. */
+.sheet {
+  position: relative;
+  margin: var(--sheet-pad);
+  border: 2px solid var(--ink);
+  padding: 6px;
+}
+.sheet > .sheet-inner { --pad: clamp(16px, 2.5vw, 32px); border: 1px solid var(--ink); min-height: calc(100vh - 2 * var(--sheet-pad) - 16px); }
+@media (max-width: 640px) {
+  .sheet { margin: 6px; border-width: 1.5px; padding: 3px; }
+}
+
+.skip {
+  position: absolute; left: 12px; top: 12px; z-index: 2000; padding: 10px 14px;
+  background: var(--ink); color: var(--paper); font-weight: 700; text-decoration: none; transform: translateY(-200%);
+}
+.skip:focus-visible { transform: none; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+html, body { overflow-x: clip; }

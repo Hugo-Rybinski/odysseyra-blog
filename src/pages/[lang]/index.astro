@@ -1,0 +1,56 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RunningHead from '../../components/RunningHead.astro';
+import { languages, t, tripUrl, homeUrl, otherLang, formatDateRange, type Lang } from '../../i18n';
+import { getPublishedTrips, getTripView } from '../../lib/trips';
+
+export function getStaticPaths() {
+  return languages.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const s = t(lang);
+const published = await getPublishedTrips();
+const cards = await Promise.all(
+  published.map(async ({ trip, texts }) => {
+    const view = await getTripView(trip, lang);
+    return { view, text: texts[lang], cover: view.photos.get(trip.data.cover)! };
+  }),
+);
+const alternates = Object.fromEntries(languages.map((l) => [l, homeUrl(l)]));
+---
+
+<BaseLayout lang={lang} title="Odysseyra" description={s.tagline} alternates={alternates}>
+  <RunningHead lang={lang} otherHref={homeUrl(otherLang(lang))} sheet={s.trips} />
+  <main class="index">
+    <p class="tagline">{s.tagline}</p>
+    <ul class="trips">
+      {
+        cards.map(({ view, text, cover }) => (
+          <li class={cover.orientation}>
+            <a href={tripUrl(lang, view.slug)}>
+              <Image src={cover.image} alt={cover.alt} widths={[480, 800, 1200]} sizes="(min-width: 900px) 45vw, 100vw" />
+              <p class="label">{s.sheet} {String(view.data.sheet).padStart(2, '0')} · {view.data.country[lang]}</p>
+              <h2>{text.data.title}</h2>
+            </a>
+            <p class="data">{formatDateRange(lang, view.data.start, view.data.end)}</p>
+            <p>{text.data.description}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </main>
+</BaseLayout>
+
+<style>
+  .index { --pad: clamp(16px, 2.5vw, 32px); padding: var(--pad); }
+  .tagline { font-size: var(--step-1); max-width: 40ch; margin: 1rem 0 2.5rem; }
+  .trips { list-style: none; margin: 0; padding: 0; display: grid; gap: 40px 32px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); align-items: start; }
+  .trips a { text-decoration: none; display: grid; gap: 10px; }
+  .trips img { width: 100%; height: auto; }
+  .trips li.portrait img { width: auto; max-height: 560px; }
+  .trips .label { margin: 4px 0 0; color: var(--ink-3); }
+  .trips h2 { font-size: var(--step-2); }
+  .trips .data { color: var(--ink-3); margin: 8px 0 6px; }
+</style>

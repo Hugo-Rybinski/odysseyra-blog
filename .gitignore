@@ -22,3 +22,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Impeccable working files (screenshots, decision page payloads)
+.impeccable/review/
+.impeccable/payload.json

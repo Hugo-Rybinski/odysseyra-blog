@@ -1,40 +1,40 @@
 ---
+import '@fontsource-variable/overpass';
+import '@fontsource/overpass-mono/400.css';
 import '../styles/global.css';
+import { base, t, type Lang } from '../i18n';
 
 interface Props {
+  lang: Lang;
   title: string;
-  description?: string;
+  description: string;
+  /** Absolute-path URLs of this page in every language, for hreflang. */
+  alternates?: Partial<Record<Lang, string>>;
 }
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const { title, description = 'Odysseyra — a travel blog' } = Astro.props;
+const { lang, title, description, alternates = {} } = Astro.props;
+const site = Astro.site?.origin ?? '';
 ---
 
-<html lang="en">
+<html lang={lang} data-copy-fallback={t(lang).copyFallback}>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="description" content={description} />
-    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
-    <meta name="generator" content={Astro.generator} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content={lang === 'fr' ? 'fr_FR' : 'en_GB'} />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    {Object.entries(alternates).map(([l, href]) => <link rel="alternate" hreflang={l} href={`${site}${href}`} />)}
+    {Object.keys(alternates).length > 0 && <link rel="alternate" hreflang="x-default" href={`${site}${base}/`} />}
+    <meta name="generator" content={Astro.generator} />
   </head>
   <body>
-    <header class="container">
-      <nav>
-        <a href={`${base}/`} class="brand">
-          <picture>
-            <source srcset={`${base}/logo-white.svg`} media="(prefers-color-scheme: dark)" />
-            <img src={`${base}/logo.svg`} alt="" width="40" height="40" />
-          </picture>
-          <strong>Odysseyra</strong>
-        </a>
-      </nav>
-    </header>
-    <main><slot /></main>
-    <footer class="container meta"><p>© {new Date().getFullYear()} Odysseyra</p></footer>
+    <a class="skip" href="#main">{t(lang).skip}</a>
+    <div class="sheet"><div class="sheet-inner"><slot /></div></div>
+    <p id="announce" class="visually-hidden" aria-live="polite"></p>
+    <script>
+      addEventListener('load', () => setTimeout(() => document.documentElement.classList.add('settled'), 300));
+    </script>
   </body>
 </html>
-
-<style>
-  .brand { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; color: inherit; padding: 0.75rem 0; }
-</style>

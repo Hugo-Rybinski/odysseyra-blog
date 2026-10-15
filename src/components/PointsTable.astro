@@ -1,0 +1,101 @@
+---
+import Icon from './Icon.astro';
+import { t, type Lang } from '../i18n';
+import { formatLatLng } from '../lib/trips';
+import type { MapPoint } from './SheetMap.astro';
+
+interface Props {
+  lang: Lang;
+  points: MapPoint[];
+}
+const { lang, points } = Astro.props;
+const s = t(lang);
+---
+
+{
+  points.length > 0 && (
+    <table class="points">
+      <caption class="visually-hidden">{s.places}</caption>
+      <thead>
+        <tr>
+          <th scope="col" class="n"><span class="visually-hidden">#</span></th>
+          <th scope="col">{s.place}</th>
+          <th scope="col">{s.coords}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {points.map((p) => {
+          const ll = formatLatLng(p.at);
+          return (
+            <tr id={`pt-${p.id}`} class={p.kind}>
+              <td class="n">
+                {p.kind === 'stage' && <span class="sq">{p.n}</span>}
+                {p.kind === 'sight' && <span class="ci">{p.n}</span>}
+                {p.kind === 'pass' && <Icon name="pass" size={18} label={s.legendPass} />}
+                {p.kind === 'warning' && <span class="warn"><Icon name="warning" size={18} label={s.legendWarning} /></span>}
+              </td>
+              <th scope="row">
+              {p.name}
+              {p.tips.map((tip) => <a class="tip-link" href={`#${tip.id}`}>{s.readTip} · {tip.label}</a>)}
+            </th>
+              <td>
+                <button type="button" class="copy data" data-copy={ll} data-done={s.copied} aria-label={`${s.copy} ${ll}`}>
+                  <span class="ll">{ll}</span>
+                  <Icon name="copy" size={15} />
+                </button>
+                <span class="go">
+                <a href={`https://www.google.com/maps/search/?api=1&query=${p.at[0]},${p.at[1]}`} rel="noopener" target="_blank">{s.openGoogle}</a>
+                <a href={`https://maps.apple.com/?ll=${p.at[0]},${p.at[1]}&q=${encodeURIComponent(p.name)}`} rel="noopener" target="_blank">{s.openApple}</a>
+                </span>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  )
+}
+
+<style>
+  .points { width: 100%; border-collapse: collapse; font-size: var(--step-0); line-height: 1.4; }
+  .points thead th {
+    text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-3); padding: 10px 12px; border-bottom: 1px solid var(--ink);
+  }
+  .points td, .points tbody th { padding: 8px 12px; border-bottom: 1px solid var(--hair); text-align: left; vertical-align: middle; }
+  .points tbody th { font-weight: 600; }
+  .tip-link { display: flex; align-items: center; gap: 8px; width: fit-content; margin-top: 2px; font-size: 13px; font-weight: 600; color: var(--gold-ink); }
+  .tip-link::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 1.5px var(--ink); flex: none; }
+  .points tr:target { animation: located 2.4s cubic-bezier(0.16, 1, 0.3, 1); }
+  @keyframes located { from { background: var(--gold-wash); } to { background: transparent; } }
+  @media (prefers-reduced-motion: reduce) { .points tr:target { animation: none; background: var(--field); } }
+  .n { width: 44px; }
+  .sq { display: inline-grid; place-items: center; width: 22px; height: 22px; background: var(--ink); color: var(--paper); font-size: 11px; font-weight: 700; }
+  .ci { display: inline-grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 50%; font-size: 11px; font-weight: 700; }
+  .warn { color: var(--gold-ink); }
+  .copy {
+    display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px; margin: -4px -6px;
+    border: 0; background: none; color: var(--ink); cursor: pointer;
+  }
+  .copy .ll { white-space: nowrap; }
+  .copy .icon { color: var(--ink-3); }
+  .copy:hover .icon, .copy.done .icon { color: var(--gold-ink); }
+  .copy.done::after { content: attr(data-done); font-family: var(--sans); font-weight: 700; color: var(--gold-ink); }
+  .go { display: flex; gap: 14px; margin-top: 2px; }
+  .go a { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+  /* Touch: every action in the row gets a full finger-sized target. */
+  @media (pointer: coarse) {
+    .points td:last-child { display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; }
+    .copy { min-height: 44px; margin-block: 0; }
+    .go { gap: 0; margin-top: 0; }
+    .go a { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 4px 10px; }
+    .tip-link { min-height: 44px; }
+  }
+  @media (max-width: 720px) {
+    .points thead { display: none; }
+    .points tr { display: grid; grid-template-columns: 44px 1fr; padding: 8px 0; border-bottom: 1px solid var(--hair); }
+    .points td, .points tbody th { border: 0; padding: 2px 12px 2px 0; }
+    .points td:not(.n) { grid-column: 2; }
+    .points .n { grid-row: span 2; padding-left: 12px; }
+  }
+</style>

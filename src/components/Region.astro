@@ -1,0 +1,116 @@
+---
+import SheetMap from './SheetMap.astro';
+import PointsTable from './PointsTable.astro';
+import Icon from './Icon.astro';
+import { t } from '../i18n';
+import { hazardKinds, mapPoints } from '../lib/trips';
+
+interface Props {
+  id: string;
+}
+const { id } = Astro.props;
+const trip = Astro.locals.trip;
+if (!trip) throw new Error('<Region> must be rendered inside a trip page');
+const index = trip.data.regions.findIndex((r) => r.id === id);
+if (index < 0) throw new Error(`[${trip.slug}] <Region id="${id}">: no such region in trip.yaml`);
+const region = trip.data.regions[index];
+const s = t(trip.lang);
+const name = region.name[trip.lang];
+const [d1, d2] = region.days;
+const days = d1 === d2 ? `${s.day} ${d1}` : `${s.days} ${d1}–${d2}`;
+const points = mapPoints(trip).filter((p) => p.regionId === id);
+// Hazards first: the road, border and fuel warnings are what a planner scans the header for.
+const tips = trip.tips
+  .filter((tip) => tip.regionId === id)
+  .sort((a, b) => Number(hazardKinds.includes(b.kind)) - Number(hazardKinds.includes(a.kind)));
+const pointName = (at?: string) => trip.points.find((p) => p.id === at)?.name;
+const trackNote = region.route.length === 0 ? s.noTrack : region.route.some((seg) => seg.approx) ? s.partlyApprox : undefined;
+---
+
+<section class="region" id={id} aria-labelledby={`${id}-title`}>
+  <header class="rhead">
+    <h2 id={`${id}-title`}>{name}</h2>
+    <p class="meta label">{s.region} {index + 1} / {trip.data.regions.length} · {days}</p>
+    <a class="back" href="#trip-map" data-highlight={id}><Icon name="arrow-up" size={16} />{s.backToMap}</a>
+    {
+      tips.length > 0 && (
+        <div class="know">
+          <p class="label">{s.toKnow} · {s.tipsCount(tips.length)}</p>
+          <ul>
+            {tips.map((tip) => (
+              <li class:list={{ hazard: hazardKinds.includes(tip.kind) }}>
+                <a href={`#${tip.id}`}>
+                  <Icon name={tip.kind} size={16} />
+                  <span class="k">{s.tipKinds[tip.kind]}</span>
+                  {pointName(tip.at) && <span class="at">{pointName(tip.at)}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+  </header>
+  <div class="detail">
+    <div class="map-cell">
+      <SheetMap
+        id={`map-${id}`}
+        lang={trip.lang}
+        variant="region"
+        label={`${s.regionMap} — ${name}`}
+        routes={[{ id, name, href: `#${id}`, segments: region.route }]}
+        points={points}
+      />
+      {trackNote && <p class="track-note">{trackNote}</p>}
+    </div>
+    <PointsTable lang={trip.lang} points={points} />
+  </div>
+  <div class="col"><slot /></div>
+</section>
+
+<style>
+  .region { padding-top: 4.5rem; clear: both; }
+  .rhead {
+    display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 8px 24px;
+    border-top: 2px solid var(--ink); padding: 18px var(--pad) 18px;
+  }
+  .rhead .meta { margin: 0; grid-column: 1; color: var(--ink-3); }
+  .rhead .back { grid-column: 2; grid-row: 1; }
+  .rhead h2 { font-size: var(--step-3); }
+  .back { display: inline-flex; gap: 6px; align-items: center; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+  .back:hover { color: var(--gold-ink); }
+
+  .know { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding-top: 12px; border-top: 1px solid var(--hair); }
+  .know .label { margin: 0; font-size: 11px; color: var(--ink-3); }
+  .know ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .know a {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px;
+    border: 1px solid var(--hair-strong); font-size: 14px; text-decoration: none; color: var(--ink);
+  }
+  .know a:hover { border-color: var(--ink); background: var(--field); }
+  .know .icon { color: var(--ink-3); flex: none; }
+  .know .k { font-weight: 700; }
+  .know .at { color: var(--ink-2); }
+  .know .hazard a { border-color: var(--gold); background: var(--gold-wash); }
+  .know .hazard .icon { color: var(--gold-ink); }
+
+  .detail { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(420px, 1fr); border-block: 1px solid var(--ink); }
+  .map-cell { display: flex; flex-direction: column; min-width: 0; }
+  .detail :global(.sheet-map.region) { flex: 1; min-height: clamp(260px, 34vh, 360px); }
+  .track-note { margin: 0; padding: 8px 12px; border-top: 1px solid var(--hair); font-size: 13px; line-height: 1.4; color: var(--ink-2); }
+  .detail :global(.points) { align-self: start; }
+  .col { max-width: var(--measure); margin: 3rem auto 0; padding-inline: var(--pad); }
+  .col::after { content: ''; display: table; clear: both; }
+  /* In the reading column, landscape plates widen past the measure; a lone portrait sits beside the text. */
+  .col > :global(.plate.landscape) { width: min(960px, 100vw - 2 * var(--pad) - 2 * var(--sheet-pad)); position: relative; left: 50%; transform: translateX(-50%); }
+  .col > :global(.plate.portrait) { max-width: 420px; margin-inline: auto; }
+  @media (min-width: 1100px) {
+    .col > :global(.plate.portrait) { float: right; width: 340px; margin: 0.4rem -7rem 1.5rem 2rem; }
+  }
+  @media (max-width: 960px) {
+    .detail { grid-template-columns: 1fr; }
+    .rhead { grid-template-columns: 1fr; }
+    .rhead .back { grid-column: 1; grid-row: auto; }
+    .know a { min-height: 44px; }
+  }
+</style>

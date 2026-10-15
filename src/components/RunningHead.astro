@@ -1,0 +1,67 @@
+---
+import { base, homeUrl, t, otherLang, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  /** URL of this page in the other language; the script keeps the reader's current region in the hash. */
+  otherHref: string;
+  sheet?: string;
+  coords?: string;
+}
+const { lang, otherHref, sheet, coords } = Astro.props;
+const s = t(lang);
+const other = otherLang(lang);
+---
+
+<header class="rhead">
+  <a class="brand" href={homeUrl(lang)}>
+    <img src={`${base}/logo.svg`} alt="" width="30" height="30" />
+    <span>Odysseyra</span>
+  </a>
+  {sheet && <p class="label sheet-no">{sheet}</p>}
+  <nav class="langs label" aria-label="Langue / Language">
+    <span aria-current="true">{lang.toUpperCase()}</span>
+    <span aria-hidden="true">/</span>
+    <a href={otherHref} hreflang={other} lang={other} data-keep-place>{s.otherLangShort}<span class="visually-hidden"> — {s.otherLang}</span></a>
+  </nav>
+  {coords && <p class="data coords">{coords}</p>}
+</header>
+
+<style>
+  .rhead {
+    display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 12px 28px;
+    padding: 12px var(--pad); border-bottom: 1px solid var(--ink);
+  }
+  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; font-size: 14px; }
+  .sheet-no { margin: 0; color: var(--ink-3); }
+  .langs { display: flex; gap: 8px; }
+  .langs [aria-current] { color: var(--ink); }
+  .langs a { color: var(--ink-3); text-decoration: none; }
+  @media (pointer: coarse) {
+    .brand { min-height: 44px; }
+    .langs { align-items: center; }
+    .langs a { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; margin: -12px -12px -12px -8px; }
+  }
+  .langs a:hover { color: var(--gold-ink); }
+  .coords { margin: 0; color: var(--ink-3); }
+  @media (max-width: 640px) {
+    .rhead { grid-template-columns: 1fr auto; gap: 6px 16px; }
+    .sheet-no { grid-row: 2; font-size: 11px; }
+    .coords { grid-row: 2; font-size: 11px; }
+  }
+</style>
+
+<script>
+  // Switching language keeps the reader at the same region: ids are shared across languages.
+  const link = document.querySelector<HTMLAnchorElement>('a[data-keep-place]');
+  const sections = [...document.querySelectorAll<HTMLElement>('section.region, #regrets')];
+  if (link && sections.length) {
+    const baseHref = link.href.split('#')[0];
+    const update = () => {
+      const current = sections.filter((s) => s.getBoundingClientRect().top < innerHeight * 0.4).pop();
+      link.href = current ? `${baseHref}#${current.id}` : baseHref;
+    };
+    addEventListener('scroll', update, { passive: true });
+    update();
+  }
+</script>

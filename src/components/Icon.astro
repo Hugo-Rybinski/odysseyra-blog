@@ -1,0 +1,40 @@
+---
+/** Authored 24px line icons, 1.75 stroke, for the survey-sheet legend and tips. */
+interface Props {
+  name: 'road' | 'fuel' | 'water' | 'money' | 'border' | 'sleep' | 'info' | 'warning' | 'pass' | 'download' | 'copy' | 'check' | 'external' | 'arrow-up';
+  size?: number;
+  label?: string;
+}
+const { name, size = 20, label } = Astro.props;
+const paths: Record<Props['name'], string> = {
+  road: 'M8 3 5 21M16 3l3 18M12 4v3M12 10.5v3M12 17v3',
+  fuel: 'M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h14M8 7h4M15 10h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9l-3-3',
+  water: 'M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z',
+  money: 'M3 7h18v10H3zM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5ZM6 10v4M18 10v4',
+  border: 'M5 21V4M5 4h11l-2 3.5L16 11H5',
+  sleep: 'M3 18V8M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5M7 12a1.5 1.5 0 1 0 0-.01',
+  info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 11v5M12 7.5v.5',
+  warning: 'M12 3 2.5 20h19L12 3ZM12 10v4.5M12 17.2v.3',
+  pass: 'M3 19 10 7l3 5 2-3 6 10H3Z',
+  download: 'M12 4v11M7 10.5l5 5 5-5M5 20h14',
+  copy: 'M9 9h11v11H9zM5 15H4V4h11v1',
+  check: 'M5 12.5 10 17 19 7',
+  external: 'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',
+  'arrow-up': 'M12 20V5M6 11l6-6 6 6',
+};
+---
+
+<svg
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.75"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}
+  class="icon"
+><path d={paths[name]} /></svg>
