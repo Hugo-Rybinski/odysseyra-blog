@@ -16,7 +16,7 @@ const posts = (await getCollection('posts', ({ data }) => import.meta.env.DEV ||
       {
         posts.map((post) => (
           <li>
-            <a href={`/posts/${post.id}/`}>
+            <a href={`${import.meta.env.BASE_URL}/posts/${post.id}/`}>
               <Image src={post.data.cover} alt={post.data.coverAlt} width={600} height={400} />
               <h2>{post.data.title}</h2>
             </a>
