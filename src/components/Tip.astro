@@ -1,33 +1,110 @@
 ---
 import Icon from './Icon.astro';
-import { t } from '../i18n';
-import { hazardKinds, pointHref, tipId, type TipKind } from '../lib/trips';
+import { badgeSpan, t } from '../i18n';
+import { pointHref, tipId, type TipKind } from '../lib/trips';
 
+type Level = 'easy' | 'medium' | 'hard';
+type Course = 'loop' | 'out-and-back' | 'one-way';
 interface Props {
   kind?: TipKind;
-  /** Id of a point in trip.yaml this tip refers to; links to its row in the region's points table. */
+  /** Id of a point in trip.yaml this box refers to: a link to it (a night's place, a hike's start). */
   at?: string;
+  /** hike: its name, and its figures, each shown when given. */
+  name?: string;
+  /** "5h30", "45min" or "3h". */
+  duration?: string;
+  /** km */
+  distance?: number;
+  /** Elevation gain, m. */
+  ascent?: number;
+  difficulty?: Level;
+  course?: Course;
+  /** A GPX file in the trip's `gpx/` folder. */
+  gpx?: string;
 }
-const { kind = 'info', at } = Astro.props;
+const { kind = 'tip', at, name, duration, distance, ascent, difficulty, course, gpx } = Astro.props;
 const trip = Astro.locals.trip;
 if (!trip) throw new Error('<Tip> must be rendered inside a trip page');
 const s = t(trip.lang);
 const point = at ? trip.points.find((p) => p.id === at) : undefined;
 if (at && !point) throw new Error(`[${trip.slug}] <Tip at="${at}">: no such point in trip.yaml`);
-const hazard = hazardKinds.includes(kind);
+if (kind === 'night' && !point) throw new Error(`[${trip.slug}] <Tip kind="night">: needs at="<stage id>" for its place`);
+if (kind === 'hike' && !name) throw new Error(`[${trip.slug}] <Tip kind="hike">: needs a name`);
 const id = tipId(kind, at, at ? '' : await Astro.slots.render('default'));
+const nf = new Intl.NumberFormat(trip.lang, { maximumFractionDigits: 1 });
+
+// A hike's figures, formatted for the page's language: "5 h 30", "12,5 km", "+900 m" (the gain only).
+const time = duration?.match(/^(?:(\d+)h)?(?:(\d+)(?:min)?)?$/);
+const hours = time ? Number(time[1] ?? 0) : 0;
+const mins = time ? Number(time[2] ?? 0) : 0;
+if (duration && (!time || (!hours && !mins))) throw new Error(`[${trip.slug}] <Tip kind="hike" duration="${duration}">: write "5h30", "3h" or "45min"`);
+const timeLabel = !duration ? undefined : hours ? `${hours} h${mins ? ` ${String(mins).padStart(2, '0')}` : ''}` : `${mins} ${s.minutes}`;
+const level = difficulty ? ['easy', 'medium', 'hard'].indexOf(difficulty) + 1 : 0;
+const files = import.meta.glob('/src/content/trips/*/gpx/*.gpx', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+const gpxUrl = gpx ? files[`/src/content/trips/${trip.slug}/gpx/${gpx}`] : undefined;
+if (gpx && !gpxUrl) throw new Error(`[${trip.slug}] <Tip gpx="${gpx}">: no such file in gpx/`);
+const facts = [
+  timeLabel && { k: s.hikeTime, v: timeLabel },
+  distance != null && { k: s.hikeDistance, v: `${nf.format(distance)} ${s.km}` },
+  ascent != null && { k: s.hikeElevation, v: `+${nf.format(ascent)} m` },
+  course && { k: s.hikeType, v: s.hikeTypes[course] },
+].filter(Boolean) as { k: string; v: string }[];
+const icon = { warning: 'warning', tip: 'info', detour: 'detour', hike: 'hike', night: 'sleep' } as const;
+const nights = point?.nights?.length ?? 0;
+const label = kind === 'night' && nights > 1 ? s.nights : s.tipKinds[kind];
 ---
 
-<!-- The outer element places the tip: on its own in the column, or as a stretch of the text panel next to it
+<!-- The outer element places the box: on its own in the column, or as a stretch of the text panel next to it
      (see global.css, "Tips set into a text panel"). The box is the tip itself. -->
-<aside class:list={['tip', { hazard }]} id={id} aria-label={s.tipKinds[kind]}>
+<aside class:list={['tip', kind]} id={id} aria-label={kind === 'hike' ? `${label} : ${name}` : label} data-kind={kind}>
   <div class="box">
     <p class="head">
-      <span class="mark"><Icon name={kind} size={18} /></span>
-      <span class="label">{s.tipKinds[kind]}</span>
-      {point && <a class="at" href={pointHref(point)}>{point.ref}{point.name}</a>}
+      <span class="mark"><Icon name={icon[kind]} size={18} /></span>
+      <span class="label">{label}</span>
+      {point && kind !== 'night' && <a class="at" href={pointHref(point)}>{point.ref}{point.name}</a>}
     </p>
+    {
+      kind === 'night' && point && (
+        <p class="where">
+          <a class="place" href={pointHref(point)} data-place={point.id}>
+            <span class="badge stay" style={`--span: ${badgeSpan(point.label)}`} aria-hidden="true"><span>{point.label}</span></span>
+            <span class="name">{point.name}</span>
+          </a>
+          <span class="data ll">{point.at[0].toFixed(4)}, {point.at[1].toFixed(4)}</span>
+        </p>
+      )
+    }
+    {
+      kind === 'hike' && (
+        <>
+          <p class="hike-name">{name}</p>
+          {(facts.length > 0 || level > 0) && (
+            <dl class="figures">
+              {facts.map((f) => (
+                <div><dt>{f.k}</dt><dd>{f.v}</dd></div>
+              ))}
+              {level > 0 && (
+                <div>
+                  <dt>{s.hikeDifficulty}</dt>
+                  <dd class="level">
+                    <span class="pips" aria-hidden="true">{[1, 2, 3].map((n) => <i class:list={{ on: n <= level }} />)}</span>
+                    {s.hikeLevels[difficulty!]}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          )}
+        </>
+      )
+    }
     <div class="body"><slot /></div>
+    {
+      gpxUrl && (
+        <a class="gpx" href={gpxUrl} download={`odysseyra-${trip.slug}-${gpx}`}>
+          <Icon name="download" size={16} /><span><strong>{s.hikeGpx}</strong><small>{s.gpxHint}</small></span>
+        </a>
+      )
+    }
   </div>
 </aside>
 
@@ -49,14 +126,56 @@ const id = tipId(kind, at, at ? '' : await Astro.slots.render('default'));
   .body :global(p) { margin-bottom: 0.7em; }
   @media (pointer: coarse) { .at { min-height: 44px; } }
 
-  /* Road, border and fuel warnings: a gold title band, so they read before the informational tips. The sheet walk
-     shares any growth of the band between its top and bottom, so its content stays centred. */
-  .hazard .box { padding-top: 0; }
-  .hazard .head { margin: 0 -16px 10px; padding: 6px 16px; background: var(--gold-wash); border-bottom: 1px solid var(--gold); }
-  .hazard .mark {
-    width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: var(--ink);
+  /* Warning: read before anything else. A double gold frame and a solid gold title band in ink capitals, the icon
+     on a paper disc; the text stays on paper. The sheet walk shares any growth of the band between its top and
+     bottom, so its content stays centred. */
+  .warning .box { padding-top: 0; border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); outline-color: color-mix(in srgb, var(--gold) 55%, var(--paper)); }
+  .warning .head { margin: 0 -16px 12px; padding: 7px 16px; background: var(--gold); border-bottom: 1px solid var(--gold); }
+  .warning .mark { width: 28px; height: 28px; border-radius: 50%; background: var(--paper); color: var(--ink); }
+  .warning .label { color: var(--ink); font-weight: 800; }
+  .warning .at { color: var(--ink); }
+  .warning .at:hover { text-decoration-color: var(--ink); }
+
+  /* Detours: the places on offer along the way, each marked with the map's detour ring (a <Place> brings its own). */
+  .detour .body :global(ul) { list-style: none; margin: 0 0 0.7em; padding: 0; display: grid; gap: 4px; }
+  .detour .body :global(li) { position: relative; padding-left: 22px; }
+  .detour .body :global(li > .place:first-child) { margin-left: -22px; }
+  .detour .body :global(li > .place:first-child .dot) { width: 12px; height: 12px; margin-right: 10px; vertical-align: -0.05em; }
+  .detour .body :global(li:not(:has(> .place:first-child))::before) {
+    content: ''; position: absolute; left: 0; top: 0.5em; width: 12px; height: 12px; box-sizing: border-box;
+    border: 2px solid var(--ink); border-radius: 50%; background: var(--paper);
   }
-  .hazard .label { color: var(--gold-ink); }
+
+  /* Night: where, as on the map (the stay's square and its name, a link that flies the map there), then the text. */
+  .where { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; margin: 0 0 8px; }
+  .where .place { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; text-decoration: none; }
+  .where .place:hover .name { text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: 0.2em; }
+  .where .badge { align-self: center; }
+  .where .ll { color: var(--ink-3); font-size: 12px; }
+
+  /* Hike: its name, then its figures on a field strip across the box, like the cartouche's facts. */
+  .hike-name { margin: 0 0 10px; font-size: 1.125rem; font-weight: 700; line-height: 1.25; }
+  .figures {
+    margin: 0 -16px 12px; padding: 9px 16px 10px; background: var(--field);
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px 18px;
+  }
+  .figures dt { color: var(--ink-3); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.3; }
+  .figures dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; line-height: 1.35; }
+  /* Difficulty: three small squares, as many filled as the level. */
+  .level { display: flex; align-items: center; gap: 8px; }
+  .pips { display: inline-flex; gap: 3px; }
+  .pips i { width: 8px; height: 8px; box-sizing: border-box; border: 1.5px solid var(--ink); }
+  .pips i.on { background: var(--ink); }
+  .gpx {
+    display: flex; width: fit-content; align-items: center; gap: 10px; margin: 2px 0 12px; padding: 8px 12px; border: 1px solid var(--ink);
+    background: var(--paper); color: var(--ink); text-decoration: none;
+    transition: background-color 160ms cubic-bezier(0.16, 1, 0.3, 1), color 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .gpx span { display: grid; line-height: 1.2; }
+  .gpx strong { font-size: 14px; }
+  .gpx small { color: var(--ink-3); font-size: 13px; line-height: 1.3; }
+  .gpx:hover { background: var(--ink); color: var(--paper); }
+  .gpx:hover small { color: rgb(255 255 255 / 0.75); }
 
   .tip:target .box { animation: located 2.4s cubic-bezier(0.16, 1, 0.3, 1); }
   @keyframes located { from { outline-color: var(--gold); outline-width: 3px; } to { outline-color: var(--hair); outline-width: 1px; } }

@@ -13,15 +13,15 @@ Le pays se prête mal aux itinéraires serrés. Les distances paraissent courtes
 
 Côté voiture, un 4×4 à garde au sol haute n’est pas un luxe : sur le Kalmak-Ashuu, la piste de Köl-Suu et la montée vers Altyn Arashan, une berline ne passe pas. Les loueurs de Bichkek fournissent en général deux roues de secours ; vérifiez-les avant de partir, ainsi que le cric.
 
-<Tip kind="border">
+<Tip kind="warning">
 Köl-Suu et les abords de la frontière chinoise demandent un permis frontalier. Il se retire à Naryn, mais renseignez-vous avant le départ sur les délais et les pièces à fournir : sans lui, la piste s’arrête au premier poste de contrôle.
 </Tip>
 
-<Tip kind="money">
+<Tip kind="tip">
 En dehors de Bichkek et de Karakol, presque tout se règle en liquide : camps de yourtes, essence, repas. Partez avec assez de soms pour plusieurs jours.
 </Tip>
 
-<Tip kind="info">
+<Tip kind="tip">
 Une carte SIM locale achetée à Bichkek couvre les villes et les grands axes. Sur les plateaux et les pistes, comptez sur une carte hors ligne : téléchargez le GPX de cette page avant de partir.
 </Tip>
 
@@ -39,7 +39,7 @@ Bichkek se visite facilement à pied. Les avenues sont larges, bordées d’arbr
 
 Le soir, le bazar Osh vaut le détour pour son ampleur plus que pour les achats. On y trouve tout ce qu’il faut pour les pique-niques des jours suivants : fruits secs, pain plat, fromage de brebis et thermos de thé.
 
-<Tip kind="money">
+<Tip kind="tip">
 Le transfert depuis l’aéroport de Manas coûte environ 1 800 KGS pour deux en taxi réservé par l’hôtel. Prévoyez des soms en liquide dès l’arrivée.
 </Tip>
 
@@ -68,7 +68,7 @@ Les 200 premiers kilomètres jusqu’à Kotchkor sont goudronnés et rapides. Le
 
 <Photo id="DSC01117" />
 
-<Tip kind="road" at="kalmak-ashuu">
+<Tip kind="warning" at="kalmak-ashuu">
 La route du Kalmak-Ashuu est une piste de montagne, décrite comme hors-piste sur une bonne partie des 120 km. Comptez 2 h 30 depuis Kotchkor et ne partez pas après le milieu d’après-midi.
 </Tip>
 
@@ -89,7 +89,7 @@ Le rythme d’une journée au Son-Koul est réglé par les troupeaux. Le matin, 
 
 <Photo id="DSC01355" />
 
-<Tip kind="sleep" at="son-koul-camp">
+<Tip kind="night" at="son-koul-camp">
 Les camps de yourtes de la rive sud n’ont ni réseau ni électricité en continu. Les nuits passent sous zéro fin septembre : prenez un vrai duvet.
 </Tip>
 
@@ -132,15 +132,15 @@ La descente par le Moldo-Ashuu est plus courte que la montée par le Kalmak-Ashu
 
 Naryn est la ville-étape de la région : une longue rue principale le long de la rivière, des hôtels simples, et surtout le bureau qui délivre les permis frontaliers pour Köl-Suu.
 
-<Tip kind="border" at="naryn-permit">
+<Tip kind="warning" at="naryn-permit">
 Le secteur de Köl-Suu est en zone frontalière : le permis se retire à Naryn avant de continuer. Le bureau est dans un bâtiment à façade en treillis rouge. Sans permis, les postes de contrôle vous font demi-tour.
 </Tip>
 
-<Tip kind="road" at="kol-suu-track">
+<Tip kind="warning" at="kol-suu-track">
 Après Naryn, environ 130 km et 4 h de piste de montagne jusqu’au jailoo de Kychtto. Faites le plein à Naryn : il n’y a rien ensuite.
 </Tip>
 
-<Tip kind="fuel">
+<Tip kind="warning">
 Au-delà de Naryn et d’At-Bashy, les stations sont rares et pas toujours approvisionnées. Un jerrican de 20 litres évite de calculer chaque kilomètre.
 </Tip>
 
@@ -193,7 +193,7 @@ La rive sud de l’Issyk-Koul est la plus sauvage des deux. Pas de grandes stati
 
 <Day n={9} title="Ton → Skazka → Karakol" />
 
-<Tip kind="road" at="skazka">
+<Tip kind="warning" at="skazka">
 L’embranchement du canyon Skazka est à environ 4 km avant Tosor, et les 2 à 3 derniers kilomètres sont sur piste. Restez sur les sentiers visibles : les reliefs s’érodent vite.
 </Tip>
 
@@ -205,7 +205,7 @@ Passage par les pétroglyphes de Tamga Tash et <Place at="barskoon">la fabrique 
 
 À Karakol, la mosquée doungane, la cathédrale de la Sainte-Trinité et le musée historique. L’après-midi, montée par Ak-Suu jusqu’à Altyn Arashan pour les sources chaudes.
 
-<Tip kind="road" at="altyn-arashan">
+<Tip kind="warning" at="altyn-arashan">
 La piste d’Ak-Suu à Altyn Arashan est hors-route sur toute sa longueur : comptez 2 h aller pour 31 km avec un véhicule adapté.
 </Tip>
 
@@ -236,13 +236,20 @@ De Karakol à Jyrgalan, ancien village minier, pour une randonnée en boucle ver
 
 Jyrgalan s’est reconverti dans la randonnée depuis la fermeture de la mine. Le village est calme, entouré d’alpages, et plusieurs maisons d’hôtes proposent des cartes des sentiers balisés. La boucle du Turnaluu-Köl se fait en une journée, avec un dénivelé raisonnable.
 
-<Tip kind="water" at="jyrgalan">
-Il n’y a pas de point d’eau fiable sur la boucle du Turnaluu-Köl. Partez avec deux litres par personne, ou un filtre pour les ruisseaux.
+{/* Exemple : les chiffres des randonnées sont indicatifs. */}
+<Tip kind="hike" at="jyrgalan" name="Boucle du Turnaluu-Köl" duration="7h" distance={19} ascent={950} difficulty="medium" course="loop">
+Départ du village par les alpages, montée régulière jusqu’au lac, retour par la crête. Il n’y a pas de point d’eau fiable sur la boucle : partez avec deux litres par personne, ou un filtre pour les ruisseaux.
 </Tip>
 
 <Day n={12} title="Rive nord → Tokmok" />
 
 Le lendemain, la vallée de Tchon Ak-Suu depuis <Place at="grigorievka" />, les pétroglyphes de Cholpon-Ata, puis la traversée par <Place at="balykchy" /> jusqu’au canyon de Konorchek et ses formations rouges, avant la nuit à Tokmok.
+
+<Tip kind="detour">
+- <Place at="grigorievka" /> : la vallée de Tchon Ak-Suu, une demi-journée aller-retour.
+- <Place at="balykchy" /> : la route du canyon de Konorchek, ses formations rouges à une heure de marche.
+- La cascade de Kök-Bel, à deux heures de marche de Jyrgalan.
+</Tip>
 
 La rive nord est plus construite, plus touristique, et la route y est meilleure. Les pétroglyphes de Cholpon-Ata s’étalent sur un champ de blocs morainiques, avec des bouquetins et des scènes de chasse gravés il y a plus de deux mille ans. Konorchek, en fin de journée, demande une courte marche dans un lit de rivière à sec.
 
@@ -266,7 +273,7 @@ La rive nord est plus construite, plus touristique, et la route y est meilleure.
 
 <Day n={13} title="Tokmok → Kegeti" />
 
-<Tip kind="info" at="tokmok-market">
+<Tip kind="tip" at="tokmok-market">
 Le marché aux bestiaux de Tokmok se tient le dimanche et commence bien avant le lever du soleil. Arrivez tôt : tout est fini vers midi.
 </Tip>
 
@@ -274,11 +281,13 @@ Le marché de Tokmok est l’un des moments les plus vivants du voyage : chevaux
 
 Route vers Kegeti pour la randonnée au lac Köl-Tör, un sentier raide jusqu’au lac turquoise, puis la cascade de Kegeti.
 
-<Tip kind="road" at="kol-tor">
+<Tip kind="warning" at="kol-tor">
 Après la vallée de Kitchi Kegeti, la route vers le départ de la randonnée comprend des portions hors-piste.
 </Tip>
 
-Le sentier du Köl-Tör grimpe sans répit pendant trois heures dans une forêt d’épicéas, puis débouche sur un lac d’un bleu presque irréel. Redescendez avant le milieu d’après-midi : le sentier est glissant à l’ombre.
+<Tip kind="hike" at="kol-tor" name="Lac Köl-Tör" duration="5h30" distance={12} ascent={900} difficulty="hard" course="out-and-back">
+Le sentier grimpe sans répit pendant trois heures dans une forêt d’épicéas, puis débouche sur un lac d’un bleu presque irréel. Redescendez avant le milieu d’après-midi : le sentier est glissant à l’ombre.
+</Tip>
 
 <Day n={14} title="Vallée du Tchou → Bichkek" />
 
@@ -288,7 +297,7 @@ Dernière journée de route : la tour Burana, les ruines de Suyab et de Navekat,
 
 <Day n={15} title="Départ" />
 
-<Tip kind="info">
+<Tip kind="tip">
 Le vol retour part très tôt : prévoyez d’être à Manas 2 h 30 avant le départ, soit 35 min de route depuis le centre.
 </Tip>
 
