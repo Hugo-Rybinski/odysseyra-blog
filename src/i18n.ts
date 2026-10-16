@@ -83,7 +83,7 @@ export const ui = {
     copyFallback: 'Sélectionné : copiez avec Ctrl+C',
     copiedAnnounce: 'Coordonnées copiées',
     approxSuffix: 'tracé approximatif',
-    sheetIndex: 'Tableau d’assemblage',
+    sheetIndex: 'Recueil de feuilles',
     sheets: 'Feuilles',
     indexMap: 'Carte des feuilles',
     legendSheet: 'Feuille de voyage',
