@@ -301,6 +301,8 @@ Below, a "Feuilles" / "Sheets" section head (2px rule, Display) over a ruled gri
 Grid references on every map's frame step per axis through 0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 45 and 90°: the finest step that keeps labels at least 110px apart across and 70px apart down, so zooming out drops lines instead of crowding them, and the lines stay at round, evenly spaced values. Longitudes past ±180° (a world view wrapping) are not labelled.
 
 ### Freshness stamp
+The cartouche facts are a ledger of label-small captions over 600 tabular values: Dates, Jours, Régions, Distance on one row, then, when `trip.yaml` gives them, Voyageurs (`travellers`) and Coût par personne (`costPerPerson: { amount, currency }`, formatted in the page's language with no decimals, followed by "hors avion" / "excl. flights" in 13px ink-3; the cost takes the rest of the row). In a cartouche narrower than 425px (a container query: phones, and desktops from 1100 to about 1400px) the figures go two by two and the note drops under the amount.
+
 Trip sheets carry `written` and optional `updated` dates (`trip.yaml`). Under the cartouche facts: "Édition du 5 octobre 2026 · Révisée le 14 octobre 2026" / "Edition of 5 October 2026 · Revised 14 October 2026", a printed sheet's edition and revision (13px ink-3, the dates in 600 ink-2, `<time>` elements, a drawn 3px dot between), the revision shown only when later than the edition.
 
 ### Author's page

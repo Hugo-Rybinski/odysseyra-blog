@@ -29,6 +29,10 @@ const trips = defineCollection({
     updated: z.coerce.date().optional(),
     /** Road distance when known; otherwise computed from the route polyline. */
     distanceKm: z.number().optional(),
+    /** How many people made the trip. */
+    travellers: z.number().int().positive().optional(),
+    /** What the trip cost each traveller on the ground, flights excluded: an amount in an ISO 4217 currency. */
+    costPerPerson: z.object({ amount: z.number().positive(), currency: z.string().regex(/^[A-Z]{3}$/).default('EUR') }).optional(),
     photos: z.array(
       z.object({
         id: z.string(),
