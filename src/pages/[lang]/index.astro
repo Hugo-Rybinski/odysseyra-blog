@@ -1,8 +1,13 @@
 ---
 import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import RunningHead from '../../components/RunningHead.astro';
-import { languages, t, tripUrl, homeUrl, otherLang, formatDateRange, type Lang } from '../../i18n';
+import SheetMap, { type MapFrame, type MapRoute } from '../../components/SheetMap.astro';
+import Icon from '../../components/Icon.astro';
+import Foot from '../../components/Foot.astro';
+import { languages, t, tripUrl, homeUrl, aboutUrl, otherLang, formatDateRange, formatDate, idx, type Lang } from '../../i18n';
+import { aboutIds } from '../../lib/about';
 import { getPublishedTrips, getTripView } from '../../lib/trips';
 
 export function getStaticPaths() {
@@ -11,46 +16,304 @@ export function getStaticPaths() {
 
 const lang = Astro.params.lang as Lang;
 const s = t(lang);
-const published = await getPublishedTrips();
-const cards = await Promise.all(
-  published.map(async ({ trip, texts }) => {
+const nf = new Intl.NumberFormat(lang);
+
+/** A sheet's extent: everything it draws, with a margin, like a sheet's neat line. */
+function extent(coords: [number, number][]): MapFrame['bounds'] {
+  const lats = coords.map(([la]) => la);
+  const lngs = coords.map(([, lo]) => lo);
+  const m = Math.max(0.25, 0.08 * Math.max(Math.max(...lats) - Math.min(...lats), Math.max(...lngs) - Math.min(...lngs)));
+  return [
+    [Math.min(...lats) - m, Math.min(...lngs) - m],
+    [Math.max(...lats) + m, Math.max(...lngs) + m],
+  ];
+}
+
+// The sheet index, as on a map series' "tableau d'assemblage": every sheet on one map, then a card per sheet,
+// newest first, the coming-soon ones after them.
+const published = await Promise.all(
+  (await getPublishedTrips()).map(async ({ trip, texts }) => {
     const view = await getTripView(trip, lang);
-    return { view, text: texts[lang], cover: view.photos.get(trip.data.cover)! };
+    const { data } = view;
+    const cover = view.photos.get(data.cover)!;
+    return {
+      id: view.slug,
+      n: idx(data.sheet),
+      code: data.code,
+      country: data.country[lang],
+      title: texts[lang].data.title,
+      description: texts[lang].data.description,
+      url: tripUrl(lang, view.slug),
+      cover,
+      dates: formatDateRange(lang, data.start, data.end),
+      written: data.written,
+      year: String(data.start.getUTCFullYear()),
+      days: Math.round((data.end.valueOf() - data.start.valueOf()) / 86_400_000) + 1,
+      regions: data.regions.length,
+      km: view.distanceKm,
+      segments: data.regions.flatMap((r) => r.route),
+      bounds: extent([...data.regions.flatMap((r) => r.route.flatMap((seg) => seg.path)), ...view.points.map((p) => p.at)]),
+    };
   }),
 );
+const upcoming = (await getCollection('upcoming'))
+  .map(({ id, data }) => {
+    const coords = [...data.route.flatMap((seg) => seg.path), ...data.places];
+    const bounds = data.bounds ?? (coords.length ? extent(coords) : undefined);
+    if (!bounds) throw new Error(`[upcoming ${id}] needs a route, places or bounds to show on the map`);
+    return {
+      id,
+      n: idx(data.sheet),
+      sheet: data.sheet,
+      code: data.code,
+      country: data.country[lang],
+      title: data.title?.[lang] ?? data.country[lang],
+      when: data.when[lang],
+      status: data.status,
+      // What the stamp says: a planned trip is coming, a travelled one is being written up.
+      stamp: data.status === 'travelled' ? s.writing : s.soon,
+      segments: data.route,
+      bounds,
+    };
+  })
+  .sort((a, b) => a.sheet - b.sheet);
+
+const routes: MapRoute[] = [
+  ...published.map((p) => ({ id: p.id, name: p.title, href: `#sheet-${p.n}`, segments: p.segments })),
+  ...upcoming.map((u) => ({ id: u.id, name: u.title, href: `#sheet-${u.n}`, segments: u.segments, soon: u.status })),
+];
+const frames: MapFrame[] = [
+  ...published.map((p) => ({ id: p.id, label: p.n, bounds: p.bounds })),
+  ...upcoming.map((u) => ({ id: u.id, label: u.n, bounds: u.bounds, soon: true })),
+];
 const alternates = Object.fromEntries(languages.map((l) => [l, homeUrl(l)]));
 ---
 
 <BaseLayout lang={lang} title="Odysseyra" description={s.tagline} alternates={alternates}>
-  <RunningHead lang={lang} otherHref={homeUrl(otherLang(lang))} sheet={s.trips} />
-  <main class="index">
-    <p class="tagline">{s.tagline}</p>
-    <ul class="trips">
-      {
-        cards.map(({ view, text, cover }) => (
-          <li class={cover.orientation}>
-            <a href={tripUrl(lang, view.slug)}>
-              <Image src={cover.image} alt={cover.alt} widths={[480, 800, 1200]} sizes="(min-width: 900px) 45vw, 100vw" />
-              <p class="label">{s.sheet} {String(view.data.sheet).padStart(2, '0')} · {view.data.country[lang]}</p>
-              <h2>{text.data.title}</h2>
-            </a>
-            <p class="data">{formatDateRange(lang, view.data.start, view.data.end)}</p>
-            <p>{text.data.description}</p>
+  <RunningHead lang={lang} otherHref={homeUrl(otherLang(lang))} sheet={s.sheetIndex} />
+
+  <main id="main" data-uid="IDX">
+    <div class="atlas">
+      <div class="cartouche">
+        <h1>{s.tagline}</h1>
+        <nav class="list" aria-labelledby="list-title" data-map-index>
+          <h2 class="label" id="list-title">{s.sheets}</h2>
+          <ol>
+            {published.map((p) => (
+              <li data-region={p.id}>
+                <button type="button" class="pick" aria-pressed="false" aria-controls="trip-map" title={s.showOnMap}>
+                  <span class="badge sheet-no" aria-hidden="true"><span>{p.n}</span></span>
+                  <span class="name">{p.title}</span>
+                  <span class="when">{p.country}<i class="sep" aria-hidden="true"></i>{p.dates}</span>
+                </button>
+                <a class="go" href={p.url} title={s.openSheet} aria-label={`${s.openSheet} : ${p.title}`}><Icon name="arrow-right" size={18} /></a>
+              </li>
+            ))}
+            {upcoming.map((u) => (
+              <li data-region={u.id} class="soon">
+                <button type="button" class="pick" aria-pressed="false" aria-controls="trip-map" title={s.showOnMap}>
+                  <span class="badge sheet-no" aria-hidden="true"><span>{u.n}</span></span>
+                  <span class="name">{u.title}</span>
+                  <span class="when">{u.stamp}<i class="sep" aria-hidden="true"></i>{u.when}</span>
+                </button>
+                <span class="go off" title={s.notYet}><Icon name="arrow-right" size={18} /><span class="visually-hidden">{s.notYet}</span></span>
+              </li>
+            ))}
+          </ol>
+        </nav>
+        <aside class="author" aria-labelledby="author-title">
+          <h2 class="label" id="author-title">{s.author}</h2>
+          <ul>
+            <li><a href={`${aboutUrl(lang)}#${aboutIds.who}`}>{s.aboutWho}<Icon name="arrow-right" size={16} /></a></li>
+            <li><a href={`${aboutUrl(lang)}#${aboutIds.prep}`}>{s.aboutPrep}<Icon name="arrow-right" size={16} /></a></li>
+          </ul>
+        </aside>
+      </div>
+
+      <div class="legend">
+        <h2 class="label">{s.legend}</h2>
+        <ul class="symbols">
+          <li><span class="sym route" aria-hidden="true"></span>{s.legendRoute}</li>
+          <li><span class="sym approx" aria-hidden="true"></span>{s.legendApprox}</li>
+          <li><span class="sym frame" aria-hidden="true"><span class="badge sheet-no"><span>01</span></span></span>{s.legendSheet}</li>
+          {upcoming.length > 0 && <li><span class="sym frame soon" aria-hidden="true"><span class="badge sheet-no"><span>{upcoming[0].n}</span></span></span>{s.legendSoon}</li>}
+        </ul>
+      </div>
+
+      <div class="atlas-map">
+        <SheetMap id="trip-map" lang={lang} variant="trip" label={s.indexMap} routes={routes} points={[]} frames={frames} />
+      </div>
+    </div>
+
+
+    <section class="sheets" aria-labelledby="sheets-title">
+      <header class="rhead"><h2 id="sheets-title">{s.sheets}</h2></header>
+      <ol class="cards">
+        {published.map((p) => (
+          <li class="card" id={`sheet-${p.n}`} data-uid-ref={`SHT${p.n}-${p.code}`}>
+            <div class:list={['cover', p.cover.orientation]}>
+              <Image
+                src={p.cover.image}
+                alt={p.cover.alt}
+                widths={[400, 640, 960]}
+                sizes="(min-width: 1100px) 25vw, (min-width: 640px) 50vw, 100vw"
+              />
+            </div>
+            <p class="meta label">{s.sheet} {p.n} · {p.country}</p>
+            <h3><a href={p.url}>{p.title}</a></h3>
+            <p class="lede">{p.description}</p>
+            <p class="stats">
+              <span>{p.dates}</span>
+              <span class="data">{p.days} {s.days.toLowerCase()} · {p.regions} {s.regions} · {nf.format(p.km)} {s.km}</span>
+              {p.written && <span class="written">{s.written} <time datetime={p.written.toISOString().slice(0, 10)}>{formatDate(lang, p.written)}</time></span>}
+            </p>
           </li>
-        ))
-      }
-    </ul>
+        ))}
+        {upcoming.map((u) => (
+          <li class="card soon" id={`sheet-${u.n}`} data-uid-ref={`SHT${u.n}-${u.code}`}>
+            <div class="cover blank"><span class="label">{u.stamp}</span></div>
+            <p class="meta label">{s.sheet} {u.n}</p>
+            <h3>{u.title}</h3>
+            <p class="stats"><span>{u.when}</span></p>
+          </li>
+        ))}
+      </ol>
+    </section>
   </main>
+
+  <Foot lang={lang} />
 </BaseLayout>
 
 <style>
-  .index { --pad: clamp(16px, 2.5vw, 32px); padding: var(--pad); }
-  .tagline { font-size: var(--step-1); max-width: 40ch; margin: 1rem 0 2.5rem; }
-  .trips { list-style: none; margin: 0; padding: 0; display: grid; gap: 40px 32px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); align-items: start; }
-  .trips a { text-decoration: none; display: grid; gap: 10px; }
-  .trips img { width: 100%; height: auto; }
-  .trips li.portrait img { width: auto; max-height: 560px; }
-  .trips .label { margin: 4px 0 0; color: var(--ink-3); }
-  .trips h2 { font-size: var(--step-2); }
-  .trips .data { color: var(--ink-3); margin: 8px 0 6px; }
+  /* No progress bar under the running head here: a sheet's link lands right under the head. */
+  :global(html) { scroll-padding-top: var(--head-h, 0px); }
+
+  /* The index's first view, drawn like a trip sheet's: the map in the large cell, the cartouche over the legend
+     beside it, the sheets index under both. */
+  .atlas {
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(360px, 1fr);
+    grid-template-areas: 'map cartouche' 'map legend';
+    grid-template-rows: auto 1fr;
+    border-bottom: 1px solid var(--ink);
+    background: var(--paper);
+  }
+  .atlas > * { min-width: 0; }
+  .atlas-map { grid-area: map; display: flex; flex-direction: column; border-right: 1px solid var(--ink); position: relative; z-index: 1; }
+  .atlas-map :global(.sheet-map.trip) { flex: 1; height: auto; min-height: 320px; }
+  .cartouche { grid-area: cartouche; padding: var(--pad) var(--pad) 18px; border-bottom: 1px solid var(--ink); }
+  .cartouche h1 { font-size: clamp(2rem, 1.4rem + 1.6vw, 2.75rem); }
+  /* The sheets, a ruled ledger: a row fits the map to its sheet (pressed again: all of them), the arrow opens it. */
+  /* Two squares under the last row: room for the list's reference in its corner. */
+  .list { margin-top: 1.5rem; padding-bottom: calc(2 * var(--grid-unit)); }
+  .list h2 { margin-bottom: 6px; font-size: 11px; color: var(--ink-3); }
+  .list ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ink); }
+  .list li { position: relative; display: flex; border-bottom: 1px solid var(--hair); }
+  .list .pick {
+    flex: 1; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0 12px;
+    padding: 8px 10px; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+  }
+  .list .pick:hover { background: var(--field); }
+  .list .badge { grid-row: span 2; --u: 24px; font-size: 11px; }
+  .list .name { font-size: 15px; font-weight: 600; line-height: 1.25; }
+  .list .when { color: var(--ink-3); font-size: 13px; line-height: 1.35; }
+  /* Overpass's middle dot has almost no advance width: a drawn one, at the small text's centre. */
+  .list .sep { display: inline-block; width: 3px; height: 3px; margin: 0 7px; border-radius: 50%; background: currentColor; vertical-align: 0.28em; }
+  .list .go { flex: none; display: grid; place-items: center; width: 40px; color: var(--ink-2); border-left: 1px solid var(--hair); }
+  .list .go:hover { background: var(--ink); color: var(--paper); }
+  .list li.soon .name { color: var(--ink-3); font-weight: 500; }
+  /* No page yet: the arrow is drawn, greyed, and leads nowhere. */
+  .list .go.off { color: color-mix(in srgb, var(--ink-3) 45%, var(--paper)); cursor: not-allowed; }
+  .list .go.off:hover { background: none; color: color-mix(in srgb, var(--ink-3) 45%, var(--paper)); }
+  .list li.soon .badge { color: var(--ink-3); border-color: var(--ink-3); background: var(--field); }
+  /* The sheet shown on the map: the row in solid ink, like the regions index's cells. */
+  .list li.is-on .pick { background: var(--ink); color: var(--paper); }
+  .list li.is-on .when, .list li.is-on.soon .name { color: rgb(255 255 255 / 0.75); }
+  .list li.is-on .badge { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+  /* The author's page, from the margin column: who writes the sheets, and how a trip is prepared. */
+  .author { margin-top: 1.5rem; }
+  .author h2 { margin-bottom: 6px; font-size: 11px; color: var(--ink-3); }
+  .author ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ink); }
+  .author li { border-bottom: 1px solid var(--hair); }
+  .author a { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 10px; font-size: 15px; font-weight: 600; line-height: 1.25; text-decoration: none; }
+  .author a :global(svg) { flex: none; color: var(--ink-2); }
+  .author a:hover { background: var(--ink); color: var(--paper); }
+  .author a:hover :global(svg) { color: var(--paper); }
+
+  /* The legend closes the margin column, as on a printed sheet: at its foot. */
+  .legend { grid-area: legend; align-self: end; padding: 16px var(--pad) var(--pad); }
+  .legend h2 { font-size: 11px; color: var(--ink-3); margin-bottom: 8px; }
+  .symbols { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; }
+  .symbols li { display: flex; align-items: center; gap: 8px; }
+  .sym { display: inline-grid; place-items: center; width: 24px; flex: none; color: var(--ink); }
+  .sym.route { height: 4px; background: var(--gold); }
+  .sym.approx { height: 3px; background: repeating-linear-gradient(90deg, var(--gold) 0 3px, transparent 3px 9px); }
+  /* A sheet's extent: its dashed neat line, numbered in the corner as on the map. */
+  .sym.frame { width: 40px; height: 26px; place-items: start; border: 2px dashed var(--ink); }
+  .sym.frame.soon { border-color: var(--ink-3); }
+  .badge.sheet-no { --u: 18px; font-size: 10px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); margin: -2px 0 0 -2px; }
+  .sym.soon .badge.sheet-no { color: var(--ink-3); border-color: var(--ink-3); background: var(--field); }
+
+  /* The sheets: a section head like a region's, then one card per sheet in a ruled grid (rules on the grid lines,
+     see sheet-grid.ts), three or four to a row. */
+  .sheets { padding-block: var(--gap-section); }
+  .rhead { border-top: 2px solid var(--ink); padding: 18px var(--pad); background: var(--paper); }
+  .rhead h2 { font-size: var(--step-3); }
+  .cards {
+    list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    border-block: 1px solid var(--ink); background: var(--paper);
+  }
+  .card { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 19px 20px 20px; }
+  .card + .card { border-left: 1px solid var(--hair); }
+  .card:not(.soon):hover { background: var(--field); }
+  /* The cover at its native ratio, never cropped: a portrait one stands in the 3:2 frame on field. */
+  .cover { aspect-ratio: 3 / 2; margin-bottom: 14px; background: var(--field); }
+  .cover :global(img) { width: 100%; height: 100%; object-fit: contain; }
+  .meta { margin: 0 0 6px; color: var(--ink-3); font-size: 11px; }
+  h3 { font-size: var(--step-1); line-height: 1.15; }
+  /* The whole card is the title's link. */
+  h3 a { text-decoration: none; }
+  h3 a::after { content: ''; position: absolute; inset: 0; }
+  /* The card's reference stays its own link above the card's. */
+  .card > :global(.uid) { z-index: 1; }
+  .card:hover h3 a { text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: 0.16em; }
+  .lede { margin: 8px 0 0; color: var(--ink-2); font-size: 14px; line-height: 1.5; }
+  .stats { margin: auto 0 0; padding-top: 14px; display: grid; gap: 2px; font-size: 14px; font-weight: 600; }
+  .stats .data { color: var(--ink-3); font-weight: 400; }
+  .stats .written { color: var(--ink-3); font-size: 13px; font-weight: 400; }
+
+  /* Coming soon (planned, or travelled and being written): no page yet. The frame is drawn, the plate not yet printed. */
+  .soon { color: var(--ink-3); }
+  .cover.blank {
+    display: grid; place-items: center; border: 2px dashed color-mix(in srgb, var(--ink-3) 55%, var(--paper));
+    background: repeating-linear-gradient(135deg, transparent 0 9px, var(--grid-major) 9px 10px), var(--field);
+  }
+  /* Stamped one square in from the frame's corner (2px dashes + 8px), a whole-square box (sheet-grid.ts). */
+  .cover.blank { place-items: start; }
+  .cover.blank .label { margin: 8px; padding: 4px 9px; background: var(--paper); border: 1px solid var(--ink-3); color: var(--ink-3); font-size: 11px; line-height: 11px; display: grid; place-items: center; }
+  .soon h3 { font-weight: 600; }
+  .soon .stats { font-weight: 400; }
+
+  @media (max-width: 960px) {
+    /* Phone order: the title, the map, then the list of sheets and the legend. */
+    .atlas { grid-template-columns: 1fr; grid-template-areas: 'title' 'map' 'summary' 'legend' 'author'; grid-template-rows: auto; }
+    .cartouche { display: contents; }
+    .cartouche h1 { grid-area: title; padding: 18px var(--pad); }
+    .cartouche .list { grid-area: summary; margin: 0; padding: 14px var(--pad) 18px; border-bottom: 1px solid var(--ink); }
+    .cartouche .author { grid-area: author; margin: 0; padding: 14px var(--pad) 18px; border-top: 1px solid var(--ink); }
+    .atlas-map { border-right: 0; border-block: 1px solid var(--ink); }
+    .atlas-map :global(.sheet-map.trip) { flex: none; height: clamp(320px, 60vh, 520px); }
+    .legend { align-self: start; }
+  }
+  @media (pointer: coarse) { .list .pick { min-height: 48px; } }
 </style>
+
+<script>
+  import { watchSheet } from '../../scripts/sheet-grid';
+  import { stampBoxes } from '../../scripts/box-uids';
+  import { stickHeads } from '../../scripts/sticky-heads';
+  // References first: their labels sit inside the boxes' padding, so the sheet walk measures the final layout.
+  stampBoxes();
+  watchSheet();
+  stickHeads();
+</script>

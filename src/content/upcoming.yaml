@@ -1,0 +1,26 @@
+# Coming-soon sheets: trips without a page yet, planned or travelled and not written up. Each one shows on the
+# sheet index as a greyed card, with its extent on the map.
+# Example:
+# - id: georgie-2027
+#   sheet: 2
+#   code: GEO
+#   country: { fr: "Géorgie", en: "Georgia" }
+#   when: { fr: "Printemps 2027", en: "Spring 2027" }
+#   status: planned          # or travelled: done, the write-up is coming (solid grey route, "En rédaction")
+#   places: [[41.72, 44.79], [42.66, 44.64]]
+
+# Dummy examples (travelled, not written up yet): replace with the real entries.
+- id: bolivie-2025
+  sheet: 2
+  code: BOL
+  country: { fr: "Bolivie", en: "Bolivia" }
+  when: { fr: "26 avril – 13 mai 2025", en: "26 April – 13 May 2025" }
+  status: travelled
+  places: [[-16.5, -68.15], [-16.17, -69.09], [-19.04, -65.26], [-19.59, -65.75], [-20.46, -66.83]]
+- id: thailande-cambodge-2024
+  sheet: 3
+  code: THA
+  country: { fr: "Thaïlande et Cambodge", en: "Thailand and Cambodia" }
+  when: { fr: "11–25 janvier 2024", en: "11–25 January 2024" }
+  status: travelled
+  places: [[13.75, 100.5], [14.35, 100.57], [13.36, 103.86], [11.56, 104.92]]

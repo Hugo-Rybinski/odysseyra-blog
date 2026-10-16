@@ -14,8 +14,10 @@ import Place from '../../../components/Place.astro';
 import Day from '../../../components/Day.astro';
 import Before from '../../../components/Before.astro';
 import Icon from '../../../components/Icon.astro';
+import IndexStrip from '../../../components/IndexStrip.astro';
+import Foot from '../../../components/Foot.astro';
 import { render } from 'astro:content';
-import { languages, t, tripUrl, otherLang, formatDateRange, base, idx, dayRange, type Lang } from '../../../i18n';
+import { languages, t, tripUrl, otherLang, formatDateRange, formatDate, base, idx, dayRange, type Lang } from '../../../i18n';
 import { getPublishedTrips, getTripView, formatDegrees, mapPoints } from '../../../lib/trips';
 
 export async function getStaticPaths() {
@@ -63,7 +65,7 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
   <RunningHead lang={lang} otherHref={tripUrl(otherLang(lang), view.slug)} sheet={sheet} coords={formatDegrees(view.center)} />
   <Progress lang={lang} />
 
-  <main id="main" data-uid={`${data.start.getUTCFullYear()}-${data.code}`}>
+  <main id="main" data-uid={`SHT${idx(data.sheet)}-${data.start.getUTCFullYear()}-${data.code}`}>
     <div class:list={['top', cover.orientation]}>
       <div class="hero-plate">
         <Photo id={data.cover} loading="eager" />
@@ -79,6 +81,19 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
           <div><dt class="label">{s.regions}</dt><dd>{data.regions.length}</dd></div>
           <div><dt class="label">{s.distance}</dt><dd>{nf.format(view.distanceKm)} {s.km}</dd></div>
         </dl>
+        {
+          data.written && (
+            <p class="stamp">
+              {s.written} <time datetime={data.written.toISOString().slice(0, 10)}>{formatDate(lang, data.written)}</time>
+              {data.updated && data.updated > data.written && (
+                <>
+                  <i class="sep" aria-hidden="true"></i>
+                  {s.updated} <time datetime={data.updated.toISOString().slice(0, 10)}>{formatDate(lang, data.updated)}</time>
+                </>
+              )}
+            </p>
+          )
+        }
         </div>
       </div>
 
@@ -113,19 +128,12 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
       </div>
     </div>
 
-    <nav class="regions-index" aria-label={s.regionsNav}>
-      <ol>
-        {data.regions.map((r, i) => (
-          <li data-region={r.id}>
-            <button type="button" class="pick" aria-pressed="false" aria-controls="trip-map" title={s.showOnMap}>
-              <span class="meta"><span class="data">{idx(i + 1)}</span><i class="sep" aria-hidden="true"></i>{dayRange(lang, r.days)}</span>
-              <span class="name">{r.name[lang]}</span>
-            </button>
-            <a class="go" href={`#${r.id}`} aria-label={`${s.goToSection} : ${r.name[lang]}`} title={s.goToSection}><Icon name="arrow-down" size={15} /></a>
-          </li>
-        ))}
-      </ol>
-    </nav>
+    <IndexStrip
+      label={s.regionsNav}
+      show={s.showOnMap}
+      go={s.goToSection}
+      cells={data.regions.map((r, i) => ({ id: r.id, n: idx(i + 1), meta: dayRange(lang, r.days), name: r.name[lang], href: `#${r.id}` }))}
+    />
 
     <article class="prose">
       <Content components={{ Before, Region, Day, Photo, Plates, Tip, Review, Good, Redo, Place }} />
@@ -141,10 +149,7 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
     }
   </main>
 
-  <footer class="foot">
-    <a href={`${base}/${lang}/`} class="label">{s.allTrips}</a>
-    <p class="data">© {new Date().getFullYear()} Odysseyra</p>
-  </footer>
+  <Foot lang={lang} href={`${base}/${lang}/`} label={s.allTrips} />
 </BaseLayout>
 
 <style>
@@ -166,6 +171,10 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
   .lede { margin: 0.8rem 0 1rem; color: var(--ink-2); font-size: 1rem; line-height: 1.55; max-width: 52ch; }
   .facts { margin: 0; display: grid; grid-template-columns: repeat(4, auto); justify-content: space-between; gap: 0 18px; border-top: 1px solid var(--hair); padding-top: 10px; }
   .facts dt { color: var(--ink-3); font-size: 11px; }
+  /* When the sheet was written and last revised: how fresh the information is, under the facts. */
+  .stamp { margin: 10px 0 0; color: var(--ink-3); font-size: 13px; line-height: 1.4; }
+  .stamp time { color: var(--ink-2); font-weight: 600; }
+  .stamp .sep { display: inline-block; width: 3px; height: 3px; margin: 0 8px; border-radius: 50%; background: currentColor; vertical-align: 0.28em; }
   .facts dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .legend { grid-area: legend; padding: 16px var(--pad) var(--pad); }
   .legend h2 { font-size: 11px; color: var(--ink-3); margin-bottom: 8px; }
@@ -193,34 +202,6 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
   .trip-map { grid-area: map; border-top: 1px solid var(--ink); }
   .trip-map :global(.sheet-map.trip) { height: clamp(300px, 40vh, 440px); }
 
-  .regions-index { border-bottom: 1px solid var(--ink); background: var(--paper); }
-  .regions-index ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
-  .regions-index li { position: relative; }
-  .regions-index li + li { border-left: 1px solid var(--hair); }
-  /* Each cell shows its region on the trip map above (pressed again: the whole trip); the arrow in its corner goes
-     to the region's section. */
-  /* Compact: the number and days on one small line, the name under it; the arrow sits beside the small line only. */
-  .regions-index .pick {
-    display: grid; align-content: start; gap: 1px; width: 100%; height: 100%; padding: 7px 12px 8px;
-    border: 0; background: none; color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; line-height: 1.2; text-align: left; cursor: pointer;
-  }
-  .regions-index .pick:hover { background: var(--field); }
-  .regions-index .meta { padding-right: 22px; color: var(--ink-3); font-size: 12px; font-weight: 400; line-height: 1.4; white-space: nowrap; }
-  .regions-index .data { font-size: inherit; }
-  /* Overpass's middle dot has almost no advance width: a drawn one, at the small caps' centre. */
-  .regions-index .sep { display: inline-block; width: 3px; height: 3px; margin: 0 6px; border-radius: 50%; background: currentColor; vertical-align: 0.3em; }
-  .regions-index .go {
-    position: absolute; top: 3px; right: 3px; display: grid; place-items: center; width: 22px; height: 22px; color: var(--ink-3);
-  }
-  .regions-index .go:hover { color: var(--ink); background: var(--field); }
-  /* On touch, a finger-sized target around the small arrow, without moving it. */
-  @media (pointer: coarse) { .regions-index .go::after { content: ''; position: absolute; inset: -11px -3px -11px -11px; } }
-  /* The region shown on the map: the cell in solid ink, like a day strip. */
-  .regions-index li.is-on .pick { background: var(--ink); color: var(--paper); }
-  .regions-index li.is-on .meta { color: rgb(255 255 255 / 0.75); }
-  .regions-index li.is-on .go { color: var(--paper); }
-  .regions-index li.is-on .go:hover { background: rgb(255 255 255 / 0.14); }
-
   .prose { padding-bottom: var(--gap-section); }
   /* The trip's opening text: a panel at the reading measure, centred under the regions index. */
   .prose > :global(:is(p, ul, ol)) { margin-left: calc((100% - var(--wide)) / 2); }
@@ -230,11 +211,6 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
   .pager a { display: grid; gap: 4px; padding: 20px var(--pad); text-decoration: none; font-weight: 700; }
   .pager a[rel='next'] { text-align: right; grid-column: 2; border-left: 1px solid var(--hair); }
   .pager .label { color: var(--ink-3); font-size: 11px; }
-
-  .foot { display: flex; justify-content: space-between; align-items: center; padding: 14px var(--pad); border-top: 1px solid var(--ink); background: var(--paper); }
-  .foot p { margin: 0; color: var(--ink-3); }
-  .foot a { text-decoration: none; }
-  @media (pointer: coarse) { .foot a { display: inline-flex; align-items: center; min-height: 44px; } }
 
   @media (max-width: 960px) {
     /* Phone order: the trip's name, then the photo with the map right below it, then the facts and exports. */

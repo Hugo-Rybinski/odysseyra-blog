@@ -1,7 +1,7 @@
 ---
 /** Authored 24px line icons, 1.75 stroke, for the survey-sheet legend and tips. */
 interface Props {
-  name: 'road' | 'fuel' | 'water' | 'money' | 'border' | 'sleep' | 'info' | 'warning' | 'pass' | 'download' | 'copy' | 'check' | 'external' | 'arrow-up' | 'arrow-down' | 'redo' | 'checklist';
+  name: 'road' | 'fuel' | 'water' | 'money' | 'border' | 'sleep' | 'info' | 'warning' | 'pass' | 'download' | 'copy' | 'check' | 'external' | 'arrow-up' | 'arrow-down' | 'arrow-right' | 'redo' | 'checklist';
   size?: number;
   label?: string;
 }
@@ -22,6 +22,7 @@ const paths: Record<Props['name'], string> = {
   external: 'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',
   'arrow-up': 'M12 20V5M6 11l6-6 6 6',
   'arrow-down': 'M12 4v15M6 13l6 6 6-6',
+  'arrow-right': 'M4 12h15M13 6l6 6-6 6',
   redo: 'M20 7v5h-5M20 12a8 8 0 1 0-2.3 5.7',
   checklist: 'M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17M11 6h9M11 12h9M11 18h9',
 };

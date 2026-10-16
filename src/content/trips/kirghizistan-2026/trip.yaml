@@ -6,6 +6,9 @@ country: { fr: "Kirghizistan", en: "Kyrgyzstan" }
 start: 2026-09-15
 end: 2026-09-29
 cover: DSC01576
+# Illustrative dates: set them to when the sheet was written and last revised.
+written: 2026-10-05
+updated: 2026-10-14
 distanceKm: 2134
 photos:
   - id: DSC01576

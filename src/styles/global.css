@@ -227,7 +227,7 @@ a:hover { text-decoration-color: var(--gold); }
   ) { padding-inline: calc(var(--grid-unit) - 1px); }
 }
 
-/* Box references (see box-uids.ts): 2026-KGZ-R04-D09-TXT-01 tucked into each box's bottom right corner, as a
+/* Box references (see box-uids.ts): SHT01-2026-KGZ-R04-D09-TXT-01 tucked into each box's bottom right corner, as a
    drawing's item number. Light enough to read only when looked for; a link to the top of its box. Absolutely placed
    in the box's bottom padding (every box keeps at least one square there), so it never moves the layout. */
 .uid {

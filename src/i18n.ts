@@ -72,6 +72,21 @@ export const ui = {
     copyFallback: 'Sélectionné : copiez avec Ctrl+C',
     copiedAnnounce: 'Coordonnées copiées',
     approxSuffix: 'tracé approximatif',
+    sheetIndex: 'Tableau d’assemblage',
+    sheets: 'Feuilles',
+    indexMap: 'Carte des feuilles',
+    legendSheet: 'Feuille de voyage',
+    legendSoon: 'Feuille à venir',
+    soon: 'À venir',
+    written: 'Rédigé le',
+    updated: 'Mis à jour le',
+    notYet: 'Pas encore publiée',
+    about: 'À propos',
+    aboutWho: 'Qui je suis',
+    aboutPrep: 'Comment je prépare mes voyages',
+    author: 'L’auteur',
+    writing: 'En rédaction',
+    openSheet: 'Ouvrir la feuille',
   },
   en: {
     sheet: 'Sheet',
@@ -142,6 +157,21 @@ export const ui = {
     copyFallback: 'Selected: copy with Ctrl+C',
     copiedAnnounce: 'Coordinates copied',
     approxSuffix: 'approximate route',
+    sheetIndex: 'Sheet index',
+    sheets: 'Sheets',
+    indexMap: 'Map of the sheets',
+    legendSheet: 'Trip sheet',
+    legendSoon: 'Coming-soon sheet',
+    soon: 'Coming soon',
+    written: 'Written on',
+    updated: 'Updated on',
+    notYet: 'Not published yet',
+    about: 'About',
+    aboutWho: 'Who I am',
+    aboutPrep: 'How I prepare my trips',
+    author: 'The author',
+    writing: 'Being written',
+    openSheet: 'Open the sheet',
   },
 } as const;
 
@@ -171,6 +201,12 @@ export const otherLang = (lang: Lang): Lang => (lang === 'fr' ? 'en' : 'fr');
 export const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 export const tripUrl = (lang: Lang, slug: string) => `${base}/${lang}/trips/${slug}/`;
 export const homeUrl = (lang: Lang) => `${base}/${lang}/`;
+
+/** "5 octobre 2026" / "5 October 2026". */
+export function formatDate(lang: Lang, date: Date) {
+  return new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date);
+}
+export const aboutUrl = (lang: Lang) => `${base}/${lang}/${lang === 'fr' ? 'a-propos' : 'about'}/`;
 
 export function formatDateRange(lang: Lang, start: Date, end: Date) {
   const f = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });

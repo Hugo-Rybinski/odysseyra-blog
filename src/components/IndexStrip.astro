@@ -1,0 +1,66 @@
+---
+import Icon from './Icon.astro';
+
+export interface IndexCell {
+  /** The route group on the map above that the cell shows (SheetMap's route id). */
+  id: string;
+  /** Mono index number, then the small line's text after the dot. */
+  n: string;
+  meta: string;
+  name: string;
+  /** Where the corner arrow goes: the cell's section on this page. */
+  href: string;
+}
+interface Props {
+  label: string;
+  /** Tooltip of a cell (it shows its route on the map) and of its arrow (it goes to its section). */
+  show: string;
+  go: string;
+  cells: IndexCell[];
+}
+const { label, show, go, cells } = Astro.props;
+---
+
+<nav class="regions-index" aria-label={label} data-map-index>
+  <ol>
+    {cells.map((c) => (
+      <li data-region={c.id}>
+        <button type="button" class="pick" aria-pressed="false" aria-controls="trip-map" title={show}>
+          <span class="meta"><span class="data">{c.n}</span><i class="sep" aria-hidden="true"></i>{c.meta}</span>
+          <span class="name">{c.name}</span>
+        </button>
+        <a class="go" href={c.href} aria-label={`${go} : ${c.name}`} title={go}><Icon name="arrow-down" size={15} /></a>
+      </li>
+    ))}
+  </ol>
+</nav>
+
+<style>
+  /* A ruled strip of cells under the trip map, one per region. Each cell shows its route on the
+     map above (pressed again: everything); the arrow in its corner goes to its section. SheetMap.astro wires both. */
+  .regions-index { border-bottom: 1px solid var(--ink); background: var(--paper); }
+  .regions-index ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+  .regions-index li { position: relative; }
+  .regions-index li + li { border-left: 1px solid var(--hair); }
+  /* Compact: the number and days on one small line, the name under it; the arrow sits beside the small line only. */
+  .pick {
+    display: grid; align-content: start; gap: 1px; width: 100%; height: 100%; padding: 7px 12px 8px;
+    border: 0; background: none; color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; line-height: 1.2; text-align: left; cursor: pointer;
+  }
+  .pick:hover { background: var(--field); }
+  .meta { padding-right: 22px; color: var(--ink-3); font-size: 12px; font-weight: 400; line-height: 1.4; white-space: nowrap; }
+  .data { font-size: inherit; }
+  /* Overpass's middle dot has almost no advance width: a drawn one, at the small caps' centre. */
+  .sep { display: inline-block; width: 3px; height: 3px; margin: 0 6px; border-radius: 50%; background: currentColor; vertical-align: 0.3em; }
+  .go {
+    position: absolute; top: 3px; right: 3px; display: grid; place-items: center; width: 22px; height: 22px; color: var(--ink-3);
+  }
+  .go:hover { color: var(--ink); background: var(--field); }
+  /* On touch, a finger-sized target around the small arrow, without moving it. */
+  @media (pointer: coarse) { .go::after { content: ''; position: absolute; inset: -11px -3px -11px -11px; } }
+  /* The cell shown on the map: solid ink, like a day strip. */
+  li.is-on .pick { background: var(--ink); color: var(--paper); }
+  li.is-on .meta { color: rgb(255 255 255 / 0.75); }
+  li.is-on .go { color: var(--paper); }
+  li.is-on .go:hover { background: rgb(255 255 255 / 0.14); }
+</style>

@@ -7,6 +7,8 @@ export interface MapRoute {
   name: string;
   href: string;
   segments: { approx: boolean; path: [number, number][] }[];
+  /** A coming-soon sheet's route: grey, dotted while planned, solid once travelled. */
+  soon?: 'planned' | 'travelled';
 }
 export type MapPoint = NumberedPoint & {
   href: string;
@@ -14,6 +16,13 @@ export type MapPoint = NumberedPoint & {
   /** Tips attached to this point: links to their box in the text. */
   tips: { id: string; label: string }[];
 };
+/** A sheet's extent on the index map: a ruled frame around its trip, numbered in its corner. */
+export interface MapFrame {
+  id: string;
+  label: string;
+  bounds: [[number, number], [number, number]];
+  soon?: boolean;
+}
 interface Props {
   id: string;
   lang: Lang;
@@ -22,8 +31,10 @@ interface Props {
   points: MapPoint[];
   /** 'trip' routes are clickable and highlightable; 'region' is a detail view. */
   variant: 'trip' | 'region';
+  /** Sheet extents (the index map), grouped with the route of the same id. */
+  frames?: MapFrame[];
 }
-const { id, lang, label, routes, points, variant } = Astro.props;
+const { id, lang, label, routes, points, variant, frames = [] } = Astro.props;
 const s = t(lang);
 const strings = {
   goToRegion: s.goToRegion,
@@ -37,7 +48,7 @@ const strings = {
   copied: s.copied,
   kinds: { stage: s.legendStage, sight: s.legendSight, detour: s.legendDetour },
 };
-const config = JSON.stringify({ routes, points, variant, strings });
+const config = JSON.stringify({ routes, points, variant, frames, strings });
 ---
 
 <div class:list={['sheet-map', variant]} id={id} data-map={config} role="region" aria-label={label}>
@@ -151,6 +162,16 @@ const config = JSON.stringify({ routes, points, variant, strings });
     box-sizing: border-box; width: 12px; height: 12px; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper);
     box-shadow: 0 0 0 1.5px var(--paper), 0 1px 3px rgb(18 41 79 / 0.35);
   }
+  /* A sheet's number on its extent's top left corner: an open square, as a frame's own label (not a stay). */
+  .sheet-map :global(.pin > .sheet-no) {
+    --u: 26px; transform: none; font-size: 12px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
+    box-shadow: 0 1px 3px rgb(18 41 79 / 0.35);
+  }
+  .sheet-map :global(.pin.frame) { cursor: pointer; }
+  .sheet-map :global(path.is-tiny) { visibility: hidden; }
+  .sheet-map :global(.pin.frame:hover > .sheet-no) { background: var(--ink); color: var(--paper); }
+  .sheet-map :global(.pin.frame:hover > .sheet-no.soon) { background: var(--ink-3); border-color: var(--ink-3); }
+  .sheet-map :global(.pin > .sheet-no.soon) { color: var(--ink-3); border-color: var(--ink-3); background: var(--field); }
   .sheet-map :global(.pin.is-active > b) { outline: 2px solid var(--gold); outline-offset: 2px; }
   .sheet-map :global(.pin.is-dim) { opacity: 0.4; }
 
@@ -180,13 +201,15 @@ const config = JSON.stringify({ routes, points, variant, strings });
 
   type Kind = 'stage' | 'sight' | 'detour';
   type Pt = { id: string; n: number; label: string; nights?: number[]; ref: string; kind: Kind; name: string; at: [number, number]; regionId: string; regionName: string; href: string; tips: { id: string; label: string }[] };
-  type Route = { id: string; name: string; href: string; segments: { approx: boolean; path: [number, number][] }[] };
+  type Route = { id: string; name: string; href: string; segments: { approx: boolean; path: [number, number][] }[]; soon?: 'planned' | 'travelled' };
+  type Frame = { id: string; label: string; bounds: [[number, number], [number, number]]; soon?: boolean };
   type Strings = { goToRegion: string; readTip: string; showAll: string; onMap: string; explore: string; exploreDone: string; credits: string; copy: string; copied: string; kinds: Record<Kind, string> };
 
   const css = getComputedStyle(document.documentElement);
   const GOLD = css.getPropertyValue('--gold').trim() || '#b08d3e';
   const INK = css.getPropertyValue('--ink').trim() || '#12294f';
   const PAPER = css.getPropertyValue('--paper').trim() || '#ffffff';
+  const INK3 = css.getPropertyValue('--ink-3').trim() || '#5d6f8c';
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const touch = matchMedia('(pointer: coarse)').matches;
   const esc = (v: string) => v.replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]!);
@@ -233,17 +256,26 @@ const config = JSON.stringify({ routes, points, variant, strings });
     el.appendChild(layer);
     const draw = () => {
       const b = map.getBounds();
-      const span = Math.max(b.getEast() - b.getWest(), b.getNorth() - b.getSouth());
-      const step = span > 6 ? 2 : span > 2 ? 1 : span > 0.8 ? 0.5 : span > 0.3 ? 0.2 : 0.1;
+      // One step per axis, the finest that keeps its labels a comfortable distance apart (a label is about 50px
+      // wide, 18px tall): zoomed out, fewer lines, always at round values, so they stay evenly spaced.
+      const steps = [0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 45, 90];
+      const pick = (px: number, gap: number) => steps.find((st) => st * px >= gap) ?? 90;
+      const pxLng = el.clientWidth / Math.max(1e-6, b.getEast() - b.getWest());
+      const pxLat = el.clientHeight / Math.max(1e-6, b.getNorth() - b.getSouth());
+      const stepX = pick(pxLng, 110);
+      const stepY = pick(pxLat, 70);
       const fmt = (v: number, pos: string, neg: string) => `${Math.abs(Number(v.toFixed(1)))}°${v >= 0 ? pos : neg}`;
       let html = '';
-      for (let lng = Math.ceil(b.getWest() / step) * step; lng < b.getEast(); lng += step) {
+      for (let i = Math.ceil(b.getWest() / stepX); i * stepX < b.getEast(); i++) {
+        const lng = i * stepX;
+        if (lng < -180 || lng > 180) continue;
         const x = map.latLngToContainerPoint([b.getNorth(), lng]).x;
         // Labels too close to the frame edge would be clipped: skip them.
         if (x < 28 || x > el.clientWidth - 28) continue;
         html += `<span class="tick x" style="left:${x}px">${fmt(lng, 'E', 'W')}</span>`;
       }
-      for (let lat = Math.ceil(b.getSouth() / step) * step; lat < b.getNorth(); lat += step) {
+      for (let i = Math.ceil(b.getSouth() / stepY); i * stepY < b.getNorth(); i++) {
+        const lat = i * stepY;
         const y = map.latLngToContainerPoint([lat, b.getWest()]).y;
         if (y < 24 || y > el.clientHeight - 24) continue;
         html += `<span class="tick y" style="top:${y}px">${fmt(lat, 'N', 'S')}</span>`;
@@ -358,7 +390,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
   }
 
   document.querySelectorAll<HTMLElement>('.sheet-map[data-map]').forEach((el) => {
-    const { routes, points, variant, strings } = JSON.parse(el.dataset.map!) as { routes: Route[]; points: Pt[]; variant: 'trip' | 'region'; strings: Strings };
+    const { routes, points, variant, frames, strings } = JSON.parse(el.dataset.map!) as { routes: Route[]; points: Pt[]; variant: 'trip' | 'region'; frames: Frame[]; strings: Strings };
     // Touch screens: one finger scrolls the page until the reader asks to explore the map.
     const map = L.map(el, { scrollWheelZoom: false, dragging: !touch, zoomSnap: 0.25, attributionControl: true, keyboardPanDelta: 120 });
     L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
@@ -392,6 +424,8 @@ const config = JSON.stringify({ routes, points, variant, strings });
     new Credits({ position: 'bottomright' }).addTo(map);
 
     const all = L.latLngBounds([]);
+    /** Sheet extents: hidden while too small on screen to read as a frame (zoomed out); the number stays. */
+    const outlines: { bounds: L.LatLngBounds; rects: L.Rectangle[] }[] = [];
     const groups = new Map<string, L.FeatureGroup>();
     const names = new Map<string, string>();
     for (const r of routes) {
@@ -399,7 +433,11 @@ const config = JSON.stringify({ routes, points, variant, strings });
       const g = L.featureGroup();
       for (const seg of r.segments) {
         const style = { lineCap: 'round', lineJoin: 'round' } as const;
-        if (seg.approx) {
+        if (r.soon) {
+          // No sheet to follow yet: a grey line on a white underlay, never gold; dotted while only planned.
+          L.polyline(seg.path, { ...style, color: PAPER, weight: 6, opacity: 0.9, interactive: false, baseOpacity: 0.9 } as L.PolylineOptions).addTo(g);
+          L.polyline(seg.path, { ...style, color: INK3, weight: 3, dashArray: r.soon === 'planned' ? '1 7' : undefined, interactive: false, baseOpacity: 1 } as L.PolylineOptions).addTo(g);
+        } else if (seg.approx) {
           // Only the ends are known: a dashed gold line on a white underlay, no navy casing.
           L.polyline(seg.path, { ...style, color: PAPER, weight: 6, opacity: 0.9, interactive: false, baseOpacity: 0.9 } as L.PolylineOptions).addTo(g);
           L.polyline(seg.path, { ...style, color: GOLD, weight: 3, dashArray: '2 9', interactive: false, baseOpacity: 1 } as L.PolylineOptions).addTo(g);
@@ -409,7 +447,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
           L.polyline(seg.path, { ...style, color: GOLD, weight: 3.5, interactive: false, baseOpacity: 1 } as L.PolylineOptions).addTo(g);
         }
       }
-      if (variant === 'trip' && r.segments.length) {
+      if (variant === 'trip' && r.segments.length && !r.soon) {
         // An invisible, wider hit line per region: hover names it, click goes to its section.
         for (const seg of r.segments) {
           const hit = L.polyline(seg.path, { color: INK, weight: 16, opacity: 0, interactive: true }).addTo(map);
@@ -418,6 +456,15 @@ const config = JSON.stringify({ routes, points, variant, strings });
           hit.on('add', () => hit.getElement()?.setAttribute('tabindex', '-1'));
           hit.getElement()?.setAttribute('tabindex', '-1');
         }
+      }
+      // The sheet's extent, ruled in ink like a map sheet's neat line, under its route.
+      const frame = frames.find((f) => f.id === r.id);
+      if (frame) {
+        // A white underlay keeps the dashes readable over dark relief; a coming-soon sheet's is grey.
+        const under = L.rectangle(frame.bounds, { color: PAPER, weight: 4, opacity: 0.85, fill: false, interactive: false, baseOpacity: 0.85 } as L.PolylineOptions).addTo(g);
+        const line = L.rectangle(frame.bounds, { color: frame.soon ? INK3 : INK, weight: 2, dashArray: '8 5', lineCap: 'butt', fill: false, interactive: false, baseOpacity: 1 } as L.PolylineOptions).addTo(g);
+        outlines.push({ bounds: L.latLngBounds(frame.bounds), rects: [under, line] });
+        all.extend(frame.bounds);
       }
       // Added once filled: a group joining the map before its lines confuses Leaflet's renderer order.
       g.addTo(map);
@@ -441,9 +488,35 @@ const config = JSON.stringify({ routes, points, variant, strings });
       allMarkers.push(m);
       all.extend(p.at);
     }
+    // Each sheet's number, on its extent's top left corner (dimmed with its route when another sheet is shown).
+    for (const f of frames) {
+      const html = `<b class="badge sheet-no${f.soon ? ' soon' : ''}"><span>${esc(f.label)}</span></b>`;
+      // Its number is a handle: a click fits the map to the sheet, like its row in the list (pressed again: all).
+      const m = L.marker([f.bounds[1][0], f.bounds[0][1]], {
+        icon: L.divIcon({ className: 'pin frame', html, iconSize: [24, 24], iconAnchor: [0, 0] }),
+        keyboard: false, title: names.get(f.id) ?? f.label, riseOnHover: true,
+      }).addTo(map);
+      m.on('click', () => {
+        const entry = registry.get(el.id);
+        if (!entry) return;
+        if (m.getElement()?.classList.contains('is-active')) reset(entry);
+        else highlight(el.id, f.id);
+      });
+      markers.set(f.id, [...(markers.get(f.id) ?? []), m]);
+    }
+    const sizeOutlines = () => {
+      for (const o of outlines) {
+        const a = map.latLngToLayerPoint(o.bounds.getNorthWest());
+        const b = map.latLngToLayerPoint(o.bounds.getSouthEast());
+        const tiny = b.x - a.x < 48 || b.y - a.y < 36;
+        for (const r of o.rects) r.getElement()?.classList.toggle('is-tiny', tiny);
+      }
+    };
+    map.on('zoomend viewreset', sizeOutlines);
     // Extra room on the left: the zoom buttons sit over that edge.
     const fit = () => (all.isValid() ? map.fitBounds(all, { paddingTopLeft: [64, 36], paddingBottomRight: [36, 36], maxZoom: 11, animate: false }) : map.setView([20, 0], 2));
     fit();
+    sizeOutlines();
     L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map);
     graticule(el, map);
     folds(map);
@@ -532,10 +605,11 @@ const config = JSON.stringify({ routes, points, variant, strings });
     if (a && locate(a.dataset.place!)) e.preventDefault();
   });
 
-  // The regions index under the trip map: a cell shows its region on the map, pressed again the whole trip.
-  const index = document.querySelector<HTMLElement>('.regions-index');
-  if (index) {
-    let current: string | null = null;
+  // Lists keyed to the trip map (the regions index under it, the sheet index's list of sheets): an item shows its
+  // route group on the map, pressed again the whole map.
+  const lists = document.querySelectorAll<HTMLElement>('[data-map-index]');
+  let current: string | null = null;
+  for (const index of lists) {
     index.addEventListener('click', (e) => {
       const cell = (e.target as Element).closest<HTMLElement>('li[data-region]');
       if (!cell || !(e.target as Element).closest('.pick')) return;
@@ -545,16 +619,16 @@ const config = JSON.stringify({ routes, points, variant, strings });
       // The map sits right above: the page stays where it is.
       highlight('trip-map', cell.dataset.region!);
     });
-    document.addEventListener('map:region', (e) => {
-      if ((e.target as HTMLElement).id !== 'trip-map') return;
-      current = (e as CustomEvent<string | null>).detail;
-      for (const li of index.querySelectorAll<HTMLElement>('li[data-region]')) {
-        const on = li.dataset.region === current;
-        li.classList.toggle('is-on', on);
-        li.querySelector('.pick')?.setAttribute('aria-pressed', String(on));
-      }
-    });
   }
+  document.addEventListener('map:region', (e) => {
+    if ((e.target as HTMLElement).id !== 'trip-map') return;
+    current = (e as CustomEvent<string | null>).detail;
+    for (const li of document.querySelectorAll<HTMLElement>('[data-map-index] li[data-region]')) {
+      const on = li.dataset.region === current;
+      li.classList.toggle('is-on', on);
+      li.querySelector('.pick')?.setAttribute('aria-pressed', String(on));
+    }
+  });
 
   // Signature cross-link: "show on the trip map" links light up their region on the trip map.
   document.addEventListener('click', (e) => {

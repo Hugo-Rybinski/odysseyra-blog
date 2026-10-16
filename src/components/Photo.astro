@@ -1,14 +1,17 @@
 ---
 import { Image } from 'astro:assets';
 import { t } from '../i18n';
+import type { TripView } from '../lib/trips';
 
 interface Props {
   id: string;
   loading?: 'lazy' | 'eager';
+  /** The trip the photo belongs to; inside a trip page, the page's own. */
+  trip?: TripView;
 }
 const { id, loading = 'lazy' } = Astro.props;
-const trip = Astro.locals.trip;
-if (!trip) throw new Error('<Photo> must be rendered inside a trip page');
+const trip = Astro.props.trip ?? Astro.locals.trip;
+if (!trip) throw new Error('<Photo> needs a trip: render it inside a trip page or pass `trip`');
 const photo = trip.photos.get(id);
 if (!photo) throw new Error(`[${trip.slug}] <Photo id="${id}">: no such photo in trip.yaml`);
 const s = t(trip.lang);
