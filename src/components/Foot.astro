@@ -1,0 +1,29 @@
+---
+import { aboutUrl, t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  /** The link on the left (the trip pages go back to the index); none on the index itself. */
+  href?: string;
+  label?: string;
+}
+const { lang, href, label } = Astro.props;
+const s = t(lang);
+---
+
+<footer class="foot">
+  <nav class="links" aria-label="Odysseyra">
+    {href && <a href={href} class="label">{label}</a>}
+    <a href={aboutUrl(lang)} class="label">{s.about}</a>
+  </nav>
+  <p class="data">© {new Date().getFullYear()} Odysseyra</p>
+</footer>
+
+<style>
+  .foot { display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; padding: 14px var(--pad); border-top: 1px solid var(--ink); background: var(--paper); }
+  .links { display: flex; flex-wrap: wrap; gap: 4px 24px; }
+  .foot p { margin: 0; color: var(--ink-3); }
+  .foot a { text-decoration: none; }
+  .foot a:hover { color: var(--gold-ink); }
+  @media (pointer: coarse) { .foot a { display: inline-flex; align-items: center; min-height: 44px; } }
+</style>

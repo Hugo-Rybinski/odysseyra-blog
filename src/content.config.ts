@@ -1,5 +1,5 @@
 import { defineCollection } from 'astro:content';
-import { glob } from 'astro/loaders';
+import { file, glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
 const localized = z.object({ fr: z.string(), en: z.string() });
@@ -24,6 +24,9 @@ const trips = defineCollection({
     draft: z.boolean().default(false),
     /** Photo id used as the hero plate and the trip card cover. */
     cover: z.string(),
+    /** When the sheet was written, and last revised (a correction, a road update); both shown on the sheet. */
+    written: z.coerce.date().optional(),
+    updated: z.coerce.date().optional(),
     /** Road distance when known; otherwise computed from the route polyline. */
     distanceKm: z.number().optional(),
     photos: z.array(
@@ -81,4 +84,33 @@ const tripTexts = defineCollection({
   }),
 });
 
-export const collections = { trips, tripTexts };
+/** Coming-soon sheets (`upcoming.yaml`): trips without a page yet, either planned or travelled and not written up.
+    A greyed card on the sheet index and their extent on its map. The sheet number is kept once it is published. */
+const upcoming = defineCollection({
+  loader: file('./src/content/upcoming.yaml'),
+  schema: z.object({
+    sheet: z.number().int().positive(),
+    code: z.string().regex(/^[A-Z]{3}$/),
+    country: localized,
+    /** When it is planned, as it should read: "Printemps 2027" / "Spring 2027". */
+    when: localized,
+    /** planned: not travelled yet. travelled: done, the write-up is coming. */
+    status: z.enum(['planned', 'travelled']).default('planned'),
+    title: localized.optional(),
+    /** The route, if any: grey on the index map, never gold (gold is a route with its sheet to follow); dotted while
+        planned, solid once travelled. */
+    route: z.array(segment).default([]),
+    /** Places it should pass through; with the route, they set the sheet's extent. */
+    places: z.array(latLng).default([]),
+    /** The extent itself, [[south, west], [north, east]], when there is no route or place yet. */
+    bounds: z.tuple([latLng, latLng]).optional(),
+  }),
+});
+
+/** The author's page ("À propos" / "About"): `fr.mdx` and `en.mdx`. */
+const about = defineCollection({
+  loader: glob({ pattern: '{fr,en}.mdx', base: './src/content/about' }),
+  schema: z.object({ title: z.string(), description: z.string() }),
+});
+
+export const collections = { trips, tripTexts, upcoming, about };

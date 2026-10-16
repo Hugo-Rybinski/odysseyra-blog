@@ -1,0 +1,27 @@
+---
+import { t, type Lang } from '../i18n';
+import { aboutIds } from '../lib/about';
+
+interface Props {
+  /** Which part of the author's page: who writes the sheets, or how a trip is prepared. */
+  part: keyof typeof aboutIds;
+}
+const { part } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const s = t(lang);
+const title = part === 'who' ? s.aboutWho : s.aboutPrep;
+---
+
+<!-- A part of the author's page, opened like a region sheet: 2px rule, Display title, then the reading column. -->
+<section class="about-part" id={aboutIds[part]} aria-labelledby={`${aboutIds[part]}-title`}>
+  <header class="rhead">
+    <h2 id={`${aboutIds[part]}-title`}>{title}</h2>
+  </header>
+  <div class="col"><slot /></div>
+</section>
+
+<style>
+  .about-part { padding-top: var(--gap-section); clear: both; }
+  .rhead { padding: 18px var(--pad); border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink); background: var(--paper); }
+  .rhead h2 { font-size: var(--step-3); }
+</style>

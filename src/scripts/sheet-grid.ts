@@ -231,9 +231,61 @@ function sheetTop(el: HTMLElement) {
   bottom(el);
 }
 
+/** The sheet index's first view: the map's right rule on a line, the cartouche's rules, then the map tall enough that
+    it and the sheets index under it fill most of the window, its bottom (the view's bottom rule) on a line. */
+function atlasTop(el: HTMLElement) {
+  const cell = el.querySelector<HTMLElement>('.atlas-map')!;
+  const map = cell.querySelector<HTMLElement>('.sheet-map')!;
+  const cartouche = el.querySelector<HTMLElement>('.cartouche')!;
+  const legend = el.querySelector<HTMLElement>('.legend')!;
+  const lists = [...cartouche.querySelectorAll<HTMLElement>('.list ol, .author ul')];
+  const index = document.querySelector<HTMLElement>('.regions-index');
+  // The list of sheets and the author's links: their top rule and each row's rule on a line.
+  const rows = () => lists.forEach((list) => {
+    top(list);
+    for (const li of list.children as HTMLCollectionOf<HTMLElement>) {
+      const r = box(li);
+      set(li, 'height', `${r.height + need(r.bottom - 1)}px`);
+      // The link's rule, at the row's right end: widen it leftwards onto a line.
+      const go = li.querySelector<HTMLElement>('.go');
+      if (go) set(go, 'width', `${box(go).width + mod(box(go).left)}px`);
+    }
+  });
+  const target = Math.max(TRIP_MAP_MIN, TRIP_VIEW * innerHeight - (index ? box(index).height : 0));
+  if (box(cell).right < box(legend).left + 5) {
+    const b = box(cell);
+    set(el, 'grid-template-columns', `${b.width - mod(b.right - 1)}px minmax(0, 1fr)`);
+    rows();
+    bottom(cartouche);
+    set(map, 'min-height', `${target}px`);
+    // The map stretches with its row whichever column is taller: growing it by the missing part moves the bottom
+    // rule onto a line in both cases.
+    set(map, 'min-height', `${box(map).height + need(box(el).bottom - 1)}px`);
+  } else {
+    const title = cartouche.querySelector<HTMLElement>('h1')!;
+    grow(title, 'padding-bottom', need(box(cell).top));
+    const m = box(map);
+    set(map, 'height', `${m.height + need(box(cell).bottom - 1)}px`);
+    rows();
+    bottom(cartouche.querySelector<HTMLElement>('.list')!);
+    // On phones the author's links come last, under the legend: their rule, then their rows again.
+    const author = cartouche.querySelector<HTMLElement>('.author');
+    if (author) {
+      top(author);
+      rows();
+    }
+    bottom(el);
+  }
+}
+
 /** The regions index: column rules on lines, then its bottom rule. */
 function regionsIndex(el: HTMLElement) {
-  const ol = el.querySelector<HTMLElement>('ol')!;
+  ruledCells(el, el.querySelector<HTMLElement>('ol')!);
+}
+
+/** A ruled grid of cells (the regions index, the index's sheet cards) whose bottom rule is `el`'s: column rules and
+    row rules on lines, the last cell closing its row, the bottom rule on a line by growing the cells. */
+function ruledCells(el: HTMLElement, ol: HTMLElement) {
   // auto-fit keeps collapsed (0px) tracks in the computed list: count only the columns that hold cells, so the last
   // cell runs to the sheet's edge instead of leaving an empty column after it.
   const cols = getComputedStyle(ol).gridTemplateColumns.split(' ').filter((t) => parseFloat(t) > 0).length;
@@ -270,6 +322,32 @@ function regionsIndex(el: HTMLElement) {
   // run all the way down to it.
   const d = need(box(el).bottom - 1);
   if (d) set(ol, 'min-height', `${box(ol).height + d}px`);
+}
+
+/** The index's sheet cards: a coming-soon card's empty frame on lines (3:2 in 30px steps, its label one square in),
+    within the cards' ruled grid. */
+function sheetCards(el: HTMLElement) {
+  top(el);
+  // Columns first (the frames are measured in their final cell), then the rows again once the frames have grown.
+  ruledCells(el, el);
+  for (const blank of el.querySelectorAll<HTMLElement>('.cover.blank')) {
+    const b = box(blank);
+    const shift = need(b.left);
+    // Its 2px dashes start on a line on every side: whole squares plus the border.
+    const w = Math.floor((b.width - shift - 2) / (3 * U) + 1e-6) * 3 * U + 2;
+    set(blank, 'margin-left', `${shift}px`);
+    set(blank, 'width', `${w}px`);
+    set(blank, 'height', `${((w - 2) / 3) * 2 + 2}px`);
+    set(blank, 'aspect-ratio', 'auto');
+    grow(blank, 'margin-top', need(box(blank).top));
+    const label = blank.querySelector<HTMLElement>('.label');
+    if (label) {
+      const l = box(label);
+      set(label, 'width', `${Math.ceil((l.width - 1) / U - 1e-6) * U + 1}px`);
+      set(label, 'height', `${Math.ceil((l.height - 1) / U - 1e-6) * U + 1}px`);
+    }
+  }
+  ruledCells(el, el);
 }
 
 function sectionHead(el: HTMLElement) {
@@ -341,8 +419,11 @@ function foot(el: HTMLElement) {
 const handlers: [string, (el: HTMLElement) => void][] = [
   ['.sheet-inner > header.rhead', runningHead],
   ['.top', sheetTop],
+  ['.atlas', atlasTop],
   ['.regions-index', regionsIndex],
-  ['section.region > .rhead, section.before > .rhead', sectionHead],
+  ['section.region > .rhead, section.before > .rhead, section.sheets > .rhead, section.about-part > .rhead', sectionHead],
+  ['main > header.intro', bottom],
+  ['section.sheets > .cards', sheetCards],
   ['.region > .detail', detail],
   ['figure.plate', (el) => !el.closest('.top') && plate(el)],
   ['aside.tip', tip],

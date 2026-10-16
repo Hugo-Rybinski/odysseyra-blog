@@ -1,0 +1,49 @@
+---
+import { getEntry, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RunningHead from '../../components/RunningHead.astro';
+import AboutPart from '../../components/AboutPart.astro';
+import Foot from '../../components/Foot.astro';
+import { languages, t, homeUrl, aboutUrl, otherLang, type Lang } from '../../i18n';
+
+// The author's page: /fr/a-propos/, /en/about/.
+export function getStaticPaths() {
+  return languages.map((lang) => ({ params: { lang, page: lang === 'fr' ? 'a-propos' : 'about' } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const s = t(lang);
+const entry = await getEntry('about', lang);
+if (!entry) throw new Error(`src/content/about/${lang}.mdx is missing`);
+const { Content } = await render(entry);
+const alternates = Object.fromEntries(languages.map((l) => [l, aboutUrl(l)]));
+---
+
+<BaseLayout lang={lang} title={`${entry.data.title} — Odysseyra`} description={entry.data.description} alternates={alternates}>
+  <RunningHead lang={lang} otherHref={aboutUrl(otherLang(lang))} sheet={s.about} />
+  <main id="main">
+    <header class="intro">
+      <h1>{entry.data.title}</h1>
+      <p class="lede">{entry.data.description}</p>
+    </header>
+    <article class="prose">
+      <Content components={{ Part: AboutPart }} />
+    </article>
+  </main>
+  <Foot lang={lang} href={homeUrl(lang)} label={s.allTrips} />
+</BaseLayout>
+
+<style>
+  /* The page's cartouche: title and lede, ruled off like a trip sheet's top. */
+  .intro { padding: var(--pad); border-bottom: 1px solid var(--ink); background: var(--paper); }
+  .intro h1 { font-size: clamp(2rem, 1.4rem + 1.6vw, 2.75rem); }
+  .lede { margin: 0.8rem 0 0; color: var(--ink-2); font-size: 1rem; line-height: 1.55; max-width: 52ch; }
+  .prose { padding-bottom: var(--gap-section); }
+</style>
+
+<script>
+  import { watchSheet } from '../../scripts/sheet-grid';
+  import { stickHeads } from '../../scripts/sticky-heads';
+  watchSheet();
+  stickHeads();
+</script>

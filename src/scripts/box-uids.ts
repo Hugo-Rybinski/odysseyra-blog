@@ -1,8 +1,8 @@
 /**
- * Stamps every box of the trip sheet with a reference, as on a technical drawing: 2026-KGZ-R04-D09-TXT-01.
+ * Stamps every box of the trip sheet with a reference, as on a technical drawing: SHT01-2026-KGZ-R04-D09-TXT-01.
  *
- * Trip year and country code; the region (R04), left out outside the regions (sheet top, "before you go"); the day
- * (D09) when a day strip comes before the box in its region; the box type (MAP, TXT, PIC, TIP, RGN for a region
+ * The sheet number (SHT01), trip year and country code; the region (R04), left out outside the regions (sheet top,
+ * "before you go"); the day (D09) when a day strip comes before the box in its region; the box type (MAP, TXT, PIC, TIP, RGN for a region
  * header, OPN for "Mon avis"); and a number that counts the boxes sharing all of the above, from 00 (the second text
  * panel of day 9 is TXT-01, its first tip still TIP-00). The page is the same in every language, so a box keeps its
  * reference across languages. Each reference sits in the box's bottom right corner and links to its top.
@@ -13,7 +13,7 @@
 import { isLang, t } from '../i18n';
 import { TIP_IN_TEXT } from './sheet-grid';
 
-type Kind = 'MAP' | 'TXT' | 'PIC' | 'TIP' | 'RGN' | 'OPN';
+type Kind = 'MAP' | 'TXT' | 'PIC' | 'TIP' | 'RGN' | 'OPN' | 'LST' | 'SHT';
 /** Kinds that belong to one day rather than to a whole region. */
 const DATED: Kind[] = ['TXT', 'PIC', 'TIP', 'OPN'];
 
@@ -21,11 +21,14 @@ const BOXES = [
   '.hero-plate figure.plate',
   '.sheet-map',
   '.prose > :is(p, ul, ol)',
-  'section > .rhead',
+  'section:not(.sheets) > .rhead',
   '.col > .day',
   '.col > :is(p, ul, ol, aside.tip)',
   '.col figure.plate',
   'aside.review',
+  // The sheet index (prefix IDX): its list of sheets and one card per sheet.
+  '.cartouche .list',
+  '.cards > .card',
 ].join(', ');
 
 const inRun = (el: Element | null): el is HTMLElement => !!el && (el.matches(':is(p, ul, ol)') || el.matches(TIP_IN_TEXT));
@@ -46,7 +49,8 @@ export function stampBoxes() {
     const key = [main.dataset.uid, region && `R${region}`, day && DATED.includes(kind) && `D${day}`, kind].filter(Boolean).join('-');
     const n = counts.get(key) ?? 0;
     counts.set(key, n + 1);
-    const uid = `${key}-${String(n).padStart(2, '0')}`;
+    // A sheet's card is named after its sheet, not its place in the grid: IDX-SHT02-BOL is sheet 02, Bolivia.
+    const uid = top.dataset.uidRef ? `${main.dataset.uid}-${top.dataset.uidRef}` : `${key}-${String(n).padStart(2, '0')}`;
     // Boxes that already carry an id (maps: other links point at them) get a marker at their top instead.
     if (top.id) {
       const at = document.createElement('span');
@@ -97,6 +101,8 @@ export function stampBoxes() {
     else if (el.matches('figure.plate')) stamp('PIC', el, el);
     else if (el.matches('.rhead')) stamp('RGN', el, el);
     else if (el.matches('aside.review')) stamp('OPN', el, el);
+    else if (el.matches('.list')) stamp('LST', el, el);
+    else if (el.matches('.card')) stamp('SHT', el, el);
     else {
       // A text run starts here: the run's first item takes the anchor, its last the label.
       if (inRun(el) && !inRun(el.previousElementSibling)) {
@@ -114,7 +120,7 @@ export function stampBoxes() {
   // A reference in the address: the boxes only got their ids now, and the sheet walk moves them once more.
   const target = () => {
     const id = decodeURIComponent(location.hash.slice(1));
-    if (/^\d{4}-[A-Z]{3}-/.test(id)) document.getElementById(id)?.scrollIntoView();
+    if (/^(SHT\d{2}-\d{4}-[A-Z]{3}|IDX)-/.test(id)) document.getElementById(id)?.scrollIntoView();
   };
   addEventListener('load', () => requestAnimationFrame(target), { once: true });
 }
