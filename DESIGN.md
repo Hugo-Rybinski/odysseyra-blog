@@ -67,7 +67,7 @@ spacing:
   pad: "clamp(16px, 2.5vw, 32px)"
   sheet-pad: "clamp(16px, 3vw, 40px)"
   section: "4.5rem"
-  measure: "62ch"
+  measure: "35rem"
 components:
   button-export:
     backgroundColor: "{colors.paper}"
@@ -108,7 +108,7 @@ components:
 
 **Creative North Star: "The Survey Sheet"**
 
-Each trip is a printed topographic survey sheet in the manner of IGN or Swisstopo, drawn the way an industrial technical drawing is: navy ink on white drafting paper with light 10px squares, a border scale in the frame, mounted photo prints, and maps printed on real paper and scanned. The map and its legend are the document; the page is framed, ruled and numbered like a map sheet, with a running head carrying sheet number and coordinates, a title cartouche, a legend box with the export actions, and region sheets that each open on a heavy rule. The reading column inside that frame stays plain: one reading face, real contrast, a 62ch measure.
+Each trip is a printed topographic survey sheet in the manner of IGN or Swisstopo, drawn the way an industrial technical drawing is: navy ink on white drafting paper with light 10px squares, a border scale in the frame, mounted photo prints, and maps printed on real paper and scanned. The map and its legend are the document; the page is framed, ruled and numbered like a map sheet, with a running head carrying sheet number and coordinates, a title cartouche, a legend box with the export actions, and region sheets that each open on a heavy rule. The reading column inside that frame stays plain: one reading face, real contrast, a measure of about 75 characters a line.
 
 The world is navy ink on white drafting paper. Ink draws every line, type and border. Gold is the route's colour and the warnings' colour; it never decorates. Depth comes from rules, not surfaces: double borders, single 1px ink rules between cells, hairlines inside them. Corners are square because printed sheets are square; the only circles are the map's own sight symbols.
 
@@ -175,7 +175,7 @@ It re-runs on font load and resize, and fires `sheet:snapped` so Leaflet re-meas
 ### Hierarchy
 - **Display** (700, clamp(2.25rem → 3.5rem), 1.08, -0.015em): region and "what I'd do differently" sheet headers. The largest type on the page.
 - **Headline** (700, clamp(2rem → 2.75rem), 1.08): the trip title inside the cartouche. Deliberately smaller than Display: the title is bounded by the cartouche column, as on a printed sheet.
-- **Body** (400, 1.0625rem, 1.65): prose, max 62ch, `text-wrap: pretty`.
+- **Body** (400, 1.0625rem, 1.65): prose, about 75 characters a line (`--text-col`: 35rem, 33em of the body, rounded down to whole squares plus 1px; Overpass letters average 0.44em, so `ch` overstates the measure), `text-wrap: pretty`. Text panels, tip boxes set into them, wide-plate captions and "Mon avis" lists keep this measure, centred in their 960px panel with equal margins (`--text-pad`, whole squares) and the text left-aligned; the box reference sits in the right margin.
 - **Lede** (400, 1rem, 1.55, ink-2): the cartouche description, max 52ch.
 - **UI** (600, 14px): button titles, back-to-map link, tip point link, legend entries.
 - **Label** (700, 0.8125rem, 0.12em, uppercase): plate numbers, tip kind, region meta line, sheet number, language switch.
@@ -268,7 +268,7 @@ A mounted print: a white box with a 1px hair-strong border; border plus padding 
 `<Place at="point-id">words</Place>` (or `<Place at="point-id" />` for the place's own name) names a place in the text, keyed to the map: its map symbol inline before the words (the stay square or stop circle at 0.62em with a 1.8em unit, or the detour ring), then the words as an ordinary link. A click brings the region map into view (centred), flies to the place and opens its card, the marker flashing the gold outline; without scripts it links to the place's row in the points table.
 
 ### Box references
-Every box carries a reference in its bottom right corner, as a technical drawing numbers its items: `SHT<sheet>-<year>-<country code>[-R<region>][-D<day>]-<type>-<n>`, e.g. `SHT01-2026-KGZ-R04-D09-TXT-01` (the sheet number first, as on the index's card `IDX-SHT01-KGZ`). The region is left out outside the regions (sheet top, "Avant de partir"); the day appears when a day strip comes before the box in its region, and never on RGN or MAP. Types: MAP, TXT (a text panel), PIC, and the inner boxes by kind (WRN a warning, TIP a tip, DTR detours, HIK a hike, NGT a night), RGN (a region or "before you go" header), OPN ("Mon avis"). `n` counts the boxes sharing everything before it, from `00` (two digits): the second text panel of day 9 is `TXT-01` while that day's first tip is still `TIP-00`. The page is the same in every language, so a box keeps its reference across languages.
+Every box carries a reference in its bottom right corner, as a technical drawing numbers its items: `SHT<sheet>-<year>-<country code>[-R<region>][-D<day>]-<type>-<n>`, e.g. `SHT01-2026-KGZ-R04-D09-TXT-01` (the sheet number first, as on the index's card `IDX-SHT01-KGZ`). The region is left out outside the regions (sheet top, "Avant de partir"); the day appears when a day strip comes before the box in its region, and never on RGN or MAP. Types: MAP, TXT (a text panel), PIC, and the inner boxes on their own (between plates) by kind (WRN a warning, TIP a tip, DTR detours, HIK a hike, NGT a night; a box set into a text panel has none, the panel's TXT reference covers it), RGN (a region or "before you go" header), OPN ("Mon avis"). `n` counts the boxes sharing everything before it, from `00` (two digits): the second text panel of day 9 is `TXT-01` while that day's first tip is still `TIP-00`. The page is the same in every language, so a box keeps its reference across languages.
 
 The sheet index uses `IDX` in place of year and country: `IDX-MAP-00` (the index map), `IDX-LST-00` (the list of sheets in its cartouche, two squares of padding under its last row for the label) and `IDX-SHT<sheet>-<code>` (a sheet's card, named after its sheet: `IDX-SHT01-KGZ`, `IDX-SHT02-BOL`, whatever its place in the grid; the label sits above the card's link). The "Feuilles" section head, the legend and the author's links carry none.
 

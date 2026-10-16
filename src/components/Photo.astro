@@ -60,7 +60,8 @@ const plateNo = String(photo.plate).padStart(2, '0');
   figcaption { padding: 10px 0 9px; display: grid; gap: 4px; }
   .cap { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; font-size: 14px; line-height: 1.45; }
   .cap .label { color: var(--ink); }
-  .cap .text { color: var(--ink-2); }
+  /* Under a wide plate the caption keeps the text panels' measure (about 75 characters a line, see --text-col). */
+  .cap .text { max-width: 33em; color: var(--ink-2); }
   .exif { margin: 0; display: flex; flex-wrap: wrap; gap: 2px 16px; color: var(--ink-3); }
 </style>
 

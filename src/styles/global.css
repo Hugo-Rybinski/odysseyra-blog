@@ -97,6 +97,15 @@ a:hover { text-decoration-color: var(--gold); }
   --gap: calc(2 * var(--grid-unit));
   --gap-section: calc(4 * var(--grid-unit));
   --half: calc((var(--wide) - var(--pair-gap)) / 2);
+  /* The text column of a wide panel: a reading measure of about 75 characters a line of body text (33em of the
+     17px body, 35rem: Overpass letters average 0.44em; its "0", and so ch, is much wider), in rem so a smaller note
+     in a run keeps the same column as the paragraphs around it; a whole number of squares plus the 1px of a border,
+     so a tip box drawn across it ends on a grid line. The panel keeps its full width and centres the column in it:
+     the same padding on each side, whole squares with the panel's rule, so the text starts on a grid line. A panel
+     is whole squares plus 1px (sheet-grid.ts), so the column between equal paddings is too, and a tip box filling it
+     lands on lines on both sides. The text itself stays left-aligned. */
+  --text-col: calc(round(down, 35rem, var(--grid-unit)) + 1px);
+  --text-pad: max(calc(2 * var(--grid-unit) - 1px), round(down, (var(--wide) - var(--text-col)) / 2, var(--grid-unit)) - 1px);
   /* A whole number of squares wide (border-box ≡ 1px mod 10), so the right border lands on a grid line like the left. */
   width: calc(round(down, 100% - 1px, var(--grid-unit)) + 1px);
   margin-inline: auto;
@@ -155,14 +164,14 @@ a:hover { text-decoration-color: var(--gold); }
 :is(.col, .prose) > :is(p, ul, ol) {
   /* flow-root: beside a floated plate the panel stops at the plate instead of running under it. */
   display: flow-root;
-  /* As wide as a landscape plate, and the text uses all of it. */
+  /* As wide as a landscape plate; the text keeps a reading measure, centred inside it (--text-col, --text-pad). */
   width: var(--wide);
   margin: 0 0 0 calc((100% - var(--wide)) / 2);
-  padding: 0 calc(2 * var(--grid-unit) - 1px) 1.1em;
+  padding: 0 var(--text-pad) 1.1em;
   background: var(--paper);
   border-inline: 1px solid var(--hair-strong);
 }
-:is(.col, .prose) > :is(ul, ol) { padding-left: calc(4 * var(--grid-unit) - 1px); }
+:is(.col, .prose) > :is(ul, ol) { padding-left: calc(var(--text-pad) + 2 * var(--grid-unit)); }
 /* The text run right after a lone portrait sits beside it, in the other half: a text | photo pair. */
 @media (min-width: 1100px) {
   .col > .plate.portrait ~ :is(p, ul, ol):not(.plate.portrait ~ :not(p, ul, ol) ~ *) {
@@ -209,7 +218,8 @@ a:hover { text-decoration-color: var(--gold); }
   display: flow-root;
   width: var(--wide);
   margin: 0 0 0 calc((100% - var(--wide)) / 2);
-  padding: 0 calc(2 * var(--grid-unit) - 1px) 1.1em;
+  /* The box fills the centred text column, as wide as the lines around it. */
+  padding: 0 var(--text-pad) 1.1em;
   background: var(--paper);
   border-inline: 1px solid var(--hair-strong);
 }
