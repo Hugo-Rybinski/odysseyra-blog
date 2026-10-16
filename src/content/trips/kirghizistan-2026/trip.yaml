@@ -10,6 +10,9 @@ cover: DSC01576
 written: 2026-10-05
 updated: 2026-10-14
 distanceKm: 2134
+# Illustrative: set to the real party size and the cost per person on the ground (flights excluded).
+travellers: 2
+costPerPerson: { amount: 1400, currency: EUR }
 photos:
   - id: DSC01576
     file: DSC01576.jpg
