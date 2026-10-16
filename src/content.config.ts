@@ -16,6 +16,8 @@ const trips = defineCollection({
   }),
   schema: z.object({
     sheet: z.number().int().positive(),
+    /** Three-letter country code (ISO 3166 alpha-3), used in the box references: 2026-KGZ-R04-D09-TXT-01. */
+    code: z.string().regex(/^[A-Z]{3}$/),
     country: localized,
     start: z.coerce.date(),
     end: z.coerce.date(),
@@ -58,6 +60,8 @@ const trips = defineCollection({
               kind: z.enum(['stage', 'sight', 'pass', 'warning']).default('sight'),
               name: localized,
               at: latLng,
+              /** stage only: the nights spent there, numbered from the first night of the trip. */
+              nights: z.array(z.number().int().positive()).optional(),
             }),
           )
           .default([]),

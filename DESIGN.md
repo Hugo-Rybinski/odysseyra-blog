@@ -82,7 +82,7 @@ components:
     backgroundColor: "{colors.ink}"
     textColor: "{colors.paper}"
     rounded: "{rounded.none}"
-    size: "22px"
+    size: "22px × nights shown"
   sight-marker:
     backgroundColor: "{colors.paper}"
     textColor: "{colors.ink}"
@@ -159,7 +159,7 @@ A two-ink print palette: navy in three strengths plus hairline alphas, one gold 
 **The Grid-Snap Rule.** Every ruled line sits on the drafting grid. The grid is counted from the sheet's border box (`background-origin: border-box`, the sheet's own border is line zero, lines cover pixels [10k, 10k + 1)), and the sheet is a whole number of squares wide (`width: calc(round(down, 100% - 1px, 10px) + 1px)`). After layout, `src/scripts/sheet-grid.ts` walks the page top to bottom and moves each ruled edge forward onto the next line, never more than one square and only by growing a padding, a margin, a column, a row or a map's height, so nothing is cropped:
 - full-width blocks (running head, title block, regions index, section heads, pager, footer): top and bottom rules;
 - columns: the plate | cartouche rule, the region map | table rule, the regions index cell rules;
-- the export buttons and "À savoir" chips: whole-square boxes (≡ 1px) with 9px gaps;
+- the export buttons: whole-square boxes (≡ 1px) with 9px gaps;
 - table rows, tip boxes (and a hazard tip's band rule), text panels, photo plates (box on lines, image one square inside in steps of 30px for 3:2 or 20px for 2:3, paired plates matched);
 - maps: the outline's edges, by growing the map's height.
 It re-runs on font load and resize, and fires `sheet:snapped` so Leaflet re-measures.
@@ -231,28 +231,35 @@ A ruled strip of cells (auto-fit, min 170px), hairline-separated: mono index num
 ### Sheet header (signature)
 Each region opens with a 2px ink top rule, Display title, a label meta line in ink-3 ("Région n / N · Jours a–b"), and a "back to map" link that scrolls to the trip map and highlights the region: its lines and markers stay full strength (markers get the gold outline), everything else drops to 0.25 / 0.4, the map flies to the region (to its single point when it has no track), and a caption box top right names it with a "Tout afficher / Show all" reset.
 
-Under a hairline, an "À savoir · n conseils" row lists the region's tips as 36px chips (44px on touch): kind icon, kind in 700, point name in ink-2, linking to the tip. Hazard chips (road, border, fuel) come first, with a gold border and gold-wash fill.
-
 ### Survey map (signature)
 Leaflet over filtered OpenTopoMap tiles, on a field ground with a 40px hairline grid, framed by a flush 1px ink outline (drawn just outside the map, so it overlaps rather than doubles the ruled box edges it touches). Routes are segments: a recorded stretch (GPS track or routed road) is a 3.5px gold line over a 7.5px navy casing; an approximate stretch (only its ends known) is a 3px gold line dashed 2/9 over a 6px white underlay, no casing, and carries a "Tracé approximatif" legend entry (no note under the map: the legend explains it). On the trip map an invisible 16px hit line per region names it on hover and links to its section. Graticule ticks on the frame in 11px mono on 92% white, with a 1px ink tick; scale bar in 11px mono. Square zoom controls with 1px ink border, metric scale bar bottom right.
 
-Markers: stage = 24px navy square, white numeral, 2px white border; sight = 22px white circle, 2px navy ring; points at the same spot share one marker ("1 · 28"); markers closer than their own width fan out a few pixels. A point with a tip carries a 10px gold dot (1.5px navy ring) at its top right, the same dot as the legend's "Conseil pratique". The trip map shows stages, passes and warnings only; sights live on the region maps. Markers stay out of the tab order (the points tables carry the same actions); their accessible name is "n. Place, kind".
+Markers: a stage is numbered by its nights, a sight by its own sequence. Stage = navy square per number shown (26px on the map with a 2px white border, 22px in tables): one night "05", consecutive nights a double square "03–04", separate stays at one spot merge into one marker, a triple square "01–02 · 14" (the separator is a drawn 3px dot: Overpass's middle dot has no advance width). Sight = true circle (24px on the map, 22px in tables), 2px navy ring. Numerals are trimmed to cap height (`text-box: trim-both cap alphabetic`) so they sit at the shape's centre; the shared `.badge` class in `global.css` draws them on the maps, the tables and the legend. Markers closer than their own width fan out a few pixels. A point with a tip carries a 10px gold dot (1.5px navy ring) at its top right, the same dot as the legend's "Conseil pratique". The trip map shows stages, passes and warnings only; sights live on the region maps. Markers stay out of the tab order (the points tables carry the same actions); their accessible name is "Nuits 03–04 · Place, kind" or "07. Place, kind".
+
+Bottom edge: one strip, flush in the corner, read right to left: the scale (its right end is the map frame), an "i" square, and the credits, folded until the "i" is pressed.
 
 Popups: kind label, name, a mono copy button for the coordinates, a gold-dot link per tip, and on the trip map a link to the region. On touch screens one finger scrolls the page; an "Explorer la carte / Explore the map" toggle (44px, top right) enables dragging.
 
 ### Points table
-Coordinates ledger in body size: label-small headers over a 1px ink rule, rows on hairlines, symbol column 44px. A place with a tip gets a "Lire le conseil · Route" link under its name (13px/600 gold-ink, led by the gold dot). Coordinates are a mono copy button with a 15px icon turning gold-ink on hover; Google/Apple Maps links below in 13px/600 ink-2. On touch every action is 44px tall and the copy button and links share a wrapping row. A targeted row flashes gold-wash over 2.4s (static field fill under reduced motion). Below 720px rows stack into a two-column grid.
+Coordinates ledger in body size: label-small headers over a 1px ink rule, rows on hairlines, symbol column 44px. Coordinates are a mono copy button with a 15px icon turning gold-ink on hover; Google/Apple Maps links below in 13px/600 ink-2. On touch every action is 44px tall and the copy button and links share a wrapping row. A targeted row flashes gold-wash over 2.4s (static field fill under reduced motion). Below 720px rows stack into a two-column grid.
 
 ### Tip
-An aside boxed like a legend note: paper fill, 1px ink border plus 1px hairline outline at 3px offset, square. Head row: 18px gold-ink line icon for the kind, label in ink, optional point link right-aligned (14px/600 ink-2). Each tip has a stable id (`tip-<point>-<kind>`) so maps, tables and region headers link to it; a targeted tip flashes its outline gold.
+An aside boxed like a legend note: paper fill, 1px ink border plus 1px hairline outline at 3px offset, square. Head row: 18px gold-ink line icon for the kind, label in ink, optional point link right-aligned (14px/600 ink-2). Each tip has a stable id (`tip-<point>-<kind>`) so the map popups link to it; a targeted tip flashes its outline gold. The icon and the label (trimmed to its cap height) share one centre line.
 
-**Hazard tip** (road, border, fuel): the head becomes a full-width gold-wash band over a 1px gold rule, the icon sits in a 28px gold disc, and the kind label turns gold-ink.
+**Set into the text.** A tip next to running text (directly, or through up to two other tips) is part of that text panel: the outer `aside` becomes a stretch of the panel (same width, fill, side rules and padding, top or bottom rule when it opens or closes the run) and the tip box sits inset in the text column. A tip with no text beside it (between plates) stands on its own in the reading column. The selector lives in `global.css` and `sheet-grid.ts` (`TIP_IN_TEXT`).
+
+**Hazard tip** (road, border, fuel): the head becomes a full-width gold-wash band over a 1px gold rule, the icon sits in a 28px gold disc, and the kind label turns gold-ink. When the sheet walk grows the band to whole squares it splits the growth between its top and bottom padding, so its content stays centred.
 
 ### Plate (photo)
-A mounted print: a white box with a 1px hair-strong border; border plus padding is exactly one grid square, so the image inside lands on the grid when the box does. Inside: the native-ratio image linking to the original, then a caption: label "Planche nn" in ink beside caption text in ink-2, and a data line in ink-3 with aperture · shutter · ISO · focal, camera · lens, and an "Original W×H · size" download link (size in Mo/MB). Missing EXIF values are omitted, not dashed.
+A mounted print: a white box with a 1px hair-strong border; border plus padding is exactly one grid square, so the image inside lands on the grid when the box does. Inside: the native-ratio image linking to the original, then a caption: label "Planche nn" in ink beside caption text in ink-2, and, when the photo has EXIF, a data line in ink-3 with aperture · shutter · ISO · focal, camera · lens. Missing EXIF values are omitted, not dashed; with none, the line is left out. The image itself is the only link to the full-size file.
+
+### Box references
+Every box carries a reference in its bottom right corner, as a technical drawing numbers its items: `<year>-<country code>[-R<region>][-D<day>]-<type>-<n>`, e.g. `2026-KGZ-R04-D09-TXT-01`. The region is left out outside the regions (sheet top, "Avant de partir"); the day appears when a day strip comes before the box in its region, and never on RGN or MAP. Types: MAP, TXT (a text panel), PIC, TIP, RGN (a region or "before you go" header), OPN ("Mon avis"). `n` counts the boxes sharing everything before it, from `00` (two digits): the second text panel of day 9 is `TXT-01` while that day's first tip is still `TIP-00`. The page is the same in every language, so a box keeps its reference across languages.
+
+Prefixed "Référence : " / "Reference: ". Mono 11/12px, 0.04em tracking, ink-3 mixed 62% into paper (ink-2 and underlined on hover or focus), absolutely placed 3px from the right border and 2px from the bottom one, inside the box's bottom padding, so it never moves the layout. A plate keeps an invisible copy at the end of its caption's last line so the caption never runs under it; on a map the reference joins the bottom strip, left of the credits. Each is a link to the top of its box (2 squares of scroll margin); boxes that already have an id (maps) take a marker at their top. Stamped in the page by `src/scripts/box-uids.ts` before the sheet walk, since text panels have no element of their own.
 
 ### Index numbers
-Every index number shows two digits (`idx()` in `src/i18n.ts`): sheets, regions ("Région 04 / 06"), days ("Jours 08–10", `dayRange()`), plates, and numbered points everywhere they appear (map pins, popups, points tables, tip links, legend samples, copied coordinates, GPX/KML names). Counts (15 days, 6 regions, 3 tips) stay plain numbers.
+Every index number shows two digits (`idx()` in `src/i18n.ts`): sheets, regions ("Région 04 / 06"), days ("Jours 08–10", `dayRange()`), plates, and numbered points everywhere they appear (map pins, popups, points tables, tip point links, legend samples, copied coordinates, GPX/KML names). Counts (15 days, 6 regions, 3 tips) stay plain numbers.
 
 ### Day strip
 `<Day n title>` marks a day inside a region: a solid ink strip as wide as the text panels, vellum text, "JOUR" in tracked label caps, "08 / 15" in mono, the date (weekday, day, month, in the page language) at 75% and an optional title in 600. It sits directly on the text panel that follows (no gap, no top rule) and carries `id="day-08"`. When the sheet walk grows it to whole squares it grows its height, not its bottom padding, so the text stays vertically centred.
@@ -260,8 +267,8 @@ Every index number shows two digits (`idx()` in `src/i18n.ts`): sheets, regions 
 ### Text panel
 Running text never sits directly on the drafting grid. Each run of consecutive paragraphs (and lists) in the trip text reads as one solid white panel with a 1px hair-strong rule, exactly as wide as a landscape plate (the wide column, `--wide`), and the text runs the full width of the panel: paragraph spacing becomes padding so the panel is continuous, the run's first paragraph draws the top rule and its last the bottom rule (CSS sibling and `:has()` selectors, no extra markup). Border plus padding is two squares (one on phones), so text starts on a grid line; from 1100px a lone portrait and the text run after it sit as a pair: the portrait takes the right half (`--half`, the width of one plate of a pair), the text the left half, tops aligned; anything else clears below. Below 1100px the portrait is centred at half width and the text runs full width. The panel's edges are snapped like every other rule.
 
-### Regrets panel
-Each region closes with `<Regrets>`: a ruled panel as wide as the text panels, 1px ink border, a head row (redo icon, "Ce que je referais autrement" in small label caps) over a 1px ink rule, then a dashed list (16 × 2px ink dash, 28px indent). There is no trip-level regrets section any more.
+### Review panel
+Each region closes with `<Review>` ("Mon avis" / "My take"): a ruled panel as wide as the text panels, 1px ink border, a head row (checklist icon, label caps) over a 1px ink rule, then two parts in one column, split by a hair-strong rule: `<Good>` "Les points forts", a list marked with a drawn 14px ink plus, and `<Redo>` "Ce que je referais autrement", marked with a 14 × 2px ink dash; 28px indent, part titles in ink-3 label caps. The sheet walk puts the split rule on a grid line.
 
 ### Before-you-go section
 `<Before>` opens the trip text before the first region: a section head like a region's (2px ink rule, Display title "Avant de partir", checklist icon and "Préparation" in label caps) with no map, then a reading column of text panels and tips (permits, cash, connectivity).

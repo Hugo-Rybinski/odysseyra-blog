@@ -17,7 +17,7 @@ const date = new Date(trip.data.start.valueOf() + (n - 1) * 86_400_000);
 const when = new Intl.DateTimeFormat(trip.lang, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(date);
 ---
 
-<h3 class="day" id={`day-${idx(n)}`}>
+<h3 class="day" id={`day-${idx(n)}`} data-day={idx(n)}>
   <span class="no"><span class="k">{s.day}</span> <span class="data">{idx(n)}<span class="of"> / {idx(total)}</span></span></span>
   <time class="when" datetime={date.toISOString().slice(0, 10)}>{when}</time>
   {title && <span class="title">{title}</span>}
@@ -39,6 +39,5 @@ const when = new Intl.DateTimeFormat(trip.lang, { weekday: 'short', day: 'numeri
   .of { opacity: 0.7; }
   .when { color: rgb(255 255 255 / 0.75); }
   .title { font-size: 1rem; font-weight: 600; }
-  /* The strip sits directly on the text panel that follows. */
-  .day + :global(:is(p, ul, ol)) { margin-top: 0; border-top-width: 0; }
+  /* The text panel that follows sits directly on the strip (global.css). */
 </style>

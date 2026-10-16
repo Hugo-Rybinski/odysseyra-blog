@@ -6,7 +6,9 @@ import Photo from '../../../components/Photo.astro';
 import Plates from '../../../components/Plates.astro';
 import Region from '../../../components/Region.astro';
 import Tip from '../../../components/Tip.astro';
-import Regrets from '../../../components/Regrets.astro';
+import Review from '../../../components/Review.astro';
+import Good from '../../../components/Good.astro';
+import Redo from '../../../components/Redo.astro';
 import Day from '../../../components/Day.astro';
 import Before from '../../../components/Before.astro';
 import Icon from '../../../components/Icon.astro';
@@ -59,7 +61,7 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
 <BaseLayout lang={lang} title={`${text.data.title} — Odysseyra`} description={text.data.description} alternates={alternates}>
   <RunningHead lang={lang} otherHref={tripUrl(otherLang(lang), view.slug)} sheet={sheet} coords={formatDegrees(view.center)} />
 
-  <main id="main">
+  <main id="main" data-uid={`${data.start.getUTCFullYear()}-${data.code}`}>
     <div class:list={['top', cover.orientation]}>
       <div class="hero-plate">
         <Photo id={data.cover} loading="eager" />
@@ -82,8 +84,8 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
         <h2 class="label">{s.legend}</h2>
         <ul class="symbols">
           <li><span class="sym route" aria-hidden="true"></span>{s.legendRoute}</li>
-          <li><span class="sym sq" aria-hidden="true">01</span>{s.legendStage}</li>
-          <li><span class="sym ci" aria-hidden="true">02</span>{s.legendSight}</li>
+          <li><span class="badge stay" aria-hidden="true"><span>01</span></span>{s.legendStage}</li>
+          <li><span class="badge stop" aria-hidden="true"><span>01</span></span>{s.legendSight}</li>
           <li><span class="sym" aria-hidden="true"><Icon name="pass" size={18} /></span>{s.legendPass}</li>
           <li><span class="sym warn" aria-hidden="true"><Icon name="warning" size={18} /></span>{s.legendWarning}</li>
           <li><span class="sym approx" aria-hidden="true"></span>{s.legendApprox}</li>
@@ -129,7 +131,7 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
     </nav>
 
     <article class="prose">
-      <Content components={{ Before, Region, Day, Photo, Plates, Tip, Regrets }} />
+      <Content components={{ Before, Region, Day, Photo, Plates, Tip, Review, Good, Redo }} />
     </article>
 
     {
@@ -177,8 +179,7 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
   .sym.route { height: 4px; background: var(--gold); }
   .sym.approx { height: 3px; background: repeating-linear-gradient(90deg, var(--gold) 0 3px, transparent 3px 9px); }
   .sym.tipdot::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 1.5px var(--ink); }
-  .sym.sq { width: 20px; height: 20px; background: var(--ink); color: var(--paper); font: 700 11px/1 var(--sans); margin-inline: 2px; }
-  .sym.ci { width: 20px; height: 20px; border: 2px solid var(--ink); border-radius: 50%; font: 700 10px/1 var(--sans); margin-inline: 2px; }
+  .symbols .badge { margin-inline: 1px; }
   .sym.warn { color: var(--gold-ink); }
   .exports { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 6px; }
   .btn {
@@ -240,6 +241,9 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
 
 <script>
   import { watchSheet } from '../../../scripts/sheet-grid';
+  import { stampBoxes } from '../../../scripts/box-uids';
+  // References first: their labels sit inside the boxes' padding, so the sheet walk measures the final layout.
+  stampBoxes();
   watchSheet();
 
   // Copy buttons anywhere on the page, map popups included (capture phase: Leaflet stops click bubbling in popups).

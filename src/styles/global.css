@@ -176,16 +176,92 @@ a:hover { text-decoration-color: var(--gold); }
   :is(.col, .prose) > :is(p, ul, ol) { padding-inline: calc(var(--grid-unit) - 1px); }
   :is(.col, .prose) > :is(ul, ol) { padding-left: calc(3 * var(--grid-unit) - 1px); }
 }
-:is(.col, .prose) > :is(p, ul, ol):not(:is(p, ul, ol) + *) {
+/* A run is its paragraphs plus the tips set into it (below): the first item draws the top rule, the last the bottom.
+   Any tip directly next to a paragraph belongs to the run, so "not after a paragraph or a tip" means first. */
+:is(.col, .prose) > :is(p, ul, ol):not(:is(p, ul, ol, aside.tip) + *),
+.col > aside.tip:is(
+    :is(p, ul, ol) + *, :is(p, ul, ol) + aside.tip + *, :is(p, ul, ol) + aside.tip + aside.tip + *,
+    :has(+ :is(p, ul, ol)), :has(+ aside.tip + :is(p, ul, ol)), :has(+ aside.tip + aside.tip + :is(p, ul, ol))
+  ):not(:is(p, ul, ol, aside.tip) + *) {
   margin-top: var(--gap);
   padding-top: calc(2 * var(--grid-unit) - 1px);
   border-top: 1px solid var(--hair-strong);
 }
-:is(.col, .prose) > :is(p, ul, ol):not(:has(+ :is(p, ul, ol))) {
+:is(.col, .prose) > :is(p, ul, ol):not(:has(+ :is(p, ul, ol, aside.tip))),
+.col > aside.tip:is(
+    :is(p, ul, ol) + *, :is(p, ul, ol) + aside.tip + *, :is(p, ul, ol) + aside.tip + aside.tip + *,
+    :has(+ :is(p, ul, ol)), :has(+ aside.tip + :is(p, ul, ol)), :has(+ aside.tip + aside.tip + :is(p, ul, ol))
+  ):not(:has(+ :is(p, ul, ol, aside.tip))) {
   margin-bottom: var(--gap);
   padding-bottom: calc(2 * var(--grid-unit) - 1px);
   border-bottom: 1px solid var(--hair-strong);
 }
+
+/* Tips set into a text panel. A tip next to running text (directly, or through up to two other tips) becomes a
+   stretch of that panel: the panel's fill and side rules run on around it, and the tip's own box sits inset in the
+   text column, like a boxed note on a printed sheet. A tip with no text beside it (between plates) stays on its own.
+   sheet-grid.ts matches the same set (TIP_IN_TEXT). */
+.col > aside.tip:is(
+    :is(p, ul, ol) + *, :is(p, ul, ol) + aside.tip + *, :is(p, ul, ol) + aside.tip + aside.tip + *,
+    :has(+ :is(p, ul, ol)), :has(+ aside.tip + :is(p, ul, ol)), :has(+ aside.tip + aside.tip + :is(p, ul, ol))
+  ) {
+  /* flow-root: the box's margin stays inside the stretch, so no gap opens in the panel's fill. */
+  display: flow-root;
+  width: var(--wide);
+  margin: 0 0 0 calc((100% - var(--wide)) / 2);
+  padding: 0 calc(2 * var(--grid-unit) - 1px) 1.1em;
+  background: var(--paper);
+  border-inline: 1px solid var(--hair-strong);
+}
+/* A run that opens under a day strip sits directly on it (the strip is its top rule). */
+/* (:not() repeats the "first of a run" condition, which is always true here, to outrank that rule.) */
+.col > .day + :is(p, ul, ol):not(:is(p, ul, ol, aside.tip) + *),
+.col > .day + aside.tip:is(
+    :is(p, ul, ol) + *, :is(p, ul, ol) + aside.tip + *, :is(p, ul, ol) + aside.tip + aside.tip + *,
+    :has(+ :is(p, ul, ol)), :has(+ aside.tip + :is(p, ul, ol)), :has(+ aside.tip + aside.tip + :is(p, ul, ol))
+  ):not(:is(p, ul, ol, aside.tip) + *) { margin-top: 0; border-top-width: 0; }
+@media (max-width: 640px) {
+  .col > aside.tip:is(
+    :is(p, ul, ol) + *, :is(p, ul, ol) + aside.tip + *, :is(p, ul, ol) + aside.tip + aside.tip + *,
+    :has(+ :is(p, ul, ol)), :has(+ aside.tip + :is(p, ul, ol)), :has(+ aside.tip + aside.tip + :is(p, ul, ol))
+  ) { padding-inline: calc(var(--grid-unit) - 1px); }
+}
+
+/* Box references (see box-uids.ts): 2026-KGZ-R04-D09-TXT-01 tucked into each box's bottom right corner, as a
+   drawing's item number. Light enough to read only when looked for; a link to the top of its box. Absolutely placed
+   in the box's bottom padding (every box keeps at least one square there), so it never moves the layout. */
+.uid {
+  font: 400 11px/12px var(--mono); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; white-space: nowrap;
+  color: color-mix(in srgb, var(--ink-3) 62%, var(--paper)); text-decoration: none;
+}
+.uid:hover, .uid:focus-visible { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+.has-uid-label { position: relative; }
+.has-uid-label > .uid { position: absolute; right: 3px; bottom: 2px; }
+/* On touch, a finger-sized target around the small label, without moving it. */
+@media (pointer: coarse) {
+  .uid::after { content: ''; position: absolute; inset: -16px -8px -2px; }
+}
+/* A plate keeps room for it at the end of its caption's last line. */
+.uid-room { font: 400 11px/12px var(--mono); letter-spacing: 0.04em; margin-left: auto; visibility: hidden; }
+/* Anchored boxes stop a little below the top of the window, and maps keep a marker at their top edge. */
+.has-uid, .uid-at { scroll-margin-top: calc(2 * var(--grid-unit)); }
+.uid-at { position: absolute; top: 0; left: 0; }
+/* On a map: part of the bottom strip, on its own paper ground so it reads over the tiles. */
+.uid.on-map { height: 22px; padding: 0 6px; line-height: 22px; background: color-mix(in srgb, var(--paper) 88%, transparent); color: var(--ink-3); }
+
+/* Point badges, the same on the maps, the tables and the legend. A stay is a solid square per number it shows
+   ("03–04" is a double square); a stop is a true circle. The digits are trimmed to their cap height, so they sit
+   at the centre of the shape rather than on the font's line box. */
+.badge {
+  --u: 22px;
+  display: inline-grid; place-items: center; flex: none; box-sizing: border-box;
+  width: calc(var(--u) * var(--span, 1)); height: var(--u); padding: 0;
+  font: 700 11px/1 var(--sans); font-variant-numeric: tabular-nums lining-nums; letter-spacing: 0.02em; white-space: nowrap;
+}
+.badge > span { text-box: trim-both cap alphabetic; }
+.badge.stay { background: var(--ink); color: var(--paper); }
+/* A circle for one number; several stops on one spot (rare) stretch it to a rounded bar. */
+.badge.stop { border: 2px solid var(--ink); border-radius: calc(var(--u) / 2); background: var(--paper); color: var(--ink); }
 
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;

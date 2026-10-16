@@ -1,6 +1,7 @@
 # Example trip built from the Kyrgyzstan travelbook (itinerary, places and road waypoints).
 # Text and tips are illustrative; photos are the author's, downscaled to 4000 px. Camera data was not in the exported files.
 sheet: 1
+code: KGZ
 country: { fr: "Kirghizistan", en: "Kyrgyzstan" }
 start: 2026-09-15
 end: 2026-09-29
@@ -67,7 +68,7 @@ regions:
     days: [1, 2]
     route: []
     points:
-      - { id: bichkek, kind: stage, name: { fr: "Bichkek", en: "Bishkek" }, at: [42.875, 74.57] }
+      - { id: bichkek, kind: stage, name: { fr: "Bichkek", en: "Bishkek" }, at: [42.875, 74.57], nights: [1, 2] }
   - id: son-koul
     name: { fr: "Son-Koul", en: "Son-Kul" }
     days: [3, 4]
@@ -80,7 +81,7 @@ regions:
     points:
       - { id: kotchkor, kind: sight, name: { fr: "Kotchkor : musée et bazar", en: "Kochkor: museum and bazaar" }, at: [42.216, 75.756] }
       - { id: kalmak-ashuu, kind: pass, name: { fr: "Col de Kalmak-Ashuu", en: "Kalmak-Ashuu pass" }, at: [41.9337, 75.7382] }
-      - { id: son-koul-camp, kind: stage, name: { fr: "Camp de yourtes, rive sud du Son-Koul", en: "Yurt camp, Son-Kul south shore" }, at: [41.77, 75.14] }
+      - { id: son-koul-camp, kind: stage, name: { fr: "Camp de yourtes, rive sud du Son-Koul", en: "Yurt camp, Son-Kul south shore" }, at: [41.77, 75.14], nights: [3, 4] }
   - id: naryn
     name: { fr: "Naryn, Köl-Suu et Tash Rabat", en: "Naryn, Köl-Suu and Tash Rabat" }
     days: [5, 7]
@@ -98,9 +99,9 @@ regions:
       - { id: naryn-permit, kind: sight, name: { fr: "Naryn : bureau des permis frontaliers", en: "Naryn: border permit office" }, at: [41.425, 76.015] }
       # Approximate position along the unpaved track (the travelbook has no waypoints for this leg).
       - { id: kol-suu-track, kind: warning, name: { fr: "Piste vers le jailoo de Kychtto", en: "Track to the Kychtto jailoo" }, at: [40.95, 76.2] }
-      - { id: kol-suu-camp, kind: stage, name: { fr: "Camp de Köl-Suu, jailoo de Kychtto", en: "Köl-Suu camp, Kychtto jailoo" }, at: [40.74, 76.4] }
+      - { id: kol-suu-camp, kind: stage, name: { fr: "Camp de Köl-Suu, jailoo de Kychtto", en: "Köl-Suu camp, Kychtto jailoo" }, at: [40.74, 76.4], nights: [5] }
       - { id: kochoy-korgon, kind: sight, name: { fr: "Kochoy Korgon, At-Bashy", en: "Kochoy Korgon, At-Bashy" }, at: [41.17, 75.81] }
-      - { id: tash-rabat, kind: stage, name: { fr: "Caravansérail de Tash Rabat", en: "Tash Rabat caravanserai" }, at: [40.827, 75.287] }
+      - { id: tash-rabat, kind: stage, name: { fr: "Caravansérail de Tash Rabat", en: "Tash Rabat caravanserai" }, at: [40.827, 75.287], nights: [6, 7] }
   - id: issyk-koul-sud
     name: { fr: "Rive sud de l’Issyk-Koul et Karakol", en: "Issyk-Kul south shore and Karakol" }
     days: [8, 10]
@@ -121,11 +122,11 @@ regions:
       - { path: [[42.48805, 78.52724], [42.47699, 78.53085], [42.45849, 78.52854], [42.45578, 78.52942], [42.44768, 78.53755], [42.44667, 78.54367], [42.44262, 78.55364], [42.43522, 78.56413], [42.43226, 78.56455], [42.42856, 78.568], [42.42385, 78.56843], [42.41785, 78.5724], [42.41477, 78.57151], [42.41045, 78.57789], [42.4131, 78.57643], [42.4109, 78.57888], [42.40213, 78.58337], [42.4012, 78.58241], [42.3983, 78.58692], [42.38636, 78.59322], [42.38453, 78.5957], [42.38238, 78.5962], [42.38266, 78.59781], [42.38261, 78.59669], [42.38175, 78.59645], [42.37699, 78.60617]] }
     points:
       - { id: manjyly-ata, kind: sight, name: { fr: "Sources de Manjyly-Ata", en: "Manjyly-Ata springs" }, at: [42.148, 77.086] }
-      - { id: ton, kind: stage, name: { fr: "Ton", en: "Ton" }, at: [42.17, 77.04] }
+      - { id: ton, kind: stage, name: { fr: "Ton", en: "Ton" }, at: [42.17, 77.04], nights: [8] }
       - { id: skazka, kind: sight, name: { fr: "Canyon Skazka", en: "Skazka canyon" }, at: [42.156, 77.351] }
       - { id: tamga-tash, kind: sight, name: { fr: "Pétroglyphes de Tamga Tash", en: "Tamga Tash petroglyphs" }, at: [42.115, 77.521] }
       - { id: jeti-oguz, kind: sight, name: { fr: "Jeti-Ögüz : les Sept Taureaux", en: "Jeti-Ögüz: the Seven Bulls" }, at: [42.342, 78.232] }
-      - { id: karakol, kind: stage, name: { fr: "Karakol", en: "Karakol" }, at: [42.49, 78.4] }
+      - { id: karakol, kind: stage, name: { fr: "Karakol", en: "Karakol" }, at: [42.49, 78.4], nights: [9, 10] }
       - { id: altyn-arashan, kind: sight, name: { fr: "Altyn Arashan", en: "Altyn Arashan" }, at: [42.38, 78.601] }
   - id: jyrgalan
     name: { fr: "Jyrgalan et rive nord", en: "Jyrgalan and the north shore" }
@@ -140,11 +141,11 @@ regions:
       - { path: [[42.46136, 76.18552], [42.45142, 76.17102], [42.45544, 76.1517], [42.45665, 76.13144], [42.45735, 76.11108], [42.4589, 76.09082], [42.46072, 76.07058], [42.4631, 76.0505], [42.46744, 76.03099], [42.46321, 76.01193], [42.4658, 75.99227], [42.46929, 75.97335], [42.4693, 75.95434], [42.46488, 75.9352], [42.46656, 75.9163], [42.4691, 75.89621], [42.47179, 75.87626], [42.48449, 75.86576], [42.4938, 75.85042], [42.50452, 75.83724], [42.51771, 75.82785], [42.53145, 75.81962], [42.5457, 75.81384], [42.55985, 75.81914], [42.57251, 75.80839], [42.58578, 75.80986], [42.59945, 75.81492]] }
       - { path: [[42.59945, 75.81492], [42.62017, 75.82825], [42.63561, 75.84837], [42.6488, 75.87328], [42.66564, 75.88948], [42.68663, 75.88702], [42.70238, 75.86434], [42.72108, 75.84585], [42.74243, 75.83404], [42.76075, 75.81714], [42.77183, 75.79085], [42.77441, 75.76272], [42.78259, 75.73371], [42.78836, 75.70341], [42.79585, 75.67409], [42.80415, 75.64469], [42.81017, 75.61456], [42.8171, 75.58448], [42.82341, 75.55421], [42.82944, 75.52506], [42.82989, 75.49361], [42.83034, 75.46215], [42.8349, 75.43123], [42.83965, 75.40041], [42.84525, 75.36981], [42.8484, 75.33865], [42.8419, 75.3015]] }
     points:
-      - { id: jyrgalan, kind: stage, name: { fr: "Jyrgalan", en: "Jyrgalan" }, at: [42.61, 79.01] }
+      - { id: jyrgalan, kind: stage, name: { fr: "Jyrgalan", en: "Jyrgalan" }, at: [42.61, 79.01], nights: [11] }
       - { id: chon-ak-suu, kind: sight, name: { fr: "Vallée de Tchon Ak-Suu", en: "Chon Ak-Suu valley" }, at: [42.755, 77.479] }
       - { id: cholpon-ata, kind: sight, name: { fr: "Cholpon-Ata : pétroglyphes", en: "Cholpon-Ata: petroglyphs" }, at: [42.649, 77.085] }
       - { id: konorchek, kind: sight, name: { fr: "Canyon de Konorchek", en: "Konorchek canyon" }, at: [42.599, 75.815] }
-      - { id: tokmok, kind: stage, name: { fr: "Tokmok", en: "Tokmok" }, at: [42.84, 75.28] }
+      - { id: tokmok, kind: stage, name: { fr: "Tokmok", en: "Tokmok" }, at: [42.84, 75.28], nights: [12] }
   - id: tchou
     name: { fr: "Vallée du Tchou", en: "Chuy valley" }
     days: [13, 15]
@@ -163,10 +164,10 @@ regions:
     points:
       - { id: tokmok-market, kind: sight, name: { fr: "Marché aux bestiaux de Tokmok", en: "Tokmok livestock market" }, at: [42.854, 75.294] }
       - { id: kol-tor, kind: sight, name: { fr: "Lac Köl-Tör", en: "Köl-Tör lake" }, at: [42.564, 75.162] }
-      - { id: kegeti, kind: stage, name: { fr: "Kegeti", en: "Kegeti" }, at: [42.61, 75.13] }
+      - { id: kegeti, kind: stage, name: { fr: "Kegeti", en: "Kegeti" }, at: [42.61, 75.13], nights: [13] }
       - { id: burana, kind: sight, name: { fr: "Tour Burana", en: "Burana tower" }, at: [42.746, 75.25] }
       - { id: suyab, kind: sight, name: { fr: "Ruines de Suyab", en: "Suyab ruins" }, at: [42.804, 75.203] }
       - { id: navekat, kind: sight, name: { fr: "Ruines de Navekat", en: "Navekat ruins" }, at: [42.916, 75.017] }
       - { id: ata-beyit, kind: sight, name: { fr: "Mémorial Ata-Beyit", en: "Ata-Beyit memorial" }, at: [42.726, 74.593] }
       - { id: ala-archa, kind: sight, name: { fr: "Parc national d’Ala-Archa", en: "Ala-Archa national park" }, at: [42.562, 74.483] }
-      - { id: bichkek-fin, kind: stage, name: { fr: "Bichkek", en: "Bishkek" }, at: [42.875, 74.57] }
+      - { id: bichkek-fin, kind: stage, name: { fr: "Bichkek", en: "Bishkek" }, at: [42.875, 74.57], nights: [14] }

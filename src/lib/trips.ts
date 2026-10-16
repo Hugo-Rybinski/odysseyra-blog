@@ -1,9 +1,8 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import type { ImageMetadata } from 'astro';
 import path from 'node:path';
-import { statSync } from 'node:fs';
 import exifr from 'exifr';
-import { idx, languages, t, type Lang } from '../i18n';
+import { idx, languages, nightsLabel, t, type Lang } from '../i18n';
 
 export type Trip = CollectionEntry<'trips'>;
 export type TripData = Trip['data'];
@@ -32,14 +31,17 @@ export interface Photo {
   caption?: string;
   exif: Exif;
   plate: number;
-  /** Size of the file behind the "Original" link. */
-  bytes: number;
 }
 
 export interface NumberedPoint {
   id: string;
+  /** A stop's own number, or a stay's first night; 0 for passes and warnings. */
   n: number;
-  /** "07. " for numbered points (stages and sights), "" otherwise: the label prefix used everywhere. */
+  /** The badge text: a stop's number ("07") or a stay's nights ("03–04", "01–02 · 14"); "" otherwise. */
+  label: string;
+  /** stage only: the nights spent there. */
+  nights?: number[];
+  /** The text prefix used everywhere a point is named: "07. " for a stop, "Nuits 03–04 · " for a stay, "" otherwise. */
   ref: string;
   kind: PointKind;
   name: string;
@@ -104,12 +106,25 @@ function haversine([lat1, lng1]: [number, number], [lat2, lng2]: [number, number
   return 6371 * 2 * Math.asin(Math.sqrt(a));
 }
 
+/** Stays are numbered by their nights, stops by their own sequence. */
 export function numberPoints(data: TripData, lang: Lang): NumberedPoint[] {
-  let n = 0;
+  const s = t(lang);
+  const lastNight = Math.round((data.end.valueOf() - data.start.valueOf()) / 86_400_000);
+  let stop = 0;
   return data.regions.flatMap((region) =>
     region.points.map((p) => {
-      const num = p.kind === 'stage' || p.kind === 'sight' ? ++n : 0;
-      return { id: p.id, n: num, ref: num ? `${idx(num)}. ` : '', kind: p.kind, name: p.name[lang], at: p.at, regionId: region.id };
+      const base = { id: p.id, kind: p.kind, name: p.name[lang], at: p.at, regionId: region.id };
+      if (p.kind === 'stage') {
+        const nights = p.nights ?? [];
+        if (!nights.length || nights.some((n) => n > lastNight)) throw new Error(`stage "${p.id}" needs nights between 1 and ${lastNight}`);
+        const label = nightsLabel(nights);
+        return { ...base, n: Math.min(...nights), label, nights, ref: `${nights.length > 1 ? s.nights : s.night} ${label} · ` };
+      }
+      if (p.kind === 'sight') {
+        const label = idx(++stop);
+        return { ...base, n: stop, label, ref: `${label}. ` };
+      }
+      return { ...base, n: 0, label: '', ref: '' };
     }),
   );
 }
@@ -163,7 +178,6 @@ export async function getTripView(trip: Trip, lang: Lang, body = ''): Promise<Tr
       caption: p.caption?.[lang],
       exif: { ...p.exif, ...stripEmpty(await readExif(path.join(process.cwd(), key))) },
       plate: ++plate,
-      bytes: statSync(path.join(process.cwd(), key)).size,
     });
   }
   if (!photos.has(trip.data.cover)) throw new Error(`[${slug}] cover photo "${trip.data.cover}" is not in photos`);
@@ -221,7 +235,3 @@ export function mapPoints(trip: TripView) {
   }));
 }
 
-export function formatBytes(lang: Lang, bytes: number) {
-  const mb = bytes / 1_000_000;
-  return `${new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(mb)} ${lang === 'fr' ? 'Mo' : 'MB'}`;
-}

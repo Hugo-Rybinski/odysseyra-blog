@@ -1,0 +1,29 @@
+---
+import { t } from '../i18n';
+
+interface Props {
+  kind: 'good' | 'redo';
+}
+const { kind } = Astro.props;
+const trip = Astro.locals.trip;
+if (!trip) throw new Error('<Good> and <Redo> must be rendered inside a trip page');
+const s = t(trip.lang);
+---
+
+<!-- One half of a <Review>: a titled list. The list marks are drawn: a plus for a highlight, a rule for a change. -->
+<section class:list={['part', kind]}>
+  <h4 class="label">{kind === 'good' ? s.highlights : s.regrets}</h4>
+  <slot />
+</section>
+
+<style>
+  .part { padding: calc(2 * var(--grid-unit) - 1px) calc(2 * var(--grid-unit) - 1px) 4px; }
+  .label { margin: 0 0 12px; font-size: 11px; color: var(--ink-3); }
+  .part :global(ul) { list-style: none; padding: 0; margin: 0; }
+  .part :global(li) { position: relative; padding: 0 0 0.6rem 28px; }
+  .part :global(li)::before, .good :global(li)::after {
+    content: ''; position: absolute; left: 0; top: 0.78em; width: 14px; height: 2px; background: var(--ink);
+  }
+  /* The plus: a second, upright bar through the first. */
+  .good :global(li)::after { left: 6px; top: calc(0.78em - 6px); width: 2px; height: 14px; }
+</style>

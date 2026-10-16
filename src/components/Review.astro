@@ -1,0 +1,31 @@
+---
+import Icon from './Icon.astro';
+import { t } from '../i18n';
+const trip = Astro.locals.trip;
+if (!trip) throw new Error('<Review> must be rendered inside a trip page');
+const s = t(trip.lang);
+---
+
+<!-- A region's closing verdict: what was best, and what I would change next time (<Good> and <Redo> inside).
+     One ruled panel in plain ink, wide like the text panels; the two parts are stacked, split by a hairline rule. -->
+<aside class="review" aria-label={s.review}>
+  <h3 class="head"><Icon name="checklist" size={18} /><span class="label">{s.review}</span></h3>
+  <div class="parts"><slot /></div>
+</aside>
+
+<style>
+  .review {
+    width: var(--wide);
+    margin: var(--gap) 0 0 calc((100% - var(--wide)) / 2);
+    border: 1px solid var(--ink);
+    background: var(--paper);
+  }
+  .head {
+    display: flex; align-items: center; gap: 10px; margin: 0;
+    padding: calc(var(--grid-unit) - 1px) calc(2 * var(--grid-unit) - 1px);
+    border-bottom: 1px solid var(--ink); color: var(--ink); font-size: inherit;
+  }
+  .head .label { font-size: 11px; text-box: trim-both cap alphabetic; }
+  .parts { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .parts > :global(.part + .part) { border-top: 1px solid var(--hair-strong); }
+</style>

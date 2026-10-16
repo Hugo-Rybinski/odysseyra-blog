@@ -32,6 +32,7 @@ const strings = {
   onMap: s.onMap,
   explore: s.explore,
   exploreDone: s.exploreDone,
+  credits: s.credits,
   copy: s.copy,
   copied: s.copied,
   kinds: { stage: s.legendStage, sight: s.legendSight, pass: s.legendPass, warning: s.legendWarning },
@@ -79,9 +80,20 @@ const config = JSON.stringify({ routes, points, variant, strings });
   .sheet-map :global(.leaflet-tile-pane) { filter: grayscale(1) sepia(0.35) hue-rotate(180deg) saturate(1.4) contrast(0.7) brightness(1.18); }
   /* Tiles overlap by half a pixel: the filter otherwise leaves hairline seams between them. */
   .sheet-map :global(.leaflet-tile) { width: 256.5px !important; height: 256.5px !important; }
-  .sheet-map :global(.leaflet-control-attribution) {
-    font: 400 11px/1.4 var(--sans); color: var(--ink-3); background: color-mix(in srgb, var(--paper) 88%, transparent); padding: 3px 6px;
+  /* Map credits folded behind an "i": the licence notice stays one click away without printing over the sheet. */
+  .sheet-map :global(.credits) { display: flex; flex-direction: row-reverse; align-items: stretch; }
+  .sheet-map :global(.credits-toggle) {
+    position: relative; flex: none; width: 22px; height: 22px; padding: 0; border: 0; border-left: 1px solid var(--ink); border-top: 1px solid var(--ink);
+    background: var(--paper); color: var(--ink); font: italic 700 13px/1 Georgia, serif; cursor: pointer;
   }
+  /* A 44px hit area on touch, without growing the drawn square. */
+  .sheet-map :global(.credits-toggle::after) { content: ''; position: absolute; right: 0; bottom: 0; width: 44px; height: 44px; }
+  .sheet-map :global(.credits-toggle:hover), .sheet-map :global(.credits-toggle[aria-expanded='true']) { background: var(--ink); color: var(--paper); }
+  .sheet-map :global(.credits .leaflet-control-attribution) {
+    display: none; float: none; margin: 0; align-content: center;
+    font: 400 11px/1.4 var(--sans); color: var(--ink-3); background: var(--paper); border-top: 1px solid var(--ink); border-left: 1px solid var(--ink); padding: 3px 6px;
+  }
+  .sheet-map :global(.credits.is-open .leaflet-control-attribution) { display: block; }
   .sheet-map :global(.leaflet-control-zoom a) { color: var(--ink); border-radius: 0; }
   .sheet-map :global(.leaflet-bar) { border: 1px solid var(--ink); border-radius: 0; box-shadow: none; }
   .sheet-map :global(.leaflet-popup-content-wrapper), .sheet-map :global(.leaflet-popup-tip), .sheet-map :global(.leaflet-control-zoom a) { background: var(--paper); }
@@ -108,22 +120,34 @@ const config = JSON.stringify({ routes, points, variant, strings });
   .sheet-map :global(.tick.y) { right: 0; transform: translateY(-50%); border-top: 1px solid var(--ink); }
   .sheet-map :global(.leaflet-top.leaflet-left) { top: 18px; }
   .sheet-map :global(.leaflet-top.leaflet-right) { top: 24px; right: 44px; }
-  .sheet-map :global(.leaflet-bottom.leaflet-right) { display: flex; flex-direction: column; align-items: flex-end; }
+  /* One strip along the bottom edge, read right to left: the scale in the corner, the "i" beside it, and the
+     credits unfolding to its left. Leaflet stacks bottom controls newest first, so the order is set here. */
+  .sheet-map :global(.leaflet-bottom.leaflet-right) { display: flex; align-items: flex-end; }
+  .sheet-map :global(.leaflet-bottom.leaflet-right .leaflet-control) { margin: 0; }
+  .sheet-map :global(.leaflet-bottom.leaflet-right .uid) { order: 0; }
+  .sheet-map :global(.leaflet-bottom.leaflet-right .credits) { order: 1; }
+  .sheet-map :global(.leaflet-bottom.leaflet-right .leaflet-control-scale) { order: 2; }
+  /* The ruler's right end is the map's own frame. */
   .sheet-map :global(.leaflet-control-scale-line) {
-    border: 1px solid var(--ink); border-top: 0; background: color-mix(in srgb, var(--paper) 88%, transparent); color: var(--ink); font: 400 11px/1.4 var(--mono);
+    height: 22px; padding: 0 6px; border: 1px solid var(--ink); border-right: 0; border-bottom: 0;
+    background: var(--paper); color: var(--ink); font: 400 11px/21px var(--mono); text-shadow: none;
   }
 
   /* Markers. The inner box carries the look; the outer Leaflet element only positions it, so overlap nudges stay smooth. */
   .sheet-map :global(.pin) { background: none; border: 0; }
+  /* Centred on the point whatever its size: a single, double or triple square, a circle, a symbol. */
   .sheet-map :global(.pin > b) {
-    position: relative; display: grid; place-items: center; width: max-content; min-width: 24px; height: 24px; padding: 0 4px;
-    font: 700 12px/1 var(--sans); color: var(--paper); background: var(--ink); border: 2px solid var(--paper);
-    box-shadow: 0 1px 3px rgb(18 41 79 / 0.35); white-space: nowrap;
-    transform: translate(calc(-50% + 12px + var(--dx, 0px)), var(--dy, 0px));
+    position: relative; display: grid; place-items: center;
+    transform: translate(calc(12px - 50% + var(--dx, 0px)), calc(12px - 50% + var(--dy, 0px)));
     transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .sheet-map :global(.pin.sight > b) { min-width: 22px; height: 22px; border-radius: 50%; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); font-size: 11px; }
-  .sheet-map :global(.pin.pass > b), .sheet-map :global(.pin.warning > b) { background: none; border: 0; box-shadow: none; padding: 0; }
+  /* On the map, a paper ring keeps the ink square readable over any tile. */
+  .sheet-map :global(.pin > b:not(.badge)) { width: max-content; }
+  .sheet-map :global(.pin > .badge) { font-size: 12px; box-shadow: 0 1px 3px rgb(18 41 79 / 0.35); }
+  .sheet-map :global(.pin > .badge.stay) { --u: 26px; border: 2px solid var(--paper); }
+  .sheet-map :global(.pin > .badge.stop) { --u: 24px; }
+  /* Overpass's middle dot has almost no advance width and spills right: draw the separator instead, at cap centre. */
+  .sheet-map :global(.badge .sep) { display: inline-block; width: 3px; height: 3px; margin: 0 5px; border-radius: 50%; background: currentColor; vertical-align: calc(0.35em - 1.5px); }
   .sheet-map :global(.pin svg) { overflow: visible; }
   /* A gold dot: this place has a practical tip in the text. */
   .sheet-map :global(.pin.has-tip > b::after) {
@@ -155,11 +179,12 @@ const config = JSON.stringify({ routes, points, variant, strings });
   import 'leaflet/dist/leaflet.css';
   import foldShade from '../assets/textures/fold-shade.webp?url';
   import foldLit from '../assets/textures/fold-lit.webp?url';
+  import { badgeSpan, nightsLabel } from '../i18n';
 
   type Kind = 'stage' | 'sight' | 'pass' | 'warning';
-  type Pt = { id: string; n: number; ref: string; kind: Kind; name: string; at: [number, number]; regionId: string; regionName: string; href: string; tips: { id: string; label: string }[] };
+  type Pt = { id: string; n: number; label: string; nights?: number[]; ref: string; kind: Kind; name: string; at: [number, number]; regionId: string; regionName: string; href: string; tips: { id: string; label: string }[] };
   type Route = { id: string; name: string; href: string; segments: { approx: boolean; path: [number, number][] }[] };
-  type Strings = { goToRegion: string; readTip: string; showAll: string; onMap: string; explore: string; exploreDone: string; copy: string; copied: string; kinds: Record<Kind, string> };
+  type Strings = { goToRegion: string; readTip: string; showAll: string; onMap: string; explore: string; exploreDone: string; credits: string; copy: string; copied: string; kinds: Record<Kind, string> };
 
   const css = getComputedStyle(document.documentElement);
   const GOLD = css.getPropertyValue('--gold').trim() || '#b08d3e';
@@ -174,7 +199,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
   const warning = () =>
     `<svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 2 24.5 22h-23Z" fill="${GOLD}" stroke="${PAPER}" stroke-width="2" stroke-linejoin="round"/><path d="M13 9v6M13 18.2v.4" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/></svg>`;
 
-  // Points at the same spot (Bishkek, start and finish) share one marker: "1 · 28".
+  // Points at the same spot (Bishkek, start and finish) share one marker: "01–02 · 14".
   function group(points: Pt[]) {
     const groups = new Map<string, Pt[]>();
     for (const p of points) {
@@ -186,10 +211,14 @@ const config = JSON.stringify({ routes, points, variant, strings });
 
   function icon(ps: Pt[]) {
     const p = ps[0];
-    const numbered = p.kind === 'stage' || p.kind === 'sight';
-    const html = numbered ? ps.filter((q) => q.n).map((q) => String(q.n).padStart(2, '0')).join(' · ') : p.kind === 'pass' ? triangle(INK, PAPER) : warning();
     const tip = ps.some((q) => q.tips.length) ? ' has-tip' : '';
-    return L.divIcon({ className: `pin ${p.kind}${tip}`, html: `<b>${html}</b>`, iconSize: [24, 24], iconAnchor: [12, 12], popupAnchor: [0, -14] });
+    let html;
+    if (p.kind === 'stage' || p.kind === 'sight') {
+      // Stays on one spot merge their nights (Bishkek: "01–02 · 14", a triple square); stops list their numbers.
+      const label = p.kind === 'stage' ? nightsLabel(ps.flatMap((q) => q.nights ?? [])) : ps.map((q) => q.label).join(' · ');
+      html = `<b class="badge ${p.kind === 'stage' ? 'stay' : 'stop'}" style="--span:${badgeSpan(label)}"><span>${label.replaceAll(' · ', '<i class="sep"></i>')}</span></b>`;
+    } else html = `<b>${p.kind === 'pass' ? triangle(INK, PAPER) : warning()}</b>`;
+    return L.divIcon({ className: `pin ${p.kind}${tip}`, html, iconSize: [24, 24], iconAnchor: [12, 12], popupAnchor: [0, -16] });
   }
 
   function popup(ps: Pt[], s: Strings, variant: 'trip' | 'region') {
@@ -341,6 +370,29 @@ const config = JSON.stringify({ routes, points, variant, strings });
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, SRTM · <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
     }).addTo(map);
+    // Fold the attribution behind an "i" button. Leaflet rewrites the attribution's own innerHTML, so the button
+    // lives beside it in a wrapper rather than inside it.
+    const Credits = L.Control.extend({
+      onAdd() {
+        const box = L.DomUtil.create('div', 'credits');
+        const text = map.attributionControl.getContainer()!;
+        text.id = `${el.id}-credits`;
+        const btn = L.DomUtil.create('button', 'credits-toggle', box) as HTMLButtonElement;
+        btn.type = 'button';
+        btn.textContent = 'i';
+        btn.setAttribute('aria-label', strings.credits);
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-controls', text.id);
+        btn.addEventListener('click', () => {
+          const open = box.classList.toggle('is-open');
+          btn.setAttribute('aria-expanded', String(open));
+        });
+        box.appendChild(text);
+        L.DomEvent.disableClickPropagation(box);
+        return box;
+      },
+    });
+    new Credits({ position: 'bottomright' }).addTo(map);
 
     const all = L.latLngBounds([]);
     const groups = new Map<string, L.FeatureGroup>();
@@ -432,6 +484,8 @@ const config = JSON.stringify({ routes, points, variant, strings });
       new Explore({ position: 'topright' }).addTo(map);
     }
     registry.set(el.id, entry);
+    // Its controls exist from here on (the box reference joins the bottom strip, see box-uids.ts).
+    el.dispatchEvent(new Event('sheetmap:ready'));
   });
 
   // The sheet grid walk resizes maps to land their outlines on the drafting grid: let Leaflet re-measure.
