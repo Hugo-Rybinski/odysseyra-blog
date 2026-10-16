@@ -62,8 +62,8 @@ export function stampBoxes() {
     a.title = s.boxLink;
     a.setAttribute('aria-label', `${s.boxLink} ${uid}`);
     if (kind === 'MAP') {
-      // On a map the corner belongs to the scale strip: the reference joins it, left of the credits.
-      const place = () => top.querySelector('.leaflet-bottom.leaflet-right')?.prepend(a);
+      // On a map the corner belongs to the bottom strip: the reference joins it as its last cell.
+      const place = () => top.querySelector('.leaflet-bottom.leaflet-right')?.append(a);
       if (top.querySelector('.leaflet-bottom.leaflet-right')) place();
       else top.addEventListener('sheetmap:ready', place, { once: true });
       a.classList.add('on-map');

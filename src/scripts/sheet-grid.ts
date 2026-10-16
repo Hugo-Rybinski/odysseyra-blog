@@ -186,6 +186,10 @@ function runningHead(el: HTMLElement) {
   bottom(el);
 }
 
+/** The trip map and the regions index under it fill this share of the window; the map is never shorter than this. */
+const TRIP_VIEW = 0.8;
+const TRIP_MAP_MIN = 320;
+
 function sheetTop(el: HTMLElement) {
   const hero = el.querySelector<HTMLElement>('.hero-plate')!;
   const cartouche = el.querySelector<HTMLElement>('.cartouche')!;
@@ -213,7 +217,10 @@ function sheetTop(el: HTMLElement) {
     if (heroPlate) plate(heroPlate);
     grow(hero, 'padding-bottom', need(box(wrap).top));
   }
-  // The map itself: its outline's bottom on a line.
+  // The map itself: tall enough that it and the regions index under it fill most of the window (the trip at a
+  // glance), then its outline's bottom on a line.
+  const index = document.querySelector<HTMLElement>('.regions-index');
+  set(map, 'height', `${Math.max(TRIP_MAP_MIN, TRIP_VIEW * innerHeight - (index ? box(index).height : 0))}px`); // refined by fitTripView
   const m = box(map);
   set(map, 'height', `${m.height + need(m.bottom)}px`);
   if (!side) {
@@ -227,7 +234,9 @@ function sheetTop(el: HTMLElement) {
 /** The regions index: column rules on lines, then its bottom rule. */
 function regionsIndex(el: HTMLElement) {
   const ol = el.querySelector<HTMLElement>('ol')!;
-  const cols = getComputedStyle(ol).gridTemplateColumns.split(' ').filter(Boolean).length;
+  // auto-fit keeps collapsed (0px) tracks in the computed list: count only the columns that hold cells, so the last
+  // cell runs to the sheet's edge instead of leaving an empty column after it.
+  const cols = getComputedStyle(ol).gridTemplateColumns.split(' ').filter((t) => parseFloat(t) > 0).length;
   const b = box(ol);
   const widths: string[] = [];
   let prev = b.left;
@@ -238,22 +247,58 @@ function regionsIndex(el: HTMLElement) {
   }
   widths.push('minmax(0, 1fr)');
   set(ol, 'grid-template-columns', widths.join(' '));
-  // A cell that wraps to the start of a row would draw its rule against the sheet's own border.
-  for (const li of ol.children as HTMLCollectionOf<HTMLElement>) {
+  // A cell that wraps to the start of a row would draw its rule against the sheet's own border; a row under another
+  // is ruled off from it; a last cell that ends short of the sheet's edge closes its row with a rule of its own.
+  const cells = [...ol.children] as HTMLElement[];
+  for (const li of cells) {
     if (box(li).left - b.left < 1) set(li, 'border-left-width', '0');
+    if (box(li).top - b.top > 1) set(li, 'border-top', '1px solid var(--hair)');
   }
-  bottom(el);
+  // Row by row, each row's height puts the next row's rule on a line (the first cell of each row stands for it).
+  const firsts = cells.filter((li, i) => i === 0 || box(li).top - box(cells[i - 1]).top > 1);
+  const tracks: number[] = [];
+  for (let r = 1; r < firsts.length; r++) {
+    const next = box(firsts[r]).top;
+    tracks.push(next - box(firsts[r - 1]).top + need(next));
+    set(ol, 'grid-template-rows', `${tracks.map((t) => `${t}px`).join(' ')} auto`);
+  }
+  // A last cell that ends short of the sheet's edge closes its row: a shadow just outside it, on the line the next
+  // cell's rule would take.
+  const last = cells.at(-1);
+  if (last && b.right - box(last).right > 1) set(last, 'box-shadow', '1px 0 0 var(--hair)');
+  // The bottom rule on a line: grow the cells (their rows stretch), not the strip's padding, so the column rules
+  // run all the way down to it.
+  const d = need(box(el).bottom - 1);
+  if (d) set(ol, 'min-height', `${box(ol).height + d}px`);
 }
 
 function sectionHead(el: HTMLElement) {
   top(el);
+  // A link to the section lands on this header's top rule (the spacing above it, grown by the walk, is skipped).
+  const section = el.parentElement!;
+  set(section, 'scroll-margin-top', `${-(box(el).top - box(section).top)}px`);
   bottom(el);
 }
+
+/** A points list longer than this scrolls inside its box (stacked under the map, on phones, rows are much taller). */
+const MAX_ROWS = { side: 7, stacked: 4 };
+/** A region map is never shorter than this many rows of its points list; stacked, never taller than 70% of the
+    window for it, so the map and the start of the list share a phone screen. */
+const MIN_MAP_ROWS = 5;
+const MAX_MAP_VH = 0.7;
 
 /** Region map beside (or above) its points table: map outline, column rule, table rows, bottom rule. */
 function detail(el: HTMLElement) {
   const map = el.querySelector<HTMLElement>('.sheet-map')!;
+  const wrap = el.querySelector<HTMLElement>('.points-wrap');
   const rows = [...el.querySelectorAll<HTMLElement>('.points tr')];
+  const body = [...el.querySelectorAll<HTMLElement>('.points tbody tr')];
+  // Past the cap the list scrolls, showing exactly that many rows (their bottoms are on lines, so the cap is too).
+  const cap = (max: number) => {
+    if (!wrap || body.length <= max) return;
+    set(wrap, 'max-height', `${box(body[max - 1]).bottom - box(wrap).top}px`);
+    set(wrap, 'overflow-y', 'auto');
+  };
   const side = box(map).right < (el.querySelector('.points')?.getBoundingClientRect().left ?? Infinity) - ox + 5;
   const alignRows = () => {
     for (const tr of rows) {
@@ -266,12 +311,18 @@ function detail(el: HTMLElement) {
     const cols = getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean);
     set(el, 'grid-template-columns', `${parseFloat(cols[0]) - mod(b.right)}px minmax(0, 1fr)`);
     alignRows();
+    cap(MAX_ROWS.side);
+    // At least five rows tall, counted with the list's head: a region with one or two places keeps a usable map.
+    const head = el.querySelector<HTMLElement>('.points thead tr');
+    if (body.length) set(map, 'min-height', `${(head ? box(head).height : 0) + MIN_MAP_ROWS * box(body[0]).height}px`);
     const m = box(map);
     set(map, 'min-height', `${m.height + need(m.bottom)}px`);
   } else {
+    if (body.length) set(map, 'min-height', `${Math.min(MIN_MAP_ROWS * box(body[0]).height, MAX_MAP_VH * innerHeight)}px`);
     const m = box(map);
     set(map, 'min-height', `${m.height + need(m.bottom)}px`);
     alignRows();
+    cap(MAX_ROWS.stacked);
     bottom(el);
   }
 }
@@ -324,7 +375,21 @@ export function snapSheet() {
     ox = now.left;
     oy = now.top;
   }
+  fitTripView();
   document.dispatchEvent(new Event('sheet:snapped'));
+}
+
+/** The regions index only takes its final height late in the walk: trim (or grow) the trip map by whole squares so
+    the two fill the share of the window they aim for. Whole squares keep everything below it on the grid. */
+function fitTripView() {
+  const map = document.querySelector<HTMLElement>('.trip-map .sheet-map');
+  const index = document.querySelector<HTMLElement>('.regions-index');
+  if (!map || !index) return;
+  // Their two heights (on phones the summary sits between them), in whole squares, never below the map's minimum.
+  const h = map.getBoundingClientRect().height;
+  const over = h + index.getBoundingClientRect().height - TRIP_VIEW * innerHeight;
+  const d = Math.min(Math.round(over / U) * U, Math.floor((h - TRIP_MAP_MIN) / U) * U);
+  if (d) set(map, 'height', `${h - d}px`);
 }
 
 export function watchSheet() {

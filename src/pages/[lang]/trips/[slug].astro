@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import RunningHead from '../../../components/RunningHead.astro';
+import Progress from '../../../components/Progress.astro';
 import SheetMap from '../../../components/SheetMap.astro';
 import Photo from '../../../components/Photo.astro';
 import Plates from '../../../components/Plates.astro';
@@ -9,6 +10,7 @@ import Tip from '../../../components/Tip.astro';
 import Review from '../../../components/Review.astro';
 import Good from '../../../components/Good.astro';
 import Redo from '../../../components/Redo.astro';
+import Place from '../../../components/Place.astro';
 import Day from '../../../components/Day.astro';
 import Before from '../../../components/Before.astro';
 import Icon from '../../../components/Icon.astro';
@@ -46,9 +48,8 @@ const alternates = Object.fromEntries(languages.map((l) => [l, tripUrl(l, view.s
 const fileBase = `odysseyra-${view.slug}-${lang}`;
 const exportsBase = `${tripUrl(lang, view.slug)}`;
 const routes = data.regions.map((r) => ({ id: r.id, name: r.name[lang], href: `#${r.id}`, segments: r.route }));
-// The trip map carries the overnight stages and the hazards; every stop is on its region map.
-const points = mapPoints(view).filter((p) => p.kind !== 'sight');
-const tipsIn = (regionId: string) => view.tips.filter((tip) => tip.regionId === regionId).length;
+// The trip map carries the overnight stages; every stop and detour is on its region map.
+const points = mapPoints(view).filter((p) => p.kind !== 'sight' && p.kind !== 'detour');
 const nf = new Intl.NumberFormat(lang);
 // Google Maps directions take an origin, a destination and up to 9 stops: the overnight stages fit.
 const stages = view.points.filter((p) => p.kind === 'stage').map((p) => p.at.join(','));
@@ -60,6 +61,7 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
 
 <BaseLayout lang={lang} title={`${text.data.title} — Odysseyra`} description={text.data.description} alternates={alternates}>
   <RunningHead lang={lang} otherHref={tripUrl(otherLang(lang), view.slug)} sheet={sheet} coords={formatDegrees(view.center)} />
+  <Progress lang={lang} />
 
   <main id="main" data-uid={`${data.start.getUTCFullYear()}-${data.code}`}>
     <div class:list={['top', cover.orientation]}>
@@ -86,10 +88,8 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
           <li><span class="sym route" aria-hidden="true"></span>{s.legendRoute}</li>
           <li><span class="badge stay" aria-hidden="true"><span>01</span></span>{s.legendStage}</li>
           <li><span class="badge stop" aria-hidden="true"><span>01</span></span>{s.legendSight}</li>
-          <li><span class="sym" aria-hidden="true"><Icon name="pass" size={18} /></span>{s.legendPass}</li>
-          <li><span class="sym warn" aria-hidden="true"><Icon name="warning" size={18} /></span>{s.legendWarning}</li>
+          <li><span class="sym detour" aria-hidden="true"></span>{s.legendDetour}</li>
           <li><span class="sym approx" aria-hidden="true"></span>{s.legendApprox}</li>
-          <li><span class="sym tipdot" aria-hidden="true"></span>{s.legendTip}</li>
         </ul>
         <h2 class="label take">{s.takeRoute}</h2>
         <div class="exports">
@@ -116,22 +116,19 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
     <nav class="regions-index" aria-label={s.regionsNav}>
       <ol>
         {data.regions.map((r, i) => (
-          <li>
-            <a href={`#${r.id}`}>
-              <span class="data">{idx(i + 1)}</span>
-              <span>{r.name[lang]}</span>
-              <span class="days">
-                {dayRange(lang, r.days)}
-                {tipsIn(r.id) > 0 && <span class="tips"> · {s.tipsCount(tipsIn(r.id))}</span>}
-              </span>
-            </a>
+          <li data-region={r.id}>
+            <button type="button" class="pick" aria-pressed="false" aria-controls="trip-map" title={s.showOnMap}>
+              <span class="meta"><span class="data">{idx(i + 1)}</span><i class="sep" aria-hidden="true"></i>{dayRange(lang, r.days)}</span>
+              <span class="name">{r.name[lang]}</span>
+            </button>
+            <a class="go" href={`#${r.id}`} aria-label={`${s.goToSection} : ${r.name[lang]}`} title={s.goToSection}><Icon name="arrow-down" size={15} /></a>
           </li>
         ))}
       </ol>
     </nav>
 
     <article class="prose">
-      <Content components={{ Before, Region, Day, Photo, Plates, Tip, Review, Good, Redo }} />
+      <Content components={{ Before, Region, Day, Photo, Plates, Tip, Review, Good, Redo, Place }} />
     </article>
 
     {
@@ -178,9 +175,8 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
   .sym { display: inline-grid; place-items: center; width: 24px; flex: none; color: var(--ink); }
   .sym.route { height: 4px; background: var(--gold); }
   .sym.approx { height: 3px; background: repeating-linear-gradient(90deg, var(--gold) 0 3px, transparent 3px 9px); }
-  .sym.tipdot::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 1.5px var(--ink); }
   .symbols .badge { margin-inline: 1px; }
-  .sym.warn { color: var(--gold-ink); }
+  .sym.detour::before { content: ''; width: 12px; height: 12px; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 50%; }
   .exports { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 6px; }
   .btn {
     display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--ink);
@@ -199,11 +195,31 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
 
   .regions-index { border-bottom: 1px solid var(--ink); background: var(--paper); }
   .regions-index ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+  .regions-index li { position: relative; }
   .regions-index li + li { border-left: 1px solid var(--hair); }
-  .regions-index a { display: grid; gap: 2px; height: 100%; padding: 12px var(--pad); text-decoration: none; font-weight: 600; line-height: 1.25; }
-  .regions-index a:hover { background: var(--field); }
-  .regions-index .data, .regions-index .days { color: var(--ink-3); font-weight: 400; font-size: 13px; }
-  .regions-index .tips { color: var(--gold-ink); font-weight: 600; }
+  /* Each cell shows its region on the trip map above (pressed again: the whole trip); the arrow in its corner goes
+     to the region's section. */
+  /* Compact: the number and days on one small line, the name under it; the arrow sits beside the small line only. */
+  .regions-index .pick {
+    display: grid; align-content: start; gap: 1px; width: 100%; height: 100%; padding: 7px 12px 8px;
+    border: 0; background: none; color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; line-height: 1.2; text-align: left; cursor: pointer;
+  }
+  .regions-index .pick:hover { background: var(--field); }
+  .regions-index .meta { padding-right: 22px; color: var(--ink-3); font-size: 12px; font-weight: 400; line-height: 1.4; white-space: nowrap; }
+  .regions-index .data { font-size: inherit; }
+  /* Overpass's middle dot has almost no advance width: a drawn one, at the small caps' centre. */
+  .regions-index .sep { display: inline-block; width: 3px; height: 3px; margin: 0 6px; border-radius: 50%; background: currentColor; vertical-align: 0.3em; }
+  .regions-index .go {
+    position: absolute; top: 3px; right: 3px; display: grid; place-items: center; width: 22px; height: 22px; color: var(--ink-3);
+  }
+  .regions-index .go:hover { color: var(--ink); background: var(--field); }
+  /* On touch, a finger-sized target around the small arrow, without moving it. */
+  @media (pointer: coarse) { .regions-index .go::after { content: ''; position: absolute; inset: -11px -3px -11px -11px; } }
+  /* The region shown on the map: the cell in solid ink, like a day strip. */
+  .regions-index li.is-on .pick { background: var(--ink); color: var(--paper); }
+  .regions-index li.is-on .meta { color: rgb(255 255 255 / 0.75); }
+  .regions-index li.is-on .go { color: var(--paper); }
+  .regions-index li.is-on .go:hover { background: rgb(255 255 255 / 0.14); }
 
   .prose { padding-bottom: var(--gap-section); }
   /* The trip's opening text: a panel at the reading measure, centred under the regions index. */
@@ -242,9 +258,11 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
 <script>
   import { watchSheet } from '../../../scripts/sheet-grid';
   import { stampBoxes } from '../../../scripts/box-uids';
+  import { stickHeads } from '../../../scripts/sticky-heads';
   // References first: their labels sit inside the boxes' padding, so the sheet walk measures the final layout.
   stampBoxes();
   watchSheet();
+  stickHeads();
 
   // Copy buttons anywhere on the page, map popups included (capture phase: Leaflet stops click bubbling in popups).
   async function copy(text: string) {

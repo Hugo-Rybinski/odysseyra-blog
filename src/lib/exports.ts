@@ -5,7 +5,7 @@ const esc = (s: string) => s.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&g
 
 const pointLabel = (lang: Lang, kind: string) => {
   const s = t(lang);
-  return ({ stage: s.legendStage, sight: s.legendSight, pass: s.legendPass, warning: s.legendWarning } as Record<string, string>)[kind];
+  return ({ stage: s.legendStage, sight: s.legendSight, detour: s.legendDetour } as Record<string, string>)[kind];
 };
 
 export function toGpx(trip: TripView, title: string) {

@@ -1,0 +1,39 @@
+---
+import { badgeSpan, t } from '../i18n';
+import { pointHref } from '../lib/trips';
+
+interface Props {
+  /** Id of a point in trip.yaml. */
+  at: string;
+}
+const { at } = Astro.props;
+const trip = Astro.locals.trip;
+if (!trip) throw new Error('<Place> must be rendered inside a trip page');
+const point = trip.points.find((p) => p.id === at);
+if (!point) throw new Error(`[${trip.slug}] <Place at="${at}">: no such point in trip.yaml`);
+const s = t(trip.lang);
+// A place named in the text (the words inside the tag, or the place's own name), keyed to the map as on a survey
+// sheet: its map symbol, then the words. With scripts, a click brings its region map into view, centred on it with
+// its card open (SheetMap.astro); without, the link goes to its row in the points table (a detour has none: its
+// region map).
+---
+
+<a class="place" href={pointHref(point)} data-place={point.id} title={`${s.onMap} · ${point.name}`}>
+  {
+    point.label ? (
+      <span class:list={['badge', point.kind === 'stage' ? 'stay' : 'stop']} style={`--span: ${badgeSpan(point.label)}`} aria-hidden="true">
+        <span>{point.label}</span>
+      </span>
+    ) : (
+      <span class="dot" aria-hidden="true" />
+    )
+  }{Astro.slots.has('default') ? <slot /> : point.name}
+</a>
+
+<style>
+  /* Inline in running text: a small symbol at about cap height, then the words, underlined like any link. */
+  .badge { font-size: 0.62em; --u: 1.8em; margin-right: 0.45em; vertical-align: 0.1em; }
+  .badge.stop { border-width: 1.5px; }
+  /* A detour: the map's small open ring. */
+  .dot { display: inline-block; width: 0.55em; height: 0.55em; margin-right: 0.35em; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper); vertical-align: 0.05em; }
+</style>

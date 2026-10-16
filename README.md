@@ -24,7 +24,7 @@ src/content/trips/<slug>/
 └── photos/     3:2 or 2:3 JPEGs (never cropped)
 ```
 
-`trip.yaml` holds everything both languages share. `code` is the country's three-letter code (`KGZ`), used with the start year in the box references (`2026-KGZ-R04-D09-TXT-01`). Short labels (region and place names, alt text, captions) are written as `{ fr: …, en: … }`. Point kinds: `stage` (overnight, with `nights: [3, 4]`, counted from the first night of the trip), `sight`, `pass`, `warning`. Stages are numbered by their nights on the maps and tables, sights by their own sequence.
+`trip.yaml` holds everything both languages share. `code` is the country's three-letter code (`KGZ`), used with the start year in the box references (`2026-KGZ-R04-D09-TXT-01`). Short labels (region and place names, alt text, captions) are written as `{ fr: …, en: … }`. Point kinds: `stage` (overnight, with `nights: [3, 4]`, counted from the first night of the trip), `sight` (any numbered stop: a village, a pass, a track), and `detour` (a place along the way or a possible side trip: shown on its region map as a small unnumbered ring, left out of the points table and the trip map, and linkable from the text with `<Place>`). Stages are numbered by their nights on the maps and tables, sights by their own sequence.
 
 A region's `route` is a list of stretches. A recorded stretch (a GPS track, or a road traced through waypoints) is drawn as a solid line. Mark a stretch `approx: true` when only its two ends are known: it is drawn dashed, labelled "approximate" in the GPX and KML, and noted under the region map.
 
@@ -39,10 +39,11 @@ Both `fr.mdx` and `en.mdx` are required: the build fails if a published trip is 
 ### Components available in the MDX files
 
 - `<Region id="…">…</Region>`: a region section with its map, its points table (coordinates, copy button, Google/Apple Maps links) and the text.
+- `<Place at="point-id">words</Place>`: names a place in the text with its map symbol; clicking it shows the place on its region map. `<Place at="point-id" />` uses the place's own name.
 - `<Photo id="…" />`: a photo plate with caption and camera settings; the image links to the original.
 - `<Day n={8} title="Tash Rabat → Ton" />`: a day marker inside a region, "Jour 08 / 15" with its date (from `start` in `trip.yaml`) and an optional title. The text after it sits directly under the strip.
 - `<Plates>…</Plates>`: puts photos side by side (two portraits per row; a landscape takes a full row).
-- `<Tip kind="road|fuel|water|money|border|sleep|info" at="point-id">…</Tip>`: a highlighted practical tip, optionally linked to a point. Tips with `at` also put a gold dot on that point's map marker, with a link in its popup. A tip next to text is set into that text panel. `road`, `border` and `fuel` tips get the stronger warning style.
+- `<Tip kind="road|fuel|water|money|border|sleep|info" at="point-id">…</Tip>`: a highlighted practical tip, optionally linked to a point. Tips with `at` are linked from that point's map popup. A tip next to text is set into that text panel. `road`, `border` and `fuel` tips get the stronger warning style.
 - `<Before>…</Before>`: the "before you go" section, placed before the first region (text and tips).
 - `<Review><Good>…</Good><Redo>…</Redo></Review>`: "Mon avis" at the end of a region, with the highlights (`<Good>`) and what I would do differently (`<Redo>`), each usually a short list.
 

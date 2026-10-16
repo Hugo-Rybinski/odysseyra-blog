@@ -38,7 +38,7 @@ const points = mapPoints(trip).filter((p) => p.regionId === id);
         points={points}
       />
     </div>
-    <PointsTable lang={trip.lang} points={points} />
+    <PointsTable lang={trip.lang} points={points.filter((p) => p.kind !== 'detour')} />
   </div>
   <div class="col"><slot /></div>
 </section>
@@ -56,9 +56,10 @@ const points = mapPoints(trip).filter((p) => p.regionId === id);
   .back:hover { color: var(--gold-ink); }
 
   .detail { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(420px, 1fr); border-block: 1px solid var(--ink); background: var(--paper); }
-  .map-cell { display: flex; flex-direction: column; min-width: 0; }
+  /* Above the points list: the map's outline overlaps the list's edge, and the list's sticky heads would cover it. */
+  .map-cell { display: flex; flex-direction: column; min-width: 0; position: relative; z-index: 1; }
   .detail :global(.sheet-map.region) { flex: 1; min-height: clamp(260px, 34vh, 360px); }
-  .detail :global(.points) { align-self: start; }
+  .detail :global(.points-wrap) { align-self: start; }
   @media (max-width: 960px) {
     .detail { grid-template-columns: 1fr; }
     .rhead { grid-template-columns: 1fr; }

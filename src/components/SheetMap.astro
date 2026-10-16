@@ -35,7 +35,7 @@ const strings = {
   credits: s.credits,
   copy: s.copy,
   copied: s.copied,
-  kinds: { stage: s.legendStage, sight: s.legendSight, pass: s.legendPass, warning: s.legendWarning },
+  kinds: { stage: s.legendStage, sight: s.legendSight, detour: s.legendDetour },
 };
 const config = JSON.stringify({ routes, points, variant, strings });
 ---
@@ -109,8 +109,6 @@ const config = JSON.stringify({ routes, points, variant, strings });
   }
   .sheet-map :global(.pop-copy:hover) { background: var(--field); }
   .sheet-map :global(.pop-copy.done::after) { content: attr(data-done); font: 700 13px/1 var(--sans); color: var(--gold-ink); }
-  .sheet-map :global(.pop-tip) { display: inline-flex; gap: 8px; align-items: center; }
-  .sheet-map :global(.pop-tip::before) { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 1.5px var(--ink); flex: none; }
   .sheet-map :global(.graticule) { position: absolute; inset: 0; z-index: 500; pointer-events: none; overflow: hidden; }
   .sheet-map :global(.tick) {
     position: absolute; font: 400 11px/1 var(--mono); color: var(--ink); background: color-mix(in srgb, var(--paper) 92%, transparent); padding: 2px 3px;
@@ -120,14 +118,15 @@ const config = JSON.stringify({ routes, points, variant, strings });
   .sheet-map :global(.tick.y) { right: 0; transform: translateY(-50%); border-top: 1px solid var(--ink); }
   .sheet-map :global(.leaflet-top.leaflet-left) { top: 18px; }
   .sheet-map :global(.leaflet-top.leaflet-right) { top: 24px; right: 44px; }
-  /* One strip along the bottom edge, read right to left: the scale in the corner, the "i" beside it, and the
-     credits unfolding to its left. Leaflet stacks bottom controls newest first, so the order is set here. */
+  /* One strip along the bottom edge, left to right: the scale, the "i" (its credits unfold between the two), and the
+     map's box reference in the corner, like every other box's. Leaflet stacks bottom controls newest first, so the
+     order is set here. */
   .sheet-map :global(.leaflet-bottom.leaflet-right) { display: flex; align-items: flex-end; }
   .sheet-map :global(.leaflet-bottom.leaflet-right .leaflet-control) { margin: 0; }
-  .sheet-map :global(.leaflet-bottom.leaflet-right .uid) { order: 0; }
+  .sheet-map :global(.leaflet-bottom.leaflet-right .leaflet-control-scale) { order: 0; }
   .sheet-map :global(.leaflet-bottom.leaflet-right .credits) { order: 1; }
-  .sheet-map :global(.leaflet-bottom.leaflet-right .leaflet-control-scale) { order: 2; }
-  /* The ruler's right end is the map's own frame. */
+  .sheet-map :global(.leaflet-bottom.leaflet-right .uid) { order: 2; }
+  /* The ruler's right end is the "i"'s left rule. */
   .sheet-map :global(.leaflet-control-scale-line) {
     height: 22px; padding: 0 6px; border: 1px solid var(--ink); border-right: 0; border-bottom: 0;
     background: var(--paper); color: var(--ink); font: 400 11px/21px var(--mono); text-shadow: none;
@@ -135,24 +134,22 @@ const config = JSON.stringify({ routes, points, variant, strings });
 
   /* Markers. The inner box carries the look; the outer Leaflet element only positions it, so overlap nudges stay smooth. */
   .sheet-map :global(.pin) { background: none; border: 0; }
-  /* Centred on the point whatever its size: a single, double or triple square, a circle, a symbol. */
+  /* Centred on the point whatever its size: a single, double or triple square, a circle, a ring. */
   .sheet-map :global(.pin > b) {
     position: relative; display: grid; place-items: center;
     transform: translate(calc(12px - 50% + var(--dx, 0px)), calc(12px - 50% + var(--dy, 0px)));
     transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
   /* On the map, a paper ring keeps the ink square readable over any tile. */
-  .sheet-map :global(.pin > b:not(.badge)) { width: max-content; }
   .sheet-map :global(.pin > .badge) { font-size: 12px; box-shadow: 0 1px 3px rgb(18 41 79 / 0.35); }
   .sheet-map :global(.pin > .badge.stay) { --u: 26px; border: 2px solid var(--paper); }
   .sheet-map :global(.pin > .badge.stop) { --u: 24px; }
   /* Overpass's middle dot has almost no advance width and spills right: draw the separator instead, at cap centre. */
   .sheet-map :global(.badge .sep) { display: inline-block; width: 3px; height: 3px; margin: 0 5px; border-radius: 50%; background: currentColor; vertical-align: calc(0.35em - 1.5px); }
-  .sheet-map :global(.pin svg) { overflow: visible; }
-  /* A gold dot: this place has a practical tip in the text. */
-  .sheet-map :global(.pin.has-tip > b::after) {
-    content: ''; position: absolute; top: -6px; right: -6px; width: 10px; height: 10px; border-radius: 50%;
-    background: var(--gold); border: 1.5px solid var(--ink);
+  /* A detour or a place along the way: a small open ring, no number; quieter than a stop, findable all the same. */
+  .sheet-map :global(.pin > .dot) {
+    box-sizing: border-box; width: 12px; height: 12px; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper);
+    box-shadow: 0 0 0 1.5px var(--paper), 0 1px 3px rgb(18 41 79 / 0.35);
   }
   .sheet-map :global(.pin.is-active > b) { outline: 2px solid var(--gold); outline-offset: 2px; }
   .sheet-map :global(.pin.is-dim) { opacity: 0.4; }
@@ -181,7 +178,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
   import foldLit from '../assets/textures/fold-lit.webp?url';
   import { badgeSpan, nightsLabel } from '../i18n';
 
-  type Kind = 'stage' | 'sight' | 'pass' | 'warning';
+  type Kind = 'stage' | 'sight' | 'detour';
   type Pt = { id: string; n: number; label: string; nights?: number[]; ref: string; kind: Kind; name: string; at: [number, number]; regionId: string; regionName: string; href: string; tips: { id: string; label: string }[] };
   type Route = { id: string; name: string; href: string; segments: { approx: boolean; path: [number, number][] }[] };
   type Strings = { goToRegion: string; readTip: string; showAll: string; onMap: string; explore: string; exploreDone: string; credits: string; copy: string; copied: string; kinds: Record<Kind, string> };
@@ -194,10 +191,6 @@ const config = JSON.stringify({ routes, points, variant, strings });
   const touch = matchMedia('(pointer: coarse)').matches;
   const esc = (v: string) => v.replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]!);
 
-  const triangle = (fill: string, stroke: string) =>
-    `<svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 2 24.5 22h-23Z" fill="${fill}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/></svg>`;
-  const warning = () =>
-    `<svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 2 24.5 22h-23Z" fill="${GOLD}" stroke="${PAPER}" stroke-width="2" stroke-linejoin="round"/><path d="M13 9v6M13 18.2v.4" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/></svg>`;
 
   // Points at the same spot (Bishkek, start and finish) share one marker: "01–02 · 14".
   function group(points: Pt[]) {
@@ -211,14 +204,13 @@ const config = JSON.stringify({ routes, points, variant, strings });
 
   function icon(ps: Pt[]) {
     const p = ps[0];
-    const tip = ps.some((q) => q.tips.length) ? ' has-tip' : '';
     let html;
     if (p.kind === 'stage' || p.kind === 'sight') {
       // Stays on one spot merge their nights (Bishkek: "01–02 · 14", a triple square); stops list their numbers.
       const label = p.kind === 'stage' ? nightsLabel(ps.flatMap((q) => q.nights ?? [])) : ps.map((q) => q.label).join(' · ');
       html = `<b class="badge ${p.kind === 'stage' ? 'stay' : 'stop'}" style="--span:${badgeSpan(label)}"><span>${label.replaceAll(' · ', '<i class="sep"></i>')}</span></b>`;
-    } else html = `<b>${p.kind === 'pass' ? triangle(INK, PAPER) : warning()}</b>`;
-    return L.divIcon({ className: `pin ${p.kind}${tip}`, html, iconSize: [24, 24], iconAnchor: [12, 12], popupAnchor: [0, -16] });
+    } else html = '<b class="dot"></b>';
+    return L.divIcon({ className: `pin ${p.kind}`, html, iconSize: [24, 24], iconAnchor: [12, 12], popupAnchor: [0, -16] });
   }
 
   function popup(ps: Pt[], s: Strings, variant: 'trip' | 'region') {
@@ -318,7 +310,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
     run();
   }
 
-  type Entry = { el: HTMLElement; map: L.Map; groups: Map<string, L.FeatureGroup>; markers: Map<string, L.Marker[]>; all: L.LatLngBounds; note?: HTMLElement; names: Map<string, string> };
+  type Entry = { el: HTMLElement; map: L.Map; byPoint: Map<string, L.Marker>; fit: () => void; moved: boolean; groups: Map<string, L.FeatureGroup>; markers: Map<string, L.Marker[]>; all: L.LatLngBounds; note?: HTMLElement; names: Map<string, string> };
   const registry = new Map<string, Entry>();
   const fitOpts = (pad: number) => ({ paddingTopLeft: [pad + 28, pad] as [number, number], paddingBottomRight: [pad, pad] as [number, number], maxZoom: 11, duration: reduced ? 0 : 0.8 });
 
@@ -326,12 +318,15 @@ const config = JSON.stringify({ routes, points, variant, strings });
     entry.groups.forEach((g) => g.eachLayer((l) => (l as L.Polyline).setStyle?.({ opacity: (l as any).options.baseOpacity ?? 1 })));
     entry.markers.forEach((ms) => ms.forEach((m) => m.getElement()?.classList.remove('is-active', 'is-dim')));
     entry.map.flyToBounds(entry.all, fitOpts(36));
+    entry.moved = false;
     if (entry.note) entry.note.hidden = true;
+    entry.el.dispatchEvent(new CustomEvent('map:region', { bubbles: true, detail: null }));
   }
 
   function highlight(mapId: string, regionId: string) {
     const entry = registry.get(mapId);
     if (!entry) return;
+    entry.moved = true;
     const bounds = L.latLngBounds([]);
     entry.groups.forEach((g, id) => {
       const on = id === regionId;
@@ -358,6 +353,8 @@ const config = JSON.stringify({ routes, points, variant, strings });
       entry.note.hidden = false;
       entry.note.querySelector('.name')!.textContent = entry.names.get(regionId) ?? '';
     }
+    // Whoever asked (a region header's link, the regions index), the index marks the region shown.
+    entry.el.dispatchEvent(new CustomEvent('map:region', { bubbles: true, detail: regionId }));
   }
 
   document.querySelectorAll<HTMLElement>('.sheet-map[data-map]').forEach((el) => {
@@ -429,6 +426,7 @@ const config = JSON.stringify({ routes, points, variant, strings });
     }
 
     const markers = new Map<string, L.Marker[]>();
+    const byPoint = new Map<string, L.Marker>();
     const allMarkers: L.Marker[] = [];
     for (const ps of group(points)) {
       const p = ps[0];
@@ -436,19 +434,25 @@ const config = JSON.stringify({ routes, points, variant, strings });
       // Not in the tab order: every point is listed, with the same actions, in the region tables.
       const m = L.marker(p.at, { icon: icon(ps), keyboard: false, title: label, alt: label, riseOnHover: true }).addTo(map);
       m.bindPopup(popup(ps, strings, variant));
-      for (const q of ps) markers.set(q.regionId, [...(markers.get(q.regionId) ?? []), m]);
+      for (const q of ps) {
+        markers.set(q.regionId, [...(markers.get(q.regionId) ?? []), m]);
+        byPoint.set(q.id, m);
+      }
       allMarkers.push(m);
       all.extend(p.at);
     }
     // Extra room on the left: the zoom buttons sit over that edge.
-    if (all.isValid()) map.fitBounds(all, { paddingTopLeft: [64, 36], paddingBottomRight: [36, 36], maxZoom: 11 });
-    else map.setView([20, 0], 2);
+    const fit = () => (all.isValid() ? map.fitBounds(all, { paddingTopLeft: [64, 36], paddingBottomRight: [36, 36], maxZoom: 11, animate: false }) : map.setView([20, 0], 2));
+    fit();
     L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map);
     graticule(el, map);
     folds(map);
     declutter(map, allMarkers);
 
-    const entry: Entry = { el, map, groups, markers, all, names };
+    const entry: Entry = { el, map, byPoint, fit, moved: false, groups, markers, all, names };
+    // Once the reader has moved the map, a later resize keeps their view instead of re-fitting the route.
+    map.on('dragstart', () => (entry.moved = true));
+    el.querySelector('.leaflet-control-zoom')?.addEventListener('click', () => (entry.moved = true));
     if (variant === 'trip') {
       const Note = L.Control.extend({
         onAdd() {
@@ -489,7 +493,68 @@ const config = JSON.stringify({ routes, points, variant, strings });
   });
 
   // The sheet grid walk resizes maps to land their outlines on the drafting grid: let Leaflet re-measure.
-  document.addEventListener('sheet:snapped', () => registry.forEach((e) => e.map.invalidateSize({ pan: false })));
+  // The walk can make a map much taller (phones): re-fit the route to the new frame unless the reader moved it.
+  document.addEventListener('sheet:snapped', () =>
+    registry.forEach((e) => {
+      e.map.invalidateSize({ pan: false });
+      if (!e.moved) e.fit();
+    }),
+  );
+
+  // A place named in the text (<Place>): bring the map that shows it into view, its region map first (stops are only
+  // there), then centre on it and open its card. The marker flashes the gold outline the region highlight uses.
+  function locate(pointId: string) {
+    const entries = [...registry.values()];
+    const entry = entries.find((e) => e.el.classList.contains('region') && e.byPoint.has(pointId)) ?? entries.find((e) => e.byPoint.has(pointId));
+    const marker = entry?.byPoint.get(pointId);
+    if (!entry || !marker) return false;
+    entry.moved = true;
+    entry.el.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+    let done = false;
+    const show = () => {
+      if (done) return;
+      done = true;
+      entry.map.flyTo(marker.getLatLng(), Math.max(entry.map.getZoom(), 10), { duration: reduced ? 0 : 0.8 });
+      entry.map.once('moveend', () => {
+        marker.openPopup();
+        const pin = marker.getElement();
+        pin?.classList.add('is-active');
+        setTimeout(() => pin?.classList.remove('is-active'), 2400);
+      });
+    };
+    // Fly once the page has stopped scrolling, so the reader sees the move (or soon, if it was already in view).
+    if ('onscrollend' in window) addEventListener('scrollend', show, { once: true });
+    setTimeout(show, reduced ? 0 : 900);
+    return true;
+  }
+  document.addEventListener('click', (e) => {
+    const a = (e.target as Element).closest<HTMLAnchorElement>('a[data-place]');
+    if (a && locate(a.dataset.place!)) e.preventDefault();
+  });
+
+  // The regions index under the trip map: a cell shows its region on the map, pressed again the whole trip.
+  const index = document.querySelector<HTMLElement>('.regions-index');
+  if (index) {
+    let current: string | null = null;
+    index.addEventListener('click', (e) => {
+      const cell = (e.target as Element).closest<HTMLElement>('li[data-region]');
+      if (!cell || !(e.target as Element).closest('.pick')) return;
+      const entry = registry.get('trip-map');
+      if (!entry) return;
+      if (cell.dataset.region === current) return reset(entry);
+      // The map sits right above: the page stays where it is.
+      highlight('trip-map', cell.dataset.region!);
+    });
+    document.addEventListener('map:region', (e) => {
+      if ((e.target as HTMLElement).id !== 'trip-map') return;
+      current = (e as CustomEvent<string | null>).detail;
+      for (const li of index.querySelectorAll<HTMLElement>('li[data-region]')) {
+        const on = li.dataset.region === current;
+        li.classList.toggle('is-on', on);
+        li.querySelector('.pick')?.setAttribute('aria-pressed', String(on));
+      }
+    });
+  }
 
   // Signature cross-link: "show on the trip map" links light up their region on the trip map.
   document.addEventListener('click', (e) => {

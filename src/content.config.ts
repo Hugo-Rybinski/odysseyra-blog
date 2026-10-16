@@ -56,8 +56,10 @@ const trips = defineCollection({
           .array(
             z.object({
               id: z.string(),
-              /** stage: overnight; sight: a stop worth the detour; pass: mountain pass; warning: road or access problem. */
-              kind: z.enum(['stage', 'sight', 'pass', 'warning']).default('sight'),
+              /** stage: overnight; sight: a numbered stop (a place, a pass, a track: all places alike); detour: a place
+                  along the way or a possible side trip, on the region map but unnumbered and left out of the points
+                  table. Road and access warnings are tips (<Tip kind="road">), not points. */
+              kind: z.enum(['stage', 'sight', 'detour']).default('sight'),
               name: localized,
               at: latLng,
               /** stage only: the nights spent there, numbered from the first night of the trip. */
