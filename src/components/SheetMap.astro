@@ -44,6 +44,8 @@ const strings = {
   explore: s.explore,
   exploreDone: s.exploreDone,
   credits: s.credits,
+  scale: s.scale,
+  pointer: s.pointer,
   copy: s.copy,
   copied: s.copied,
   kinds: { stage: s.legendStage, sight: s.legendSight, detour: s.legendDetour },
@@ -129,19 +131,34 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
   .sheet-map :global(.tick.y) { right: 0; transform: translateY(-50%); border-top: 1px solid var(--ink); }
   .sheet-map :global(.leaflet-top.leaflet-left) { top: 18px; }
   .sheet-map :global(.leaflet-top.leaflet-right) { top: 24px; right: 44px; }
-  /* One strip along the bottom edge, left to right: the scale, the "i" (its credits unfold between the two), and the
-     map's box reference in the corner, like every other box's. Leaflet stacks bottom controls newest first, so the
-     order is set here. */
+  /* One strip along the bottom edge, left to right: the scale (bar and fraction), the pointer's position (mouse only),
+     the "i" (its credits unfold beside it), and the map's box reference in the corner, like every other box's.
+     Leaflet stacks bottom controls newest first, so the order is set here. Each cell draws its top and left rules;
+     the next cell's left rule closes it. */
   .sheet-map :global(.leaflet-bottom.leaflet-right) { display: flex; align-items: flex-end; }
   .sheet-map :global(.leaflet-bottom.leaflet-right .leaflet-control) { margin: 0; }
-  .sheet-map :global(.leaflet-bottom.leaflet-right .leaflet-control-scale) { order: 0; }
-  .sheet-map :global(.leaflet-bottom.leaflet-right .credits) { order: 1; }
-  .sheet-map :global(.leaflet-bottom.leaflet-right .uid) { order: 2; }
-  /* The ruler's right end is the "i"'s left rule. */
-  .sheet-map :global(.leaflet-control-scale-line) {
-    height: 22px; padding: 0 6px; border: 1px solid var(--ink); border-right: 0; border-bottom: 0;
-    background: var(--paper); color: var(--ink); font: 400 11px/21px var(--mono); text-shadow: none;
+  .sheet-map :global(.leaflet-bottom.leaflet-right .sheet-scale) { order: 0; }
+  .sheet-map :global(.leaflet-bottom.leaflet-right .readout) { order: 1; }
+  .sheet-map :global(.leaflet-bottom.leaflet-right .credits) { order: 2; }
+  .sheet-map :global(.leaflet-bottom.leaflet-right .uid) { order: 3; }
+  .sheet-map :global(.sheet-scale), .sheet-map :global(.readout) { display: flex; align-items: stretch; height: 22px; }
+  .sheet-map :global(.sheet-scale > *), .sheet-map :global(.readout) {
+    display: flex; align-items: center; padding: 0 6px; border-top: 1px solid var(--ink); border-left: 1px solid var(--ink);
+    background: var(--paper); color: var(--ink); font: 400 11px/1 var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap;
   }
+  /* The scale as a sheet draws it: a bar of four alternating ink and paper segments, then the representative fraction. */
+  .sheet-map :global(.sheet-scale .bar) { padding: 0 2px 0 4px; }
+  .sheet-map :global(.sheet-scale .bar svg) { display: block; overflow: visible; }
+  .sheet-map :global(.sheet-scale .rf) { color: var(--ink-2); }
+  .sheet-map :global(.sheet-scale .rf[hidden]) { display: none; }
+  /* The pointer's position, in degrees and minutes; a click on the map copies it (in decimal degrees). */
+  .sheet-map :global(.readout) { min-width: 25ch; justify-content: flex-start; color: var(--ink-2); }
+  .sheet-map :global(.readout.done) { font: 700 11px/1 var(--sans); letter-spacing: 0.02em; color: var(--gold-ink); }
+  .sheet-map :global(.leaflet-container.has-readout) { cursor: crosshair; }
+  .sheet-map :global(.leaflet-container.has-readout.leaflet-dragging) { cursor: grabbing; }
+  /* The graticule drawn across the map, light: a sheet's grid, under the route and the markers. */
+  /* A pale blue-grey between the tiles' darks and lights, so it reads lightly over relief and over the pale plains alike. */
+  .sheet-map :global(.grid-line) { stroke: #aab5c8; stroke-opacity: 0.75; stroke-width: 1px; fill: none; }
 
   /* Markers. The inner box carries the look; the outer Leaflet element only positions it, so overlap nudges stay smooth. */
   .sheet-map :global(.pin) { background: none; border: 0; }
@@ -203,7 +220,7 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
   type Pt = { id: string; n: number; label: string; nights?: number[]; ref: string; kind: Kind; name: string; at: [number, number]; regionId: string; regionName: string; href: string; tips: { id: string; label: string }[] };
   type Route = { id: string; name: string; href: string; segments: { approx: boolean; path: [number, number][] }[]; soon?: 'planned' | 'travelled' };
   type Frame = { id: string; label: string; bounds: [[number, number], [number, number]]; soon?: boolean };
-  type Strings = { goToRegion: string; readTip: string; showAll: string; onMap: string; explore: string; exploreDone: string; credits: string; copy: string; copied: string; kinds: Record<Kind, string> };
+  type Strings = { goToRegion: string; readTip: string; showAll: string; onMap: string; explore: string; exploreDone: string; credits: string; scale: string; pointer: string; copy: string; copied: string; kinds: Record<Kind, string> };
 
   const css = getComputedStyle(document.documentElement);
   const GOLD = css.getPropertyValue('--gold').trim() || '#b08d3e';
@@ -248,12 +265,16 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
       .join('<hr style="border:0;border-top:1px solid var(--hair);margin:4px 0">');
   }
 
-  // Grid references on the frame, as on a survey sheet: whole or half degrees depending on the view.
+  // Grid references on the frame, as on a survey sheet: whole or half degrees depending on the view, and the same
+  // graticule drawn lightly across the map, in a pane between the tiles and the route.
   function graticule(el: HTMLElement, map: L.Map) {
     const layer = document.createElement('div');
     layer.className = 'graticule';
     layer.setAttribute('aria-hidden', 'true');
     el.appendChild(layer);
+    map.createPane('grid').style.zIndex = '350';
+    const renderer = L.svg({ pane: 'grid', padding: 1 });
+    const lines = L.layerGroup().addTo(map);
     const draw = () => {
       const b = map.getBounds();
       // One step per axis, the finest that keeps its labels a comfortable distance apart (a label is about 50px
@@ -281,9 +302,127 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
         html += `<span class="tick y" style="top:${y}px">${fmt(lat, 'N', 'S')}</span>`;
       }
       layer.innerHTML = html;
+      // The lines run a view beyond each edge, so a pan shows them before the redraw at its end.
+      const far = b.pad(1);
+      const opts = { renderer, className: 'grid-line', interactive: false };
+      lines.clearLayers();
+      for (let i = Math.ceil(far.getWest() / stepX); i * stepX < far.getEast(); i++) {
+        const lng = i * stepX;
+        if (lng >= -180 && lng <= 180) L.polyline([[Math.max(-85, far.getSouth()), lng], [Math.min(85, far.getNorth()), lng]], opts).addTo(lines);
+      }
+      for (let i = Math.ceil(Math.max(-85, far.getSouth()) / stepY); i * stepY < Math.min(85, far.getNorth()); i++) {
+        L.polyline([[i * stepY, far.getWest()], [i * stepY, far.getEast()]], opts).addTo(lines);
+      }
     };
     map.on('moveend zoomend resize', draw);
     draw();
+  }
+
+  // The scale as a printed sheet gives it: an alternating bar of a round length (four segments, labelled at 0, half
+  // and full), then the representative fraction at the screen's nominal 96 dpi.
+  function sheetScale(map: L.Map, label: string) {
+    const lang = document.documentElement.lang || 'fr';
+    const Scale = L.Control.extend({
+      onAdd() {
+        const box = L.DomUtil.create('div', 'sheet-scale');
+        box.setAttribute('role', 'img');
+        const bar = L.DomUtil.create('span', 'bar', box);
+        const rf = L.DomUtil.create('span', 'rf', box);
+        const update = () => {
+          const size = map.getSize();
+          const y = size.y / 2, x = size.x / 2;
+          const mpp = map.distance(map.containerPointToLatLng([x - 50, y]), map.containerPointToLatLng([x + 50, y])) / 100;
+          if (!mpp) return;
+          // The longest round length (1, 2 or 5 × 10ⁿ) under 110px; under 56px on a narrow map, where the strip
+          // also carries the box reference.
+          const narrow = size.x < 520;
+          const max = mpp * (narrow ? 56 : 110);
+          const p = 10 ** Math.floor(Math.log10(max));
+          const len = [5, 2, 1].map((k) => k * p).find((v) => v <= max) ?? p;
+          const px = Math.round(len / mpp / 4) * 4;
+          const km = len >= 1000;
+          const nf = new Intl.NumberFormat(lang, { maximumFractionDigits: 2 });
+          const fmt = (v: number) => nf.format(km ? v / 1000 : v);
+          const seg = px / 4;
+          // x0: room for the "0" centred on the bar's start.
+          const x0 = 4.5;
+          let svg = `<svg width="${px + 32}" height="21" viewBox="0 0 ${px + 32} 21" aria-hidden="true" font-family="${css.getPropertyValue('--mono') || 'monospace'}" font-size="10" fill="${INK}">`;
+          for (let i = 0; i < 4; i++) svg += `<rect x="${x0 + i * seg}" y="12.5" width="${seg}" height="4" fill="${i % 2 ? PAPER : INK}" stroke="${INK}"/>`;
+          svg += `<text x="${x0}" y="9" text-anchor="middle">0</text>`;
+          if (!narrow) svg += `<text x="${x0 + px / 2}" y="9" text-anchor="middle">${fmt(len / 2)}</text>`;
+          svg += `<text x="${x0 + px}" y="9" text-anchor="middle">${fmt(len)}</text><text x="${x0 + px + 5}" y="17">${km ? 'km' : 'm'}</text></svg>`;
+          bar.innerHTML = svg;
+          // 1 px = 0.2646 mm at 96 dpi; two significant figures, as a sheet rounds it.
+          const fraction = `1 : ${new Intl.NumberFormat(lang).format(Number((mpp / 0.00026458).toPrecision(2)))}`;
+          rf.textContent = fraction;
+          box.setAttribute('aria-label', `${label} ${fraction}, ${fmt(len)} ${km ? 'km' : 'm'}`);
+          // A narrow map keeps the bar and drops the fraction.
+          rf.hidden = narrow;
+        };
+        map.on('zoomend moveend resize', update);
+        map.whenReady(update);
+        return box;
+      },
+    });
+    new Scale({ position: 'bottomright' }).addTo(map);
+  }
+
+  // The pointer's position in the bottom strip, as a plotting table reads it out (mouse only); a click on the map
+  // copies it in decimal degrees, the format the points tables copy.
+  function readout(el: HTMLElement, map: L.Map, s: Strings) {
+    const dm = (v: number, pos: string, neg: string) => {
+      const a = Math.abs(v), d = Math.floor(a);
+      return `${d}°${((a - d) * 60).toFixed(2).padStart(5, '0')}′${v >= 0 ? pos : neg}`;
+    };
+    const Readout = L.Control.extend({
+      onAdd() {
+        const box = L.DomUtil.create('output', 'readout');
+        box.setAttribute('aria-label', s.pointer);
+        box.title = s.pointer;
+        let timer = 0;
+        let hovering = false;
+        const show = (ll: L.LatLng) => {
+          box.classList.remove('done');
+          box.textContent = `${dm(ll.lat, 'N', 'S')} ${dm(ll.lng, 'E', 'W')}`;
+        };
+        // Away from the pointer, the cell reads the map's centre, kept up to date as the map moves.
+        const centre = () => !hovering && !timer && show(map.getCenter());
+        map.on('mousemove', (e: L.LeafletMouseEvent) => {
+          hovering = true;
+          if (!timer) show(e.latlng);
+        });
+        map.getContainer().addEventListener('mouseleave', () => {
+          hovering = false;
+          centre();
+        });
+        map.on('move', centre);
+        map.whenReady(centre);
+        map.on('click', async (e: L.LeafletMouseEvent) => {
+          // A click on the route, a marker or a control does its own thing.
+          if ((e.originalEvent.target as Element).closest('.leaflet-interactive, .leaflet-control')) return;
+          const text = `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+          try {
+            await navigator.clipboard.writeText(text);
+          } catch {
+            return;
+          }
+          box.classList.add('done');
+          box.textContent = `${s.copied} ${text}`;
+          const announce = document.getElementById('announce');
+          if (announce) announce.textContent = `${s.copied} — ${text}`;
+          clearTimeout(timer);
+          timer = window.setTimeout(() => {
+            timer = 0;
+            box.classList.remove('done');
+            centre();
+          }, 1600);
+        });
+        L.DomEvent.disableClickPropagation(box);
+        return box;
+      },
+    });
+    new Readout({ position: 'bottomright' }).addTo(map);
+    map.getContainer().classList.add('has-readout');
   }
 
   // The paper sheet: a pane between the route (400) and the markers (600). The pane itself always covers the
@@ -517,7 +656,8 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
     const fit = () => (all.isValid() ? map.fitBounds(all, { paddingTopLeft: [64, 36], paddingBottomRight: [36, 36], maxZoom: 11, animate: false }) : map.setView([20, 0], 2));
     fit();
     sizeOutlines();
-    L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map);
+    sheetScale(map, strings.scale);
+    if (!touch) readout(el, map, strings);
     graticule(el, map);
     folds(map);
     declutter(map, allMarkers);
