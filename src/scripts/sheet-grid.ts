@@ -71,19 +71,6 @@ function boxGrid(grid: HTMLElement) {
   top(grid);
 }
 
-/** Bordered chips in a wrapping row (the "À savoir" tips list). */
-function chips(list: HTMLElement) {
-  set(list, 'gap', '9px');
-  set(list, 'align-self', 'flex-start');
-  grow(list, 'margin-left', need(box(list).left));
-  for (const a of list.querySelectorAll<HTMLElement>('a')) {
-    const r = a.getBoundingClientRect();
-    set(a, 'width', `${Math.ceil((r.width - 1) / U - 1e-6) * U + 1}px`);
-    set(a, 'height', `${Math.ceil((r.height - 1) / U - 1e-6) * U + 1}px`);
-  }
-  top(list);
-}
-
 /** A photo plate: box on lines, image one square inside on lines, in whole steps (3:2 → 30px, 2:3 → 20px). */
 function plate(fig: HTMLElement) {
   const img = fig.querySelector('img') as HTMLImageElement;
@@ -116,18 +103,39 @@ function plate(fig: HTMLElement) {
   }
 }
 
-/** A tip box: all four borders on lines, inside the reading column. */
+/** Tips next to running text are set into its panel (same selector as global.css). */
+const TEXT = ':is(p, ul, ol)';
+export const TIP_IN_TEXT = `.col > aside.tip:is(${TEXT} + *, ${TEXT} + aside.tip + *, ${TEXT} + aside.tip + aside.tip + *, :has(+ ${TEXT}), :has(+ aside.tip + ${TEXT}), :has(+ aside.tip + aside.tip + ${TEXT}))`;
+
+/** A hazard tip's title band ends on a rule of its own; the growth is shared above and below, so it stays centred. */
+function band(head: HTMLElement | null) {
+  if (!head || !hasBorder(head, 'bottom')) return;
+  const d = need(box(head).bottom - 1);
+  grow(head, 'padding-top', d / 2);
+  grow(head, 'padding-bottom', d / 2);
+}
+
+/** A tip box: all four borders on lines. Set into a text panel, the stretch is placed like a paragraph first. */
 function tip(el: HTMLElement) {
+  const inner = el.querySelector<HTMLElement>(':scope > .box')!;
+  if (el.matches(TIP_IN_TEXT)) {
+    // The stretch's sides land on lines like the panel's, and its rule plus padding is whole squares, so the box's
+    // sides land on lines too. Only the box's top and bottom are left to place.
+    textRun(el, false);
+    top(inner);
+    band(inner.querySelector('.head'));
+    bottom(inner);
+    if (hasBorder(el, 'bottom')) bottom(el);
+    return;
+  }
   top(el);
   const b = box(el);
   const left = b.left + need(b.left);
   const right = Math.floor((b.right - 1) / U + 1e-6) * U + 1;
   grow(el, 'margin-left', left - b.left);
   set(el, 'width', `${right - left}px`);
-  // A hazard tip's title band ends on a rule of its own.
-  const head = el.querySelector<HTMLElement>('.head');
-  if (head && hasBorder(head, 'bottom')) bottom(head);
-  bottom(el);
+  band(inner.querySelector('.head'));
+  bottom(inner);
 }
 
 /** Text runs that sit beside a lone portrait (same selector as global.css). */
@@ -160,11 +168,17 @@ function dayStrip(el: HTMLElement) {
   set(el, 'height', `${b.height + need(b.bottom - 1)}px`);
 }
 
-/** A region's "what I'd do differently" panel: wide like the text panels, head rule and bottom rule on lines. */
-function regrets(el: HTMLElement) {
+/** A region's "Mon avis" panel: wide like the text panels; head rule, the rule between its two parts, bottom rule. */
+function review(el: HTMLElement) {
   textRun(el, false);
-  const head = el.querySelector<HTMLElement>('.head');
+  const head = el.querySelector<HTMLElement>(':scope > .head');
   if (head) bottom(head);
+  const parts = el.querySelector<HTMLElement>(':scope > .parts');
+  const [a, b] = parts ? ([...parts.children] as HTMLElement[]) : [];
+  if (parts && a && b) {
+    // The parts are stacked: the second one's top rule goes on a line.
+    grow(a, 'padding-bottom', need(box(b).top));
+  }
   bottom(el);
 }
 
@@ -233,11 +247,6 @@ function regionsIndex(el: HTMLElement) {
 
 function sectionHead(el: HTMLElement) {
   top(el);
-  const know = el.querySelector<HTMLElement>('.know');
-  if (know) {
-    top(know);
-    chips(know.querySelector<HTMLElement>('ul')!);
-  }
   bottom(el);
 }
 
@@ -286,7 +295,7 @@ const handlers: [string, (el: HTMLElement) => void][] = [
   ['.region > .detail', detail],
   ['figure.plate', (el) => !el.closest('.top') && plate(el)],
   ['aside.tip', tip],
-  ['aside.regrets', regrets],
+  ['aside.review', review],
   ['.col > :is(p, ul, ol), .prose > :is(p, ul, ol)', textRun],
   ['.col > .day', dayStrip],
   ['.pager', pager],

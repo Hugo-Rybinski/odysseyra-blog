@@ -1,8 +1,6 @@
 ---
 import { Image } from 'astro:assets';
-import Icon from './Icon.astro';
 import { t } from '../i18n';
-import { formatBytes } from '../lib/trips';
 
 interface Props {
   id: string;
@@ -34,19 +32,19 @@ const plateNo = String(photo.plate).padStart(2, '0');
       <span class="label">{s.plate} {plateNo}</span>
       {photo.caption && <span class="text">{photo.caption}</span>}
     </p>
-    <p class="exif data">
-      {settings.length > 0 && <span>{settings.join(' · ')}</span>}
-      {gear.length > 0 && <span>{gear.join(' · ')}</span>}
-      <a href={image.src} download class="orig">
-        <Icon name="download" size={14} />
-        {s.original} {image.width}×{image.height} · {formatBytes(trip.lang, photo.bytes)}
-      </a>
-    </p>
+    {
+      (settings.length > 0 || gear.length > 0) && (
+        <p class="exif data">
+          {settings.length > 0 && <span>{settings.join(' · ')}</span>}
+          {gear.length > 0 && <span>{gear.join(' · ')}</span>}
+        </p>
+      )
+    }
   </figcaption>
 </figure>
 
 <style>
-  /* A mounted print: image, plate number and download link in one white box with a light border. Border plus padding
+  /* A mounted print: image (a link to the full-size file), plate number and caption in one white box with a light border. Border plus padding
      is exactly one grid square, so when the box sits on the grid, so does the image inside it. */
   .plate {
     margin: var(--gap) 0;
@@ -61,8 +59,5 @@ const plateNo = String(photo.plate).padStart(2, '0');
   .cap .label { color: var(--ink); }
   .cap .text { color: var(--ink-2); }
   .exif { margin: 0; display: flex; flex-wrap: wrap; gap: 2px 16px; color: var(--ink-3); }
-  .orig { display: inline-flex; gap: 6px; align-items: center; color: var(--ink-2); font-family: var(--sans); font-weight: 600; text-decoration: none; }
-  .orig:hover { color: var(--gold-ink); }
-  @media (pointer: coarse) { .orig { min-height: 44px; } }
 </style>
 

@@ -12,6 +12,8 @@ export const ui = {
     region: 'Région',
     day: 'Jour',
     days: 'Jours',
+    night: 'Nuit',
+    nights: 'Nuits',
     route: 'Tracé',
     distance: 'Distance',
     dates: 'Dates',
@@ -38,6 +40,8 @@ export const ui = {
     openGoogle: 'Google Maps',
     openApple: 'Plans',
     tipKinds: { road: 'Route', fuel: 'Carburant', water: 'Eau', money: 'Argent', border: 'Frontière', sleep: 'Nuit', info: 'Pratique' },
+    review: 'Mon avis',
+    highlights: 'Les points forts',
     regrets: 'Ce que je referais autrement',
     before: 'Avant de partir',
     beforeMeta: 'Préparation',
@@ -55,7 +59,6 @@ export const ui = {
     regionsNav: 'Régions du voyage',
     legendApprox: 'Tracé approximatif',
     legendTip: 'Conseil pratique',
-    toKnow: 'À savoir',
     tipsCount: (n: number) => `${n} conseil${n > 1 ? 's' : ''}`,
     goToRegion: 'Aller à la région',
     readTip: 'Lire le conseil',
@@ -63,6 +66,9 @@ export const ui = {
     onMap: 'Sur la carte',
     explore: 'Explorer la carte',
     exploreDone: 'Terminer',
+    credits: 'Sources de la carte',
+    boxLink: 'Lien vers ce bloc',
+    boxRef: 'Référence\u00a0: ',
     copyFallback: 'Sélectionné : copiez avec Ctrl+C',
     copiedAnnounce: 'Coordonnées copiées',
     approxSuffix: 'tracé approximatif',
@@ -76,6 +82,8 @@ export const ui = {
     region: 'Region',
     day: 'Day',
     days: 'Days',
+    night: 'Night',
+    nights: 'Nights',
     route: 'Route',
     distance: 'Distance',
     dates: 'Dates',
@@ -102,6 +110,8 @@ export const ui = {
     openGoogle: 'Google Maps',
     openApple: 'Apple Maps',
     tipKinds: { road: 'Road', fuel: 'Fuel', water: 'Water', money: 'Money', border: 'Border', sleep: 'Night', info: 'Practical' },
+    review: 'My take',
+    highlights: 'The highlights',
     regrets: 'What I would do differently',
     before: 'Before you go',
     beforeMeta: 'Preparation',
@@ -119,7 +129,6 @@ export const ui = {
     regionsNav: 'Trip regions',
     legendApprox: 'Approximate route',
     legendTip: 'Practical tip',
-    toKnow: 'Good to know',
     tipsCount: (n: number) => `${n} tip${n > 1 ? 's' : ''}`,
     goToRegion: 'Go to the region',
     readTip: 'Read the tip',
@@ -127,6 +136,9 @@ export const ui = {
     onMap: 'On the map',
     explore: 'Explore the map',
     exploreDone: 'Done',
+    credits: 'Map credits',
+    boxLink: 'Link to this box',
+    boxRef: 'Reference: ',
     copyFallback: 'Selected: copy with Ctrl+C',
     copiedAnnounce: 'Coordinates copied',
     approxSuffix: 'approximate route',
@@ -140,7 +152,20 @@ export const idx = (n: number) => String(n).padStart(2, '0');
 /** "Jour 03" or "Jours 08–10". */
 export const dayRange = (lang: Lang, [a, b]: readonly [number, number]) =>
   a === b ? `${ui[lang].day} ${idx(a)}` : `${ui[lang].days} ${idx(a)}–${idx(b)}`;
-export const isLang = (v: string | undefined): v is Lang => languages.includes(v as Lang);
+/** Night numbers as a stay label: consecutive nights become a range, the rest are listed. [1, 2, 14] → "01–02 · 14". */
+export function nightsLabel(nights: readonly number[]) {
+  const sorted = [...new Set(nights)].sort((a, b) => a - b);
+  const runs: [number, number][] = [];
+  for (const n of sorted) {
+    const last = runs.at(-1);
+    if (last && n === last[1] + 1) last[1] = n;
+    else runs.push([n, n]);
+  }
+  return runs.map(([a, b]) => (a === b ? idx(a) : `${idx(a)}–${idx(b)}`)).join(' · ');
+}
+/** Point badges are one square (or circle) per number they show: "05" → 1, "03–04" → 2, "01–02 · 14" → 3. */
+export const badgeSpan = (label: string) => label.match(/\d+/g)?.length ?? 1;
+export const isLang =(v: string | undefined): v is Lang => languages.includes(v as Lang);
 export const otherLang = (lang: Lang): Lang => (lang === 'fr' ? 'en' : 'fr');
 
 export const base = import.meta.env.BASE_URL.replace(/\/$/, '');

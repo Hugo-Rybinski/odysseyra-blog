@@ -18,40 +18,47 @@ const hazard = hazardKinds.includes(kind);
 const id = tipId(kind, at, at ? '' : await Astro.slots.render('default'));
 ---
 
+<!-- The outer element places the tip: on its own in the column, or as a stretch of the text panel next to it
+     (see global.css, "Tips set into a text panel"). The box is the tip itself. -->
 <aside class:list={['tip', { hazard }]} id={id} aria-label={s.tipKinds[kind]}>
-  <p class="head">
-    <span class="mark"><Icon name={kind} size={18} /></span>
-    <span class="label">{s.tipKinds[kind]}</span>
-    {point && <a class="at" href={`#pt-${point.id}`}>{point.ref}{point.name}</a>}
-  </p>
-  <div class="body"><slot /></div>
+  <div class="box">
+    <p class="head">
+      <span class="mark"><Icon name={kind} size={18} /></span>
+      <span class="label">{s.tipKinds[kind]}</span>
+      {point && <a class="at" href={`#pt-${point.id}`}>{point.ref}{point.name}</a>}
+    </p>
+    <div class="body"><slot /></div>
+  </div>
 </aside>
 
 <style>
-  .tip {
-    margin: var(--gap) 0;
+  .tip { margin: var(--gap) 0; }
+  .box {
     padding: 12px 16px 4px;
     background: var(--paper);
     border: 1px solid var(--ink);
     outline: 1px solid var(--hair);
     outline-offset: 3px;
   }
+  /* align-items: the icon and the label's capitals share one centre line; the label is trimmed to its cap height so
+     the font's line box does not push it off that line. */
   .head { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; flex-wrap: wrap; }
-  .mark { display: inline-grid; place-items: center; color: var(--gold-ink); }
-  .label { color: var(--ink); }
+  .mark { display: inline-grid; place-items: center; flex: none; color: var(--gold-ink); }
+  .label { color: var(--ink); text-box: trim-both cap alphabetic; }
   .at { margin-left: auto; display: inline-flex; align-items: center; min-height: 32px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
   .body :global(p) { margin-bottom: 0.7em; }
   @media (pointer: coarse) { .at { min-height: 44px; } }
 
-  /* Road, border and fuel warnings: a gold title band, so they read before the informational tips. */
-  .hazard { padding-top: 0; }
+  /* Road, border and fuel warnings: a gold title band, so they read before the informational tips. The sheet walk
+     shares any growth of the band between its top and bottom, so its content stays centred. */
+  .hazard .box { padding-top: 0; }
   .hazard .head { margin: 0 -16px 10px; padding: 6px 16px; background: var(--gold-wash); border-bottom: 1px solid var(--gold); }
   .hazard .mark {
     width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: var(--ink);
   }
   .hazard .label { color: var(--gold-ink); }
 
-  .tip:target { animation: located 2.4s cubic-bezier(0.16, 1, 0.3, 1); }
+  .tip:target .box { animation: located 2.4s cubic-bezier(0.16, 1, 0.3, 1); }
   @keyframes located { from { outline-color: var(--gold); outline-width: 3px; } to { outline-color: var(--hair); outline-width: 1px; } }
-  @media (prefers-reduced-motion: reduce) { .tip:target { animation: none; outline-color: var(--gold); } }
+  @media (prefers-reduced-motion: reduce) { .tip:target .box { animation: none; outline-color: var(--gold); } }
 </style>

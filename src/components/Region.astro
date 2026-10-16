@@ -3,7 +3,7 @@ import SheetMap from './SheetMap.astro';
 import PointsTable from './PointsTable.astro';
 import Icon from './Icon.astro';
 import { dayRange, idx, t } from '../i18n';
-import { hazardKinds, mapPoints } from '../lib/trips';
+import { mapPoints } from '../lib/trips';
 
 interface Props {
   id: string;
@@ -19,36 +19,13 @@ const name = region.name[trip.lang];
 const [d1, d2] = region.days;
 const days = dayRange(trip.lang, region.days);
 const points = mapPoints(trip).filter((p) => p.regionId === id);
-// Hazards first: the road, border and fuel warnings are what a planner scans the header for.
-const tips = trip.tips
-  .filter((tip) => tip.regionId === id)
-  .sort((a, b) => Number(hazardKinds.includes(b.kind)) - Number(hazardKinds.includes(a.kind)));
-const pointName = (at?: string) => trip.points.find((p) => p.id === at)?.name;
 ---
 
-<section class="region" id={id} aria-labelledby={`${id}-title`}>
+<section class="region" id={id} data-region={idx(index + 1)} aria-labelledby={`${id}-title`}>
   <header class="rhead">
     <h2 id={`${id}-title`}>{name}</h2>
     <p class="meta label">{s.region} {idx(index + 1)} / {idx(trip.data.regions.length)} · {days}</p>
     <a class="back" href="#trip-map" data-highlight={id}><Icon name="arrow-up" size={16} />{s.backToMap}</a>
-    {
-      tips.length > 0 && (
-        <div class="know">
-          <p class="label">{s.toKnow} · {s.tipsCount(tips.length)}</p>
-          <ul>
-            {tips.map((tip) => (
-              <li class:list={{ hazard: hazardKinds.includes(tip.kind) }}>
-                <a href={`#${tip.id}`}>
-                  <Icon name={tip.kind} size={16} />
-                  <span class="k">{s.tipKinds[tip.kind]}</span>
-                  {pointName(tip.at) && <span class="at">{pointName(tip.at)}</span>}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )
-    }
   </header>
   <div class="detail">
     <div class="map-cell">
@@ -78,20 +55,6 @@ const pointName = (at?: string) => trip.points.find((p) => p.id === at)?.name;
   .back { display: inline-flex; gap: 6px; align-items: center; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
   .back:hover { color: var(--gold-ink); }
 
-  .know { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding-top: 12px; border-top: 1px solid var(--hair); }
-  .know .label { margin: 0; font-size: 11px; color: var(--ink-3); }
-  .know ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-  .know a {
-    display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px;
-    border: 1px solid var(--hair-strong); font-size: 14px; text-decoration: none; color: var(--ink);
-  }
-  .know a:hover { border-color: var(--ink); background: var(--field); }
-  .know .icon { color: var(--ink-3); flex: none; }
-  .know .k { font-weight: 700; }
-  .know .at { color: var(--ink-2); }
-  .know .hazard a { border-color: var(--gold); background: var(--gold-wash); }
-  .know .hazard .icon { color: var(--gold-ink); }
-
   .detail { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(420px, 1fr); border-block: 1px solid var(--ink); background: var(--paper); }
   .map-cell { display: flex; flex-direction: column; min-width: 0; }
   .detail :global(.sheet-map.region) { flex: 1; min-height: clamp(260px, 34vh, 360px); }
@@ -100,6 +63,5 @@ const pointName = (at?: string) => trip.points.find((p) => p.id === at)?.name;
     .detail { grid-template-columns: 1fr; }
     .rhead { grid-template-columns: 1fr; }
     .rhead .back { grid-column: 1; grid-row: auto; }
-    .know a { min-height: 44px; }
   }
 </style>
