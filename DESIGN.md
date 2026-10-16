@@ -222,6 +222,9 @@ Printed-form boxes, inverted on hover.
 - **Focus:** global 2px gold outline, 3px offset.
 - **Done (copy):** title gains " · Copié/Copied" in gold-ink for 1.8s (white while the button is still hovered), announced through a polite live region. Without clipboard access the text is selected and the live region says how to copy it.
 
+### Mark
+A drafting compass with a star inside, drawn only with circles and straight lines on a 64-unit grid (`src/assets/logo/make-logo.py` writes the three files). The compass: a 24.5-unit ink ring (3 wide), four kite pointers whose widest point sits on the ring (north reaching further out and a little wider), and four short ink ticks inside the ring on the diagonals. It is turned 22.5° east, while the rose at its centre stays upright, like the declination diagram in a map sheet's margin: a gold four-point star (17.5) over a smaller ink one on the diagonals (13.5), clear of the pointers' tails and the ticks. The canvas is cropped square to the drawing. `logo.svg` (ink on paper), `logo-white.svg` (white on ink grounds), `favicon.svg` (a square ink tile, corners square like the sheet, the drawing at 88% for a margin; no ticks or inner rose, which are lost at 16px).
+
 ### Navigation (running head)
 A map-sheet header row: logo and tracked "ODYSSEYRA" (800, 0.16em, 14px), sheet number and country in label/ink-3, FR / EN switch in label (current in ink, other ink-3, gold-ink on hover), centre coordinates in data/ink-3. 1px ink rule beneath. Below 640px it becomes two rows. The language link keeps the reader's current region via the hash.
 
