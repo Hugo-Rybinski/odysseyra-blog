@@ -49,7 +49,9 @@ export interface NumberedPoint {
   regionId: string;
 }
 
-export type TipKind = 'road' | 'fuel' | 'water' | 'money' | 'border' | 'sleep' | 'info';
+/** The boxes set into a sheet's text: a warning (road, border, fuel: read first), a tip (any practical note), the
+    detours on offer, a hike (with its figures), a night (where, and what to know). */
+export type TipKind = 'warning' | 'tip' | 'detour' | 'hike' | 'night';
 
 /** A <Tip> found in the trip's text, so maps and region headers can point to it before it renders. */
 export interface TipRef {
@@ -153,7 +155,7 @@ export function parseTips(body: string): TipRef[] {
     if (m[1]) regionId = m[1];
     else if (m[0] === '</Region>') regionId = undefined;
     else {
-      const kind = (/kind="([^"]+)"/.exec(m[2])?.[1] ?? 'info') as TipKind;
+      const kind = (/kind="([^"]+)"/.exec(m[2])?.[1] ?? 'tip') as TipKind;
       const at = /at="([^"]+)"/.exec(m[2])?.[1];
       const id = tipId(kind, at, m[3]);
       if (!tips.some((t) => t.id === id)) tips.push({ id, kind, at, regionId });
@@ -162,8 +164,6 @@ export function parseTips(body: string): TipRef[] {
   return tips;
 }
 
-/** Tip kinds that warn about the road itself rather than inform. */
-export const hazardKinds: TipKind[] = ['road', 'border', 'fuel'];
 
 export async function getTripView(trip: Trip, lang: Lang, body = ''): Promise<TripView> {
   const slug = trip.id;

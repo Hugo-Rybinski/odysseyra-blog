@@ -2,8 +2,8 @@
  * Stamps every box of the trip sheet with a reference, as on a technical drawing: SHT01-2026-KGZ-R04-D09-TXT-01.
  *
  * The sheet number (SHT01), trip year and country code; the region (R04), left out outside the regions (sheet top,
- * "before you go"); the day (D09) when a day strip comes before the box in its region; the box type (MAP, TXT, PIC, TIP, RGN for a region
- * header, OPN for "Mon avis"); and a number that counts the boxes sharing all of the above, from 00 (the second text
+ * "before you go"); the day (D09) when a day strip comes before the box in its region; the box type (MAP, TXT, PIC,
+ * an inner box by kind: WRN, TIP, DTR, HIK, NGT; RGN for a region header, OPN for "Mon avis"); and a number that counts the boxes sharing all of the above, from 00 (the second text
  * panel of day 9 is TXT-01, its first tip still TIP-00). The page is the same in every language, so a box keeps its
  * reference across languages. Each reference sits in the box's bottom right corner and links to its top.
  *
@@ -13,9 +13,11 @@
 import { isLang, t } from '../i18n';
 import { TIP_IN_TEXT } from './sheet-grid';
 
-type Kind = 'MAP' | 'TXT' | 'PIC' | 'TIP' | 'RGN' | 'OPN' | 'LST' | 'SHT';
+type Kind = 'MAP' | 'TXT' | 'PIC' | 'TIP' | 'WRN' | 'DTR' | 'HIK' | 'NGT' | 'RGN' | 'OPN' | 'LST' | 'SHT';
+/** The boxes set into the text, by kind (Tip.astro's data-kind). */
+const TIP_KINDS: Record<string, Kind> = { tip: 'TIP', warning: 'WRN', detour: 'DTR', hike: 'HIK', night: 'NGT' };
 /** Kinds that belong to one day rather than to a whole region. */
-const DATED: Kind[] = ['TXT', 'PIC', 'TIP', 'OPN'];
+const DATED: Kind[] = ['TXT', 'PIC', 'TIP', 'WRN', 'DTR', 'HIK', 'NGT', 'OPN'];
 
 const BOXES = [
   '.hero-plate figure.plate',
@@ -112,7 +114,7 @@ export function stampBoxes() {
       }
       if (el.matches('aside.tip')) {
         const box = el.querySelector<HTMLElement>(':scope > .box')!;
-        stamp('TIP', box, box);
+        stamp(TIP_KINDS[el.dataset.kind ?? 'tip'] ?? 'TIP', box, box);
       }
     }
   }

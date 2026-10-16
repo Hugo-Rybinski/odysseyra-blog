@@ -110,7 +110,7 @@ components:
 
 Each trip is a printed topographic survey sheet in the manner of IGN or Swisstopo, drawn the way an industrial technical drawing is: navy ink on white drafting paper with light 10px squares, a border scale in the frame, mounted photo prints, and maps printed on real paper and scanned. The map and its legend are the document; the page is framed, ruled and numbered like a map sheet, with a running head carrying sheet number and coordinates, a title cartouche, a legend box with the export actions, and region sheets that each open on a heavy rule. The reading column inside that frame stays plain: one reading face, real contrast, a 62ch measure.
 
-The world is navy ink on white drafting paper. Ink draws every line, type and border. Gold is the route's colour and the hazard tips' colour; it never decorates. Depth comes from rules, not surfaces: double borders, single 1px ink rules between cells, hairlines inside them. Corners are square because printed sheets are square; the only circles are the map's own sight symbols.
+The world is navy ink on white drafting paper. Ink draws every line, type and border. Gold is the route's colour and the warnings' colour; it never decorates. Depth comes from rules, not surfaces: double borders, single 1px ink rules between cells, hairlines inside them. Corners are square because printed sheets are square; the only circles are the map's own sight symbols.
 
 Density is that of a map margin: small tracked capitals for legend and field labels, tabular monospace for every coordinate and EXIF value, and generous whitespace only in the reading column. Photography is shown at native 3:2 or 2:3, never cropped, captioned as numbered plates.
 
@@ -146,7 +146,7 @@ A two-ink print palette: navy in three strengths plus hairline alphas, one gold 
 - **Field Grey** (field): map background before tiles load, image placeholder, hover fill on the regions index, reduced-motion target-row fill.
 
 ### Named Rules
-**The Two-Ink Rule.** Navy draws; gold marks the way. If a gold element is not a route, a warning, a tip mark, a focus or a located state, it is wrong. Gold-wash is the one gold surface: it fills the title band of a hazard tip (road, border, fuel) and its chip in the region header, and nothing else.
+**The Two-Ink Rule.** Navy draws; gold marks the way. If a gold element is not a route, a warning, a tip mark, a focus or a located state, it is wrong. Solid gold is the one gold surface besides the route: it fills a warning's title band, and nothing else; gold-wash only tints the selection, a targeted row and the progress bar's current section.
 
 **The Gold-Ink Split Rule.** Raw gold (#b08d3e) never carries text. Any gold glyph or word at text size uses gold-ink.
 
@@ -160,7 +160,7 @@ A two-ink print palette: navy in three strengths plus hairline alphas, one gold 
 - full-width blocks (running head, title block, regions index, section heads, pager, footer): top and bottom rules;
 - columns: the plate | cartouche rule, the region map | table rule, the regions index cell rules;
 - the export buttons: whole-square boxes (≡ 1px) with 9px gaps;
-- table rows, tip boxes (and a hazard tip's band rule), text panels, photo plates (box on lines, image one square inside in steps of 30px for 3:2 or 20px for 2:3, paired plates matched);
+- table rows, inner boxes (and a warning's band rule, a hike's GPX button), text panels, photo plates (box on lines, image one square inside in steps of 30px for 3:2 or 20px for 2:3, paired plates matched);
 - maps: the outline's edges, by growing the map's height.
 It re-runs on font load and resize, and fires `sheet:snapped` so Leaflet re-measures.
 
@@ -210,7 +210,7 @@ Flat. Depth on the sheet is expressed by rule weight: 2px ink for the frame and 
 
 ## Shapes
 
-Square corners throughout (0): buttons, tips, map controls, popups, stage markers, table, frame. The circle (50%) is a map symbol, reserved for sight markers in the map, legend and table. A detour is a small open ring. There are no pass or warning symbols: a pass or a track is a place like any other (a numbered stop), and road or access warnings are hazard tips. Icons are authored 24px line drawings, 1.75 stroke, round caps and joins, in currentColor.
+Square corners throughout (0): buttons, tips, map controls, popups, stage markers, table, frame. The circle (50%) is a map symbol, reserved for sight markers in the map, legend and table. A detour is a small open ring. There are no pass or warning symbols: a pass or a track is a place like any other (a numbered stop), and road or access warnings are warning boxes. Icons are authored 24px line drawings, 1.75 stroke, round caps and joins, in currentColor.
 
 ## Components
 
@@ -250,12 +250,16 @@ Popups: kind label, name, a mono copy button for the coordinates, a link per tip
 ### Points table
 Coordinates ledger in body size: label-small headers over a 1px ink rule (sticky, the rule drawn as an inset shadow), rows on hairlines, symbol column sized to the widest badge. Past 7 places (4 when the list sits under the map, as on phones, where rows are taller) the list scrolls inside its box, showing exactly that many rows, with a soft shade under the last visible row until the end is reached. The region map is never shorter than 5 rows of the list (plus its head, side by side); stacked, that minimum stops at 70% of the window height. The map sits above the list in the stacking order, so the sticky heads never cover its outline, and it re-fits its route whenever the sheet walk resizes it, until the reader moves it. Coordinates are a mono copy button with a 15px icon turning gold-ink on hover; Google/Apple Maps links below in 13px/600 ink-2. On touch every action is 44px tall and the copy button and links share a wrapping row. A targeted row flashes gold-wash over 2.4s (static field fill under reduced motion). Below 720px rows stack into a two-column grid.
 
-### Tip
-An aside boxed like a legend note: paper fill, 1px ink border plus 1px hairline outline at 3px offset, square. Head row: 18px gold-ink line icon for the kind, label in ink, optional point link right-aligned (14px/600 ink-2). Each tip has a stable id (`tip-<point>-<kind>`) so the map popups link to it; a targeted tip flashes its outline gold. The icon and the label (trimmed to its cap height) share one centre line.
+### Inner boxes (Tip)
+`<Tip kind="…">` boxes set into the text, five kinds. All share the legend-note box (paper fill, 1px ink border plus a 1px hairline outline 3px out, square), a head row (18px line icon, label caps, an optional point link right-aligned, 14px/600 ink-2, from `at="point-id"`), a stable id (`tip-<point>-<kind>`) so map popups link to them, and the gold outline flash when targeted. The icon and the label (trimmed to its cap height) share one centre line.
 
-**Set into the text.** A tip next to running text (directly, or through up to two other tips) is part of that text panel: the outer `aside` becomes a stretch of the panel (same width, fill, side rules and padding, top or bottom rule when it opens or closes the run) and the tip box sits inset in the text column. A tip with no text beside it (between plates) stands on its own in the reading column. The selector lives in `global.css` and `sheet-grid.ts` (`TIP_IN_TEXT`).
+- **warning** ("Attention" / "Warning", warning triangle): road, border, fuel, anything to read first. A double gold frame (1px gold border plus a 1px inset), its outline gold at 55%; the head is a solid gold band over the box's width, ink capitals at 800 (4.6:1 on gold), the icon on a 28px paper disc; the text stays on paper. When the sheet walk grows the band to whole squares it splits the growth above and below.
+- **tip** ("Conseil" / "Tip", info circle): any practical note (money, connectivity, timing). The plain box, icon in gold-ink.
+- **detour** ("Détours possibles" / "Side trips", forking path): a list of side trips; each item is marked with the map's 12px detour ring, a `<Place>` at the start of an item bringing its own (so it also flies the map there).
+- **hike** ("Randonnée" / "Hike", mountain with a flag): `name` (required) in 18px/700, then its figures on a field strip across the box (label-small caps over 600 tabular values, auto-fit from 118px): duration (`duration="5h30"` → "5 h 30", "45min" → "45 min"), distance (km), elevation (`ascent`, the gain only → "+900 m"), route (`course`: loop, out-and-back, one-way → "Boucle", "Aller-retour", "Aller simple"), difficulty (`easy | medium | hard` → three 8px squares, as many filled as the level, then "Facile", "Moyenne", "Difficile"); each figure only when given. Then the description, and with `gpx="file.gpx"` (from the trip's `gpx/` folder) a "GPX de la randonnée" download box styled like the export buttons, whole squares on the grid.
+- **night** ("Nuit" / "Nuits", bed): `at` a stage (required). Its place as on the map: the stay's ink square with its nights and the place name in 600, a link that flies the region map there, the coordinates in 12px mono ink-3; then the optional text.
 
-**Hazard tip** (road, border, fuel): the head becomes a full-width gold-wash band over a 1px gold rule, the icon sits in a 28px gold disc, and the kind label turns gold-ink. When the sheet walk grows the band to whole squares it splits the growth between its top and bottom padding, so its content stays centred.
+**Set into the text.** A box next to running text (directly, or through up to two other boxes) is part of that text panel: the outer `aside` becomes a stretch of the panel (same width, fill, side rules and padding, top or bottom rule when it opens or closes the run) and the box sits inset in the text column. A box with no text beside it (between plates) stands on its own in the reading column. The selector lives in `global.css` and `sheet-grid.ts` (`TIP_IN_TEXT`).
 
 ### Plate (photo)
 A mounted print: a white box with a 1px hair-strong border; border plus padding is exactly one grid square, so the image inside lands on the grid when the box does. Inside: the native-ratio image linking to the original, then a caption: label "Planche nn" in ink beside caption text in ink-2, and, when the photo has EXIF, a data line in ink-3 with aperture · shutter · ISO · focal, camera · lens. Missing EXIF values are omitted, not dashed; with none, the line is left out. The image itself is the only link to the full-size file.
@@ -264,7 +268,7 @@ A mounted print: a white box with a 1px hair-strong border; border plus padding 
 `<Place at="point-id">words</Place>` (or `<Place at="point-id" />` for the place's own name) names a place in the text, keyed to the map: its map symbol inline before the words (the stay square or stop circle at 0.62em with a 1.8em unit, or the detour ring), then the words as an ordinary link. A click brings the region map into view (centred), flies to the place and opens its card, the marker flashing the gold outline; without scripts it links to the place's row in the points table.
 
 ### Box references
-Every box carries a reference in its bottom right corner, as a technical drawing numbers its items: `SHT<sheet>-<year>-<country code>[-R<region>][-D<day>]-<type>-<n>`, e.g. `SHT01-2026-KGZ-R04-D09-TXT-01` (the sheet number first, as on the index's card `IDX-SHT01-KGZ`). The region is left out outside the regions (sheet top, "Avant de partir"); the day appears when a day strip comes before the box in its region, and never on RGN or MAP. Types: MAP, TXT (a text panel), PIC, TIP, RGN (a region or "before you go" header), OPN ("Mon avis"). `n` counts the boxes sharing everything before it, from `00` (two digits): the second text panel of day 9 is `TXT-01` while that day's first tip is still `TIP-00`. The page is the same in every language, so a box keeps its reference across languages.
+Every box carries a reference in its bottom right corner, as a technical drawing numbers its items: `SHT<sheet>-<year>-<country code>[-R<region>][-D<day>]-<type>-<n>`, e.g. `SHT01-2026-KGZ-R04-D09-TXT-01` (the sheet number first, as on the index's card `IDX-SHT01-KGZ`). The region is left out outside the regions (sheet top, "Avant de partir"); the day appears when a day strip comes before the box in its region, and never on RGN or MAP. Types: MAP, TXT (a text panel), PIC, and the inner boxes by kind (WRN a warning, TIP a tip, DTR detours, HIK a hike, NGT a night), RGN (a region or "before you go" header), OPN ("Mon avis"). `n` counts the boxes sharing everything before it, from `00` (two digits): the second text panel of day 9 is `TXT-01` while that day's first tip is still `TIP-00`. The page is the same in every language, so a box keeps its reference across languages.
 
 The sheet index uses `IDX` in place of year and country: `IDX-MAP-00` (the index map), `IDX-LST-00` (the list of sheets in its cartouche, two squares of padding under its last row for the label) and `IDX-SHT<sheet>-<code>` (a sheet's card, named after its sheet: `IDX-SHT01-KGZ`, `IDX-SHT02-BOL`, whatever its place in the grid; the label sits above the card's link). The "Feuilles" section head, the legend and the author's links carry none.
 
@@ -318,7 +322,7 @@ Trip sheets carry `written` and optional `updated` dates (`trip.yaml`). Under th
 ### Don't:
 - **Don't** round corners on boxes, buttons, tips or map controls; the circle belongs to the sight symbol only.
 - **Don't** put drop shadows on page surfaces; shadow is for map pins and popups.
-- **Don't** use gold for decoration, headings, backgrounds or body links (the hazard band's gold-wash is the single exception).
+- **Don't** use gold for decoration, headings, backgrounds or body links (a warning's gold band is the single exception).
 - **Don't** draw an approximate stretch as a solid line, or join unrelated points into one line: a route the reader may follow must say how precise it is.
 - **Don't** crop photos or force them into a uniform ratio.
 - **Don't** set a tracked-capital label above or below a heading unless it carries a field name or data.

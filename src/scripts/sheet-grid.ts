@@ -107,12 +107,23 @@ function plate(fig: HTMLElement) {
 const TEXT = ':is(p, ul, ol)';
 export const TIP_IN_TEXT = `.col > aside.tip:is(${TEXT} + *, ${TEXT} + aside.tip + *, ${TEXT} + aside.tip + aside.tip + *, :has(+ ${TEXT}), :has(+ aside.tip + ${TEXT}), :has(+ aside.tip + aside.tip + ${TEXT}))`;
 
-/** A hazard tip's title band ends on a rule of its own; the growth is shared above and below, so it stays centred. */
+/** A warning's title band ends on a rule of its own; the growth is shared above and below, so it stays centred. */
 function band(head: HTMLElement | null) {
   if (!head || !hasBorder(head, 'bottom')) return;
   const d = need(box(head).bottom - 1);
   grow(head, 'padding-top', d / 2);
   grow(head, 'padding-bottom', d / 2);
+}
+
+/** A hike's GPX button: a whole-square box on the lines, like the export buttons. */
+function gpxButton(inner: HTMLElement) {
+  const btn = inner.querySelector<HTMLElement>(':scope > .gpx');
+  if (!btn) return;
+  const b = box(btn);
+  set(btn, 'width', `${Math.ceil((b.width - 1) / U - 1e-6) * U + 1}px`);
+  set(btn, 'height', `${Math.ceil((b.height - 1) / U - 1e-6) * U + 1}px`);
+  grow(btn, 'margin-left', need(b.left));
+  top(btn);
 }
 
 /** A tip box: all four borders on lines. Set into a text panel, the stretch is placed like a paragraph first. */
@@ -124,6 +135,7 @@ function tip(el: HTMLElement) {
     textRun(el, false);
     top(inner);
     band(inner.querySelector('.head'));
+    gpxButton(inner);
     bottom(inner);
     if (hasBorder(el, 'bottom')) bottom(el);
     return;
@@ -135,6 +147,7 @@ function tip(el: HTMLElement) {
   grow(el, 'margin-left', left - b.left);
   set(el, 'width', `${right - left}px`);
   band(inner.querySelector('.head'));
+  gpxButton(inner);
   bottom(inner);
 }
 
