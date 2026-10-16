@@ -159,7 +159,7 @@ const alternates = Object.fromEntries(languages.map((l) => [l, homeUrl(l)]));
                 sizes="(min-width: 1100px) 25vw, (min-width: 640px) 50vw, 100vw"
               />
             </div>
-            <p class="meta label">{s.sheet} {p.n} · {p.country}</p>
+            <p class="meta label">{s.sheet} {p.n} <i class="sep" aria-hidden="true"></i> {p.country}</p>
             <h3><a href={p.url}>{p.title}</a></h3>
             <p class="lede">{p.description}</p>
             <p class="stats">

@@ -44,6 +44,8 @@ const strings = {
   explore: s.explore,
   exploreDone: s.exploreDone,
   credits: s.credits,
+  zoomIn: s.zoomIn,
+  zoomOut: s.zoomOut,
   scale: s.scale,
   pointer: s.pointer,
   copy: s.copy,
@@ -89,7 +91,8 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
   .sheet-map :global(.fold-shade) { mix-blend-mode: multiply; }
   .sheet-map :global(.fold-lit) { mix-blend-mode: screen; }
   .fallback { margin: 0; padding: 16px 16px 16px 36px; font-size: 14px; }
-  .sheet-map :global(.leaflet-container) { font: inherit; background: var(--field); }
+  /* The map element is the Leaflet container itself: Leaflet's font (Helvetica) would win over a descendant rule. */
+  .sheet-map:global(.leaflet-container) { font: inherit; background: var(--field); }
   .sheet-map :global(.leaflet-tile-pane) { filter: grayscale(1) sepia(0.35) hue-rotate(180deg) saturate(1.4) contrast(0.7) brightness(1.18); }
   /* Tiles overlap by half a pixel: the filter otherwise leaves hairline seams between them. */
   .sheet-map :global(.leaflet-tile) { width: 256.5px !important; height: 256.5px !important; }
@@ -97,7 +100,7 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
   .sheet-map :global(.credits) { display: flex; flex-direction: row-reverse; align-items: stretch; }
   .sheet-map :global(.credits-toggle) {
     position: relative; flex: none; width: 22px; height: 22px; padding: 0; border: 0; border-left: 1px solid var(--ink); border-top: 1px solid var(--ink);
-    background: var(--paper); color: var(--ink); font: italic 700 13px/1 Georgia, serif; cursor: pointer;
+    display: grid; place-items: center; background: var(--paper); color: var(--ink); cursor: pointer;
   }
   /* A 44px hit area on touch, without growing the drawn square. */
   .sheet-map :global(.credits-toggle::after) { content: ''; position: absolute; right: 0; bottom: 0; width: 44px; height: 44px; }
@@ -107,8 +110,16 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
     font: 400 11px/1.4 var(--sans); color: var(--ink-3); background: var(--paper); border-top: 1px solid var(--ink); border-left: 1px solid var(--ink); padding: 3px 6px;
   }
   .sheet-map :global(.credits.is-open .leaflet-control-attribution) { display: block; }
-  .sheet-map :global(.leaflet-control-zoom a) { color: var(--ink); border-radius: 0; }
-  .sheet-map :global(.leaflet-bar) { border: 1px solid var(--ink); border-radius: 0; box-shadow: none; }
+  /* The zoom buttons: two square cells in one ink frame, an ink rule between them. Leaflet's own rules
+     (.leaflet-touch .leaflet-bar a:first-child …) match as specifically as a scoped one, so these name the control twice. */
+  .sheet-map :global(.leaflet-control-zoom.leaflet-bar) { border: 1px solid var(--ink); border-radius: 0; box-shadow: none; background-clip: border-box; }
+  .sheet-map :global(.leaflet-control-zoom.leaflet-bar a) {
+    display: grid; place-items: center; width: 30px; height: 30px; border-radius: 0; border: 0; color: var(--ink); font: inherit;
+  }
+  .sheet-map :global(.leaflet-control-zoom.leaflet-bar a + a) { border-top: 1px solid var(--ink); }
+  .sheet-map :global(.leaflet-control-zoom.leaflet-bar a svg) { display: block; }
+  .sheet-map :global(.leaflet-control-zoom.leaflet-bar a:hover) { background: var(--ink); color: var(--paper); }
+  .sheet-map :global(.leaflet-control-zoom.leaflet-bar a.leaflet-disabled) { background: var(--paper); color: var(--hair-strong); }
   .sheet-map :global(.leaflet-popup-content-wrapper), .sheet-map :global(.leaflet-popup-tip), .sheet-map :global(.leaflet-control-zoom a) { background: var(--paper); }
   .sheet-map :global(.leaflet-popup-content-wrapper) { border-radius: 0; border: 1px solid var(--ink); box-shadow: 0 6px 18px rgb(18 41 79 / 0.14); }
   .sheet-map :global(.leaflet-popup-tip) { border: 1px solid var(--ink); box-shadow: none; }
@@ -154,8 +165,8 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
   /* The pointer's position, in degrees and minutes; a click on the map copies it (in decimal degrees). */
   .sheet-map :global(.readout) { min-width: 25ch; justify-content: flex-start; color: var(--ink-2); }
   .sheet-map :global(.readout.done) { font: 700 11px/1 var(--sans); letter-spacing: 0.02em; color: var(--gold-ink); }
-  .sheet-map :global(.leaflet-container.has-readout) { cursor: crosshair; }
-  .sheet-map :global(.leaflet-container.has-readout.leaflet-dragging) { cursor: grabbing; }
+  .sheet-map:global(.leaflet-container.has-readout) { cursor: crosshair; }
+  .sheet-map:global(.leaflet-container.has-readout.leaflet-dragging) { cursor: grabbing; }
   /* The graticule drawn across the map, light: a sheet's grid, under the route and the markers. */
   /* A pale blue-grey between the tiles' darks and lights, so it reads lightly over relief and over the pale plains alike. */
   .sheet-map :global(.grid-line) { stroke: #aab5c8; stroke-opacity: 0.75; stroke-width: 1px; fill: none; }
@@ -169,7 +180,9 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
     transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
   /* On the map, a paper ring keeps the ink square readable over any tile. */
-  .sheet-map :global(.pin > .badge) { font-size: 12px; box-shadow: 0 1px 3px rgb(18 41 79 / 0.35); }
+  .sheet-map :global(.pin > .badge) { font-size: 12px; }
+  /* No drop shadows: a printed map has none. A stop's circle gets the same crisp paper ring as a stay's square. */
+  .sheet-map :global(.pin > .badge.stop) { box-shadow: 0 0 0 1.5px var(--paper); }
   .sheet-map :global(.pin > .badge.stay) { --u: 26px; border: 2px solid var(--paper); }
   .sheet-map :global(.pin > .badge.stop) { --u: 24px; }
   /* Overpass's middle dot has almost no advance width and spills right: draw the separator instead, at cap centre. */
@@ -177,12 +190,12 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
   /* A detour or a place along the way: a small open ring, no number; quieter than a stop, findable all the same. */
   .sheet-map :global(.pin > .dot) {
     box-sizing: border-box; width: 12px; height: 12px; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper);
-    box-shadow: 0 0 0 1.5px var(--paper), 0 1px 3px rgb(18 41 79 / 0.35);
+    box-shadow: 0 0 0 1.5px var(--paper);
   }
   /* A sheet's number on its extent's top left corner: an open square, as a frame's own label (not a stay). */
   .sheet-map :global(.pin > .sheet-no) {
     --u: 26px; transform: none; font-size: 12px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
-    box-shadow: 0 1px 3px rgb(18 41 79 / 0.35);
+    box-shadow: 0 0 0 1.5px var(--paper);
   }
   .sheet-map :global(.pin.frame) { cursor: pointer; }
   .sheet-map :global(path.is-tiny) { visibility: hidden; }
@@ -220,7 +233,7 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
   type Pt = { id: string; n: number; label: string; nights?: number[]; ref: string; kind: Kind; name: string; at: [number, number]; regionId: string; regionName: string; href: string; tips: { id: string; label: string }[] };
   type Route = { id: string; name: string; href: string; segments: { approx: boolean; path: [number, number][] }[]; soon?: 'planned' | 'travelled' };
   type Frame = { id: string; label: string; bounds: [[number, number], [number, number]]; soon?: boolean };
-  type Strings = { goToRegion: string; readTip: string; showAll: string; onMap: string; explore: string; exploreDone: string; credits: string; scale: string; pointer: string; copy: string; copied: string; kinds: Record<Kind, string> };
+  type Strings = { goToRegion: string; readTip: string; showAll: string; onMap: string; explore: string; exploreDone: string; credits: string; zoomIn: string; zoomOut: string; scale: string; pointer: string; copy: string; copied: string; kinds: Record<Kind, string> };
 
   const css = getComputedStyle(document.documentElement);
   const GOLD = css.getPropertyValue('--gold').trim() || '#b08d3e';
@@ -257,7 +270,7 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
     return ps
       .map((p) => {
         const ll = `${p.at[0].toFixed(5)}, ${p.at[1].toFixed(5)}`;
-        const tips = p.tips.map((tip) => `<a class="pop-tip" href="#${tip.id}">${esc(s.readTip)} · ${esc(tip.label)}</a>`).join('');
+        const tips = p.tips.map((tip) => `<a class="pop-tip" href="#${tip.id}">${esc(s.readTip)} <i class="sep" aria-hidden="true"></i> ${esc(tip.label)}</a>`).join('');
         const region = variant === 'trip' ? `<a href="#${p.regionId}">${esc(s.goToRegion)} : ${esc(p.regionName)}</a>` : '';
         return `<p class="pop-kind">${esc(s.kinds[p.kind])}</p><p><strong>${p.ref}${esc(p.name)}</strong></p>
           <button type="button" class="pop-copy" data-copy="${ll}" data-done="${esc(s.copied)}" aria-label="${esc(s.copy)} ${ll}">${ll}</button>${tips}${region}`;
@@ -531,7 +544,11 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
   document.querySelectorAll<HTMLElement>('.sheet-map[data-map]').forEach((el) => {
     const { routes, points, variant, frames, strings } = JSON.parse(el.dataset.map!) as { routes: Route[]; points: Pt[]; variant: 'trip' | 'region'; frames: Frame[]; strings: Strings };
     // Touch screens: one finger scrolls the page until the reader asks to explore the map.
-    const map = L.map(el, { scrollWheelZoom: false, dragging: !touch, zoomSnap: 0.25, attributionControl: true, keyboardPanDelta: 120 });
+    const map = L.map(el, { zoomControl: false, scrollWheelZoom: false, dragging: !touch, zoomSnap: 0.25, attributionControl: true, keyboardPanDelta: 120 });
+    // The zoom buttons, labelled in the page's language, their + and − drawn as the sheet's own strokes rather than
+    // set in Leaflet's monospace.
+    const stroke = (d: string) => `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="${d}" stroke="currentColor" stroke-width="1.75" fill="none"/></svg>`;
+    L.control.zoom({ zoomInTitle: strings.zoomIn, zoomOutTitle: strings.zoomOut, zoomInText: stroke('M0 6h12M6 0v12'), zoomOutText: stroke('M0 6h12') }).addTo(map);
     L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
       maxZoom: 17,
       subdomains: 'abc',
@@ -547,7 +564,8 @@ const config = JSON.stringify({ routes, points, variant, frames, strings });
         text.id = `${el.id}-credits`;
         const btn = L.DomUtil.create('button', 'credits-toggle', box) as HTMLButtonElement;
         btn.type = 'button';
-        btn.textContent = 'i';
+        // The "i" drawn as the info icon's stem and dot (the square is its circle), not set in a serif italic.
+        btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 5v6M6 1.5v1.75" stroke="currentColor" stroke-width="2" fill="none"/></svg>';
         btn.setAttribute('aria-label', strings.credits);
         btn.setAttribute('aria-expanded', 'false');
         btn.setAttribute('aria-controls', text.id);

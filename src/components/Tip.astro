@@ -61,7 +61,7 @@ const label = kind === 'night' && nights > 1 ? s.nights : s.tipKinds[kind];
     <p class="head">
       <span class="mark"><Icon name={icon[kind]} size={18} /></span>
       <span class="label">{label}</span>
-      {point && kind !== 'night' && <a class="at" href={pointHref(point)}>{point.ref}{point.name}</a>}
+      {point && kind !== 'night' && <a class="at" href={pointHref(point)}>{point.ref.replace(/ · $/, '')}{point.ref.endsWith(' · ') && <> <i class="sep" aria-hidden="true"></i> </>}{point.name}</a>}
     </p>
     {
       kind === 'night' && point && (

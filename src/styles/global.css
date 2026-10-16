@@ -282,6 +282,10 @@ section.region, section.before { scroll-margin-top: calc(-1 * var(--gap-section)
 /* A circle for one number; several stops on one spot (rare) stretch it to a rounded bar. */
 .badge.stop { border: 2px solid var(--ink); border-radius: calc(var(--u) / 2); background: var(--paper); color: var(--ink); }
 
+/* The separator in labels ("Feuille 01 · Kirghizistan"): a drawn dot between two real spaces. The font's "·" sits
+   against the next capital, so the dot is drawn and centred instead; the spaces keep the words apart when read aloud. */
+.sep { display: inline-block; width: 3px; height: 3px; margin: 0 1px; border-radius: 50%; background: currentColor; vertical-align: 0.3em; }
+
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
 }
