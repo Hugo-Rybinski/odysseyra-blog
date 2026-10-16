@@ -18,7 +18,7 @@ const other = otherLang(lang);
     <img src={`${base}/logo.svg`} alt="" width="30" height="30" />
     <span>Odysseyra</span>
   </a>
-  {sheet && <p class="label sheet-no">{sheet}</p>}
+  {sheet && <p class="label sheet-no"><a href="#top">{sheet}</a></p>}
   <nav class="langs label" aria-label="Langue / Language">
     <span aria-current="true">{lang.toUpperCase()}</span>
     <span aria-hidden="true">/</span>
@@ -31,9 +31,15 @@ const other = otherLang(lang);
   .rhead {
     display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 12px 28px;
     padding: 12px var(--pad); border-bottom: 1px solid var(--ink); background: var(--paper);
+    /* The page's running title: it stays at the top of the window all the way down (sticky-heads.ts). */
+    position: sticky; top: 0; z-index: 30;
   }
   .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; font-size: 14px; }
   .sheet-no { margin: 0; color: var(--ink-3); }
+  /* The sheet's title goes back to the top of the sheet. */
+  .sheet-no a { color: inherit; text-decoration: none; }
+  .sheet-no a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+  @media (pointer: coarse) { .sheet-no a { display: inline-flex; align-items: center; min-height: 44px; } }
   .langs { display: flex; gap: 8px; }
   .langs [aria-current] { color: var(--ink); }
   .langs a { color: var(--ink-3); text-decoration: none; }

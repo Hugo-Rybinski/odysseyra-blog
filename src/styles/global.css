@@ -246,8 +246,17 @@ a:hover { text-decoration-color: var(--gold); }
 /* Anchored boxes stop a little below the top of the window, and maps keep a marker at their top edge. */
 .has-uid, .uid-at { scroll-margin-top: calc(2 * var(--grid-unit)); }
 .uid-at { position: absolute; top: 0; left: 0; }
-/* On a map: part of the bottom strip, on its own paper ground so it reads over the tiles. */
-.uid.on-map { height: 22px; padding: 0 6px; line-height: 22px; background: color-mix(in srgb, var(--paper) 88%, transparent); color: var(--ink-3); }
+/* On a map: the last cell of the bottom strip, ruled and filled like the "i" beside it. */
+.uid.on-map {
+  box-sizing: border-box; height: 22px; padding: 0 6px; line-height: 21px;
+  background: var(--paper); border-top: 1px solid var(--ink); border-left: 1px solid var(--ink); color: var(--ink-3);
+}
+
+/* Sticky: the page's running head (RunningHead.astro) and the progress bar under it (Progress.astro) stay at the top
+   of the window all the way down. Anchors land below both. */
+html { scroll-padding-top: calc(var(--head-h, 0px) + 2 * var(--grid-unit)); }
+/* A link to a section lands on its header's top rule, right under the bar, not on the spacing above it. */
+section.region, section.before { scroll-margin-top: calc(-1 * var(--gap-section)); }
 
 /* Point badges, the same on the maps, the tables and the legend. A stay is a solid square per number it shows
    ("03–04" is a double square); a stop is a true circle. The digits are trimmed to their cap height, so they sit

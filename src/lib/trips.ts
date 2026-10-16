@@ -129,6 +129,9 @@ export function numberPoints(data: TripData, lang: Lang): NumberedPoint[] {
   );
 }
 
+/** Where a link to a point lands without scripts: its points-table row, or its region map for a detour (no row). */
+export const pointHref = (p: Pick<NumberedPoint, 'id' | 'kind' | 'regionId'>) => (p.kind === 'detour' ? `#map-${p.regionId}` : `#pt-${p.id}`);
+
 /** A short key from a tip's opening words, for tips not tied to a place (same result from MDX source or HTML). */
 export const textKey = (text: string) =>
   text

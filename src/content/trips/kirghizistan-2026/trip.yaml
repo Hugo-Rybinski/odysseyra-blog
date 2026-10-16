@@ -80,7 +80,7 @@ regions:
       - { path: [[41.76103, 75.37304], [41.76352, 75.36355], [41.76551, 75.35479], [41.76703, 75.34589], [41.7678, 75.33691], [41.76961, 75.32809], [41.77034, 75.31904], [41.7699, 75.30994], [41.76927, 75.30083], [41.76862, 75.29172], [41.76759, 75.28269], [41.76619, 75.27374], [41.76458, 75.26484], [41.76308, 75.25592], [41.75889, 75.24948], [41.75423, 75.24286], [41.75618, 75.23463], [41.75951, 75.22689], [41.76047, 75.21783], [41.76036, 75.20871], [41.75951, 75.19964], [41.75827, 75.19064], [41.75774, 75.18155], [41.75781, 75.1724], [41.75887, 75.1635], [41.7606, 75.15466], [41.76297, 75.14588]] }
     points:
       - { id: kotchkor, kind: sight, name: { fr: "Kotchkor : musée et bazar", en: "Kochkor: museum and bazaar" }, at: [42.216, 75.756] }
-      - { id: kalmak-ashuu, kind: pass, name: { fr: "Col de Kalmak-Ashuu", en: "Kalmak-Ashuu pass" }, at: [41.9337, 75.7382] }
+      - { id: kalmak-ashuu, kind: sight, name: { fr: "Col de Kalmak-Ashuu", en: "Kalmak-Ashuu pass" }, at: [41.9337, 75.7382] }
       - { id: son-koul-camp, kind: stage, name: { fr: "Camp de yourtes, rive sud du Son-Koul", en: "Yurt camp, Son-Kul south shore" }, at: [41.77, 75.14], nights: [3, 4] }
   - id: naryn
     name: { fr: "Naryn, Köl-Suu et Tash Rabat", en: "Naryn, Köl-Suu and Tash Rabat" }
@@ -97,8 +97,9 @@ regions:
       - { approx: true, path: [[41.17, 75.81], [40.827, 75.287]] }
     points:
       - { id: naryn-permit, kind: sight, name: { fr: "Naryn : bureau des permis frontaliers", en: "Naryn: border permit office" }, at: [41.425, 76.015] }
+      - { id: ak-tal, kind: detour, name: { fr: "Ak Tal", en: "Ak Tal" }, at: [41.4123, 75.0324] }
       # Approximate position along the unpaved track (the travelbook has no waypoints for this leg).
-      - { id: kol-suu-track, kind: warning, name: { fr: "Piste vers le jailoo de Kychtto", en: "Track to the Kychtto jailoo" }, at: [40.95, 76.2] }
+      - { id: kol-suu-track, kind: sight, name: { fr: "Piste vers le jailoo de Kychtto", en: "Track to the Kychtto jailoo" }, at: [40.95, 76.2] }
       - { id: kol-suu-camp, kind: stage, name: { fr: "Camp de Köl-Suu, jailoo de Kychtto", en: "Köl-Suu camp, Kychtto jailoo" }, at: [40.74, 76.4], nights: [5] }
       - { id: kochoy-korgon, kind: sight, name: { fr: "Kochoy Korgon, At-Bashy", en: "Kochoy Korgon, At-Bashy" }, at: [41.17, 75.81] }
       - { id: tash-rabat, kind: stage, name: { fr: "Caravansérail de Tash Rabat", en: "Tash Rabat caravanserai" }, at: [40.827, 75.287], nights: [6, 7] }
@@ -125,6 +126,7 @@ regions:
       - { id: ton, kind: stage, name: { fr: "Ton", en: "Ton" }, at: [42.17, 77.04], nights: [8] }
       - { id: skazka, kind: sight, name: { fr: "Canyon Skazka", en: "Skazka canyon" }, at: [42.156, 77.351] }
       - { id: tamga-tash, kind: sight, name: { fr: "Pétroglyphes de Tamga Tash", en: "Tamga Tash petroglyphs" }, at: [42.115, 77.521] }
+      - { id: barskoon, kind: detour, name: { fr: "Barskoön : fabrique de yourtes", en: "Barskoön: yurt workshop" }, at: [42.179, 77.5982] }
       - { id: jeti-oguz, kind: sight, name: { fr: "Jeti-Ögüz : les Sept Taureaux", en: "Jeti-Ögüz: the Seven Bulls" }, at: [42.342, 78.232] }
       - { id: karakol, kind: stage, name: { fr: "Karakol", en: "Karakol" }, at: [42.49, 78.4], nights: [9, 10] }
       - { id: altyn-arashan, kind: sight, name: { fr: "Altyn Arashan", en: "Altyn Arashan" }, at: [42.38, 78.601] }
@@ -143,6 +145,8 @@ regions:
     points:
       - { id: jyrgalan, kind: stage, name: { fr: "Jyrgalan", en: "Jyrgalan" }, at: [42.61, 79.01], nights: [11] }
       - { id: chon-ak-suu, kind: sight, name: { fr: "Vallée de Tchon Ak-Suu", en: "Chon Ak-Suu valley" }, at: [42.755, 77.479] }
+      - { id: grigorievka, kind: detour, name: { fr: "Grigorievka", en: "Grigorievka" }, at: [42.72, 77.4853] }
+      - { id: balykchy, kind: detour, name: { fr: "Balykchy", en: "Balykchy" }, at: [42.4614, 76.1855] }
       - { id: cholpon-ata, kind: sight, name: { fr: "Cholpon-Ata : pétroglyphes", en: "Cholpon-Ata: petroglyphs" }, at: [42.649, 77.085] }
       - { id: konorchek, kind: sight, name: { fr: "Canyon de Konorchek", en: "Konorchek canyon" }, at: [42.599, 75.815] }
       - { id: tokmok, kind: stage, name: { fr: "Tokmok", en: "Tokmok" }, at: [42.84, 75.28], nights: [12] }

@@ -1,0 +1,118 @@
+---
+import { t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const s = t(Astro.props.lang);
+---
+
+<!-- The reader's place in the trip, under the running head and sticky with it: one named segment per section
+     ("before you go", then each region by number and name), filled in ink once read, in gold while being read, pale
+     ahead. The segments are built from the page's sections by the script below; each links to its section. Two grid
+     squares tall. Cells are fixed: sized by their labels, never by the reader's position. -->
+<nav class="progress" aria-label={s.progress}><ol></ol></nav>
+
+<style>
+  .progress {
+    position: sticky; top: var(--head-h, 0px); z-index: 30;
+    box-sizing: border-box; height: calc(2 * var(--grid-unit)); border-bottom: 1px solid var(--ink); background: var(--paper);
+  }
+  /* The 1px gaps show the list's hairline ground: segment rules, like the ticks of a scale. */
+  .progress ol { display: flex; gap: 1px; height: 100%; margin: 0; padding: 0; list-style: none; background: var(--hair-strong); }
+  /* Fixed cells: each sized by its own label (longer names get more room), the spare width shared equally; when the
+     bar is too narrow they shrink in proportion and the longest names end in an ellipsis, full name in the tooltip.
+     Nothing depends on the reader's position, so no cell moves as the page scrolls. */
+  .progress :global(li) { flex: 1 1 auto; }
+  .progress :global(li) { min-width: 0; }
+  .progress :global(a) {
+    position: relative; display: flex; align-items: center; gap: 6px; height: 100%; padding: 0 8px; overflow: hidden;
+    background: var(--field); color: var(--ink-3); text-decoration: none;
+    font: 600 11px/1 var(--sans); letter-spacing: 0.02em; white-space: nowrap;
+  }
+  /* Number and name both trimmed to their capitals, so they centre on the same line. */
+  .progress :global(.no) { flex: none; font: 400 10px/1 var(--mono); text-box: trim-both cap alphabetic; }
+  /* Trimmed to its capitals so it centres in the segment; clipped with a margin so descenders and accents, outside
+     the trimmed box, still show (the segment itself clips at its edges). */
+  .progress :global(.name) { min-width: 0; overflow: clip; overflow-clip-margin: 6px; text-overflow: ellipsis; text-box: trim-both cap alphabetic; }
+  .progress :global(li.past a) { background: var(--ink); color: var(--paper); }
+  /* gold-wash is a tint: laid on paper, not on the hairline ground behind the segments. */
+  .progress :global(li.now a) { color: var(--ink); background: linear-gradient(90deg, var(--gold) var(--fill, 0%), var(--gold-wash) var(--fill, 0%)), var(--paper); }
+  .progress :global(a:hover) { box-shadow: inset 0 -3px 0 var(--ink); }
+  .progress :global(a:focus-visible) { outline: 2px solid var(--gold); outline-offset: 1px; }
+  /* On touch, a finger-sized target around the thin segment, mostly over the page below it. */
+  @media (pointer: coarse) { .progress :global(a::after) { content: ''; position: absolute; inset: -6px 0 -28px; } }
+  .progress :global(.short) { display: none; text-box: trim-both cap alphabetic; }
+  /* Phones: equal cells, each a region's number ("before you go": its first word). */
+  @media (max-width: 720px) {
+    .progress :global(li) { flex: 1 1 0; }
+    .progress :global(a) { justify-content: center; padding: 0 4px; }
+    .progress :global(.name) { display: none; }
+    .progress :global(.short) { display: inline; }
+  }
+</style>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('nav.progress');
+  const sections = [...document.querySelectorAll<HTMLElement>('section.before, section.region')];
+  if (bar && sections.length) {
+    const list = bar.querySelector('ol')!;
+    const items = sections.map((sec) => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      const name = sec.querySelector('h2')?.textContent?.trim() ?? sec.id;
+      a.href = `#${sec.id}`;
+      a.title = name;
+      // A region by its number, then its name; "before you go" by its name alone.
+      if (sec.dataset.region) {
+        const no = document.createElement('span');
+        no.className = 'no';
+        no.textContent = sec.dataset.region;
+        no.setAttribute('aria-hidden', 'true');
+        a.append(no);
+      }
+      const label = document.createElement('span');
+      label.className = 'name';
+      label.textContent = name;
+      a.append(label);
+      if (!sec.dataset.region) {
+        // Phones show numbers only; a section without one keeps the first word of its name.
+        const short = document.createElement('span');
+        short.className = 'short';
+        short.setAttribute('aria-hidden', 'true');
+        short.textContent = name.split(/\s+/)[0];
+        a.append(short);
+      }
+      li.append(a);
+      list.append(li);
+      return { sec, li, a };
+    });
+    let queued = false;
+    const update = () => {
+      queued = false;
+      // The reading line: just under the sticky bars.
+      const line = bar.getBoundingClientRect().bottom + 1;
+      // The furthest the line can go: at the bottom of the page the last section reads as complete.
+      const reach = line + document.documentElement.scrollHeight - innerHeight - scrollY;
+      items.forEach(({ sec, li, a }, i) => {
+        const top = sec.getBoundingClientRect().top;
+        const end = Math.min(items[i + 1]?.sec.getBoundingClientRect().top ?? sec.getBoundingClientRect().bottom, Math.max(reach, top + 1));
+        const past = line >= end;
+        const now = !past && line >= top;
+        li.classList.toggle('past', past);
+        li.classList.toggle('now', now);
+        if (now) a.setAttribute('aria-current', 'location');
+        else a.removeAttribute('aria-current');
+        a.style.setProperty('--fill', now ? `${Math.round(((line - top) / (end - top)) * 1000) / 10}%` : '0%');
+      });
+    };
+    const later = () => {
+      if (!queued) requestAnimationFrame(update);
+      queued = true;
+    };
+    addEventListener('scroll', later, { passive: true });
+    addEventListener('resize', later);
+    document.addEventListener('sheet:snapped', later);
+    update();
+  }
+</script>

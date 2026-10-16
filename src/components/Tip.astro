@@ -1,7 +1,7 @@
 ---
 import Icon from './Icon.astro';
 import { t } from '../i18n';
-import { hazardKinds, tipId, type TipKind } from '../lib/trips';
+import { hazardKinds, pointHref, tipId, type TipKind } from '../lib/trips';
 
 interface Props {
   kind?: TipKind;
@@ -25,7 +25,7 @@ const id = tipId(kind, at, at ? '' : await Astro.slots.render('default'));
     <p class="head">
       <span class="mark"><Icon name={kind} size={18} /></span>
       <span class="label">{s.tipKinds[kind]}</span>
-      {point && <a class="at" href={`#pt-${point.id}`}>{point.ref}{point.name}</a>}
+      {point && <a class="at" href={pointHref(point)}>{point.ref}{point.name}</a>}
     </p>
     <div class="body"><slot /></div>
   </div>
