@@ -1,0 +1,108 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import RunningHead from '../components/RunningHead.astro';
+import Foot from '../components/Foot.astro';
+import Icon from '../components/Icon.astro';
+import { languages, t, tripUrl, homeUrl, idx, type Lang } from '../i18n';
+import { getPublishedTrips } from '../lib/trips';
+
+// The missing sheet. GitHub Pages serves this one page for every unknown address, whatever its language, so it
+// carries both: the address's language (/en/…) or else the browser's picks which one shows, before the first paint.
+const trips = (await getPublishedTrips())
+  .map(({ trip, texts }) => ({ slug: trip.id, sheet: trip.data.sheet, country: trip.data.country, title: texts }))
+  .sort((a, b) => a.sheet - b.sheet);
+const titles = Object.fromEntries(languages.map((l) => [l, `${t(l).lost} — Odysseyra`]));
+---
+
+<BaseLayout lang="fr" title={titles.fr} description={t('fr').lostText}>
+  <script is:inline define:vars={{ titles }}>
+    const path = location.pathname.split('/');
+    const lang = path.includes('en') ? 'en' : path.includes('fr') ? 'fr'
+      : (navigator.languages || [navigator.language]).some((l) => /^fr\b/i.test(l)) ? 'fr' : 'en';
+    document.documentElement.lang = lang;
+    document.title = titles[lang];
+  </script>
+  {
+    languages.map((lang: Lang) => {
+      const s = t(lang);
+      return (
+        <div class="lost" data-lang={lang} lang={lang}>
+          <RunningHead lang={lang} otherHref={homeUrl(lang === 'fr' ? 'en' : 'fr')} />
+          <main>
+            <header class="intro">
+              <p class="label code">{s.lostCode}</p>
+              <h1>{s.lost}</h1>
+              <p class="lede">{s.lostText}</p>
+              {trips.length > 0 && (
+                <section class="issued" aria-labelledby={`sheets-${lang}`}>
+                  <h2 class="label" id={`sheets-${lang}`}>{s.lostSheets}</h2>
+                  <ul class="sheets">
+                    {trips.map((trip) => (
+                      <li>
+                        <a href={tripUrl(lang, trip.slug)}>
+                          <span class="badge stay" aria-hidden="true"><span>{idx(trip.sheet)}</span></span>
+                          <span class="txt">
+                            <strong>{trip.title[lang]?.data.title ?? trip.country[lang]}</strong>
+                            <small class="label">{s.sheet} {idx(trip.sheet)} <i class="sep" aria-hidden="true"></i> {trip.country[lang]}</small>
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              <a class="back" href={homeUrl(lang)}><Icon name="arrow-right" size={16} />{s.lostBack}</a>
+            </header>
+          </main>
+          <Foot lang={lang} href={homeUrl(lang)} label={s.sheetIndex} />
+        </div>
+      );
+    })
+  }
+</BaseLayout>
+
+<style>
+  /* One language shows: the other block is gone from the page and from the accessibility tree. */
+  :global(html:not([lang='en'])) .lost[data-lang='en'], :global(html[lang='en']) .lost[data-lang='fr'] { display: none; }
+  .lost { display: flex; flex-direction: column; min-height: inherit; }
+  .lost main { flex: 1; padding-bottom: var(--gap-section); }
+  /* The cartouche, as on the about page: the error code above the title, the sheets issued, then the way back. */
+  .intro { padding: var(--pad); border-bottom: 1px solid var(--ink); background: var(--paper); }
+  .code { margin: 0 0 0.6rem; color: var(--ink-3); }
+  .intro h1 { font-size: clamp(2rem, 1.4rem + 1.6vw, 2.75rem); }
+  .lede { margin: 0.8rem 0 0; color: var(--ink-2); font-size: 1rem; line-height: 1.55; max-width: 52ch; }
+  .back { display: inline-flex; margin-top: 16px; gap: 8px; align-items: center; min-height: 44px; font-weight: 600; }
+  .back:hover { color: var(--gold-ink); }
+  /* The sheets issued, as the legend's export boxes: the sheet's number in its stay square, title, sheet and country. */
+  .issued { max-width: 560px; margin-top: 28px; }
+  .issued h2 { margin: 0 0 10px; color: var(--ink-3); }
+  .sheets { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+  .sheets a { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border: 1px solid var(--ink); background: var(--paper); text-decoration: none; }
+  .sheets .badge { --u: 26px; flex: none; font-size: 12px; }
+  .txt { display: grid; gap: 2px; line-height: 1.3; }
+  .txt small { color: var(--ink-3); font-size: 11px; }
+  .sheets a:hover { background: var(--ink); color: var(--paper); }
+  .sheets a:hover small { color: rgb(255 255 255 / 0.75); }
+  .sheets a:hover .badge { background: var(--paper); color: var(--ink); }
+</style>
+
+<script>
+  import { watchSheet } from '../scripts/sheet-grid';
+  watchSheet();
+  // The shown block's <main> is the skip link's target.
+  const show = (lang: string) => {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('.lost main').forEach((m) => m.removeAttribute('id'));
+    const block = document.querySelector<HTMLElement>(`.lost[data-lang="${lang}"]`)!;
+    block.querySelector('main')!.id = 'main';
+    document.title = `${block.querySelector('h1')!.textContent} — Odysseyra`;
+  };
+  show(document.documentElement.lang);
+  // The language switch swaps the page's language in place: the address stays the one that was not found.
+  document.querySelectorAll<HTMLAnchorElement>('.lost .langs a').forEach((a) =>
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      show(a.hreflang);
+    }),
+  );
+</script>

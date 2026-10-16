@@ -24,7 +24,7 @@ const points = mapPoints(trip).filter((p) => p.regionId === id);
 <section class="region" id={id} data-region={idx(index + 1)} aria-labelledby={`${id}-title`}>
   <header class="rhead">
     <h2 id={`${id}-title`}>{name}</h2>
-    <p class="meta label">{s.region} {idx(index + 1)} / {idx(trip.data.regions.length)} · {days}</p>
+    <p class="meta label">{s.region} {idx(index + 1)} / {idx(trip.data.regions.length)} <i class="sep" aria-hidden="true"></i> {days}</p>
     <a class="back" href="#trip-map" data-highlight={id}><Icon name="arrow-up" size={16} />{s.backToMap}</a>
   </header>
   <div class="detail">
