@@ -3,7 +3,7 @@
  *
  * The sheet number (SHT01), trip year and country code; the region (R04), left out outside the regions (sheet top,
  * "before you go"); the day (D09) when a day strip comes before the box in its region; the box type (MAP, TXT, PIC,
- * an inner box by kind: WRN, TIP, DTR, HIK, NGT; RGN for a region header, OPN for "Mon avis"); and a number that counts the boxes sharing all of the above, from 00 (the second text
+ * an inner box on its own by kind: WRN, TIP, DTR, HIK, NGT, none for one set into a text panel; RGN for a region header, OPN for "Mon avis"); and a number that counts the boxes sharing all of the above, from 00 (the second text
  * panel of day 9 is TXT-01, its first tip still TIP-00). The page is the same in every language, so a box keeps its
  * reference across languages. Each reference sits in the box's bottom right corner and links to its top.
  *
@@ -112,7 +112,9 @@ export function stampBoxes() {
         while (inRun(last.nextElementSibling)) last = last.nextElementSibling;
         stamp('TXT', el, last);
       }
-      if (el.matches('aside.tip')) {
+      // A tip set into a text panel is part of that panel, whose reference covers it; only a tip on its own (between
+      // plates) carries one.
+      if (el.matches('aside.tip') && !el.matches(TIP_IN_TEXT)) {
         const box = el.querySelector<HTMLElement>(':scope > .box')!;
         stamp(TIP_KINDS[el.dataset.kind ?? 'tip'] ?? 'TIP', box, box);
       }
