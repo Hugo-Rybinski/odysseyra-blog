@@ -146,7 +146,9 @@ export const textKey = (text: string) =>
     .slice(0, 16);
 
 /** Stable id for a tip, shared by the parser below and the <Tip> component. */
-export const tipId = (kind: string, at?: string, text = '') => `tip-${at ?? textKey(text)}-${kind}`;
+/** A box's id: its point and kind (a night box about one night of a stay adds that night: tip-karakol-night-10). */
+export const tipId = (kind: string, at?: string, text = '', night?: number) =>
+  `tip-${at ?? textKey(text)}-${kind}${night != null ? `-${String(night).padStart(2, '0')}` : ''}`;
 
 /** Reads <Tip kind at> tags from the MDX source, with the <Region> each one sits in. */
 export function parseTips(body: string): TipRef[] {
@@ -159,7 +161,8 @@ export function parseTips(body: string): TipRef[] {
     else {
       const kind = (/kind="([^"]+)"/.exec(m[2])?.[1] ?? 'tip') as TipKind;
       const at = /at="([^"]+)"/.exec(m[2])?.[1];
-      const id = tipId(kind, at, m[3]);
+      const night = /night=\{(\d+)\}/.exec(m[2])?.[1];
+      const id = tipId(kind, at, m[3], night ? Number(night) : undefined);
       if (!tips.some((t) => t.id === id)) tips.push({ id, kind, at, regionId });
     }
   }
