@@ -26,6 +26,7 @@ const BOXES = [
   'section:not(.sheets) > .rhead',
   '.col > .day',
   '.col > :is(p, ul, ol, aside.tip)',
+  '.col > .pair > .pair-text',
   '.col figure.plate',
   'aside.review',
   // The sheet index (prefix IDX): its list of sheets and one card per sheet.
@@ -103,6 +104,7 @@ export function stampBoxes() {
     else if (el.matches('figure.plate')) stamp('PIC', el, el);
     else if (el.matches('.rhead')) stamp('RGN', el, el);
     else if (el.matches('aside.review')) stamp('OPN', el, el);
+    else if (el.matches('.pair-text')) stamp('TXT', el, el);
     else if (el.matches('.list')) stamp('LST', el, el);
     else if (el.matches('.card')) stamp('SHT', el, el);
     else {

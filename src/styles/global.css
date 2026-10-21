@@ -143,19 +143,10 @@ a:hover { text-decoration-color: var(--gold); }
 .col { display: flow-root; max-width: var(--measure); margin: var(--gap) auto 0; padding-inline: var(--pad); }
 .col > :first-child { margin-top: 0; }
 .col::after { content: ''; display: table; clear: both; }
-/* Landscape plates and text panels share the wide column; a lone portrait is half of it, like one of a pair. */
+/* Landscape plates and text panels share the wide column; a lone portrait is half of it, like one of a pair, centred.
+   A portrait that goes with a text sits beside it in a <Pair>. */
 .col > .plate.landscape { width: var(--wide); position: relative; left: 50%; transform: translateX(-50%); }
 .col > .plate.portrait { max-width: var(--half); margin-inline: auto; }
-/* Anything that is not running text starts below a floated portrait. */
-.col > :not(p, ul, ol, .plate.portrait) { clear: both; }
-@media (min-width: 1100px) {
-  /* Text | portrait, as a pair would sit: the portrait takes the right half of the wide column, the text run that
-     follows it the left half (see global.css). */
-  .col > .plate.portrait {
-    float: right; width: var(--half); max-width: none;
-    margin: var(--gap) calc((100% - var(--wide)) / 2) var(--gap) var(--pair-gap);
-  }
-}
 
 /* Running text on the sheet: each run of consecutive paragraphs (and lists) reads as one solid panel with a light
    rule, like the photo plates, pasted over the drafting grid. Paragraph spacing becomes padding so the panel stays
@@ -172,15 +163,6 @@ a:hover { text-decoration-color: var(--gold); }
   border-inline: 1px solid var(--hair-strong);
 }
 :is(.col, .prose) > :is(ul, ol) { padding-left: calc(var(--text-pad) + 2 * var(--grid-unit)); }
-/* The text run right after a lone portrait sits beside it, in the other half: a text | photo pair. */
-@media (min-width: 1100px) {
-  .col > .plate.portrait ~ :is(p, ul, ol):not(.plate.portrait ~ :not(p, ul, ol) ~ *) {
-    /* A plain block, already sized to its half: it sits beside the float without needing to avoid it. */
-    display: block;
-    width: var(--half);
-    padding-inline: calc(2 * var(--grid-unit) - 1px);
-  }
-}
 @media (max-width: 640px) {
   :is(.col, .prose) > :is(p, ul, ol) { padding-inline: calc(var(--grid-unit) - 1px); }
   :is(.col, .prose) > :is(ul, ol) { padding-left: calc(3 * var(--grid-unit) - 1px); }

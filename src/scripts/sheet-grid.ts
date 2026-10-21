@@ -151,27 +151,34 @@ function tip(el: HTMLElement) {
   bottom(inner);
 }
 
-/** Text runs that sit beside a lone portrait (same selector as global.css). */
-const BESIDE = '.col > .plate.portrait ~ :is(p, ul, ol):not(.plate.portrait ~ :not(p, ul, ol) ~ *)';
-
 /** One paragraph of a text panel: sides on lines; the run's first draws the top rule, its last the bottom rule. */
 function textRun(el: HTMLElement, snapBottom = true) {
   if (hasBorder(el, 'top')) top(el);
-  // Same width rule as the plates it lines up with: a full-width panel matches a landscape plate (30px steps), a
-  // half-width panel beside a portrait matches a portrait plate (20px steps).
+  // Same width rule as the landscape plates it lines up with (30px steps).
   const b = box(el);
-  const half = matchMedia('(min-width: 1100px)').matches && el.matches(BESIDE);
-  const step = half ? 2 * U : 3 * U;
-  const width = Math.floor((b.width - U) / step + 1e-6) * step + 2 * U + 1;
+  const width = Math.floor((b.width - U) / (3 * U) + 1e-6) * 3 * U + 2 * U + 1;
   grow(el, 'margin-left', need(b.left));
   set(el, 'width', `${width}px`);
   if (snapBottom && hasBorder(el, 'bottom')) bottom(el);
-  // Text beside a floated portrait: the pair shares its top line, like two plates side by side.
-  const prev = el.previousElementSibling as HTMLElement | null;
-  if (prev?.matches('figure.plate') && getComputedStyle(prev).float !== 'none') {
-    const d = box(el).top - box(prev).top;
-    if (d) set(prev, 'margin-top', `${(parseFloat(getComputedStyle(prev).marginTop) || 0) + d}px`);
-  }
+}
+
+/** A text | portrait pair (Pair.astro): the row's top on a line, its plate placed like any plate, then its text panel
+    boxed on lines. Side by side, the panel matches the portrait plate beside it (20px steps, like a pair of plates)
+    and the row's bottom goes on a line for both boxes (they stretch together); stacked, the panel takes a landscape
+    plate's width (30px steps) under the plate. */
+function pairRow(el: HTMLElement) {
+  top(el);
+  const fig = el.querySelector<HTMLElement>('figure.plate');
+  if (fig) plate(fig);
+  const text = el.querySelector<HTMLElement>(':scope > .pair-text');
+  if (!text) return;
+  const side = getComputedStyle(el).display === 'grid';
+  if (!side) top(text);
+  const b = box(text);
+  const step = side ? 2 * U : 3 * U;
+  grow(text, 'margin-left', need(b.left));
+  set(text, 'width', `${Math.floor((b.width - U) / step + 1e-6) * step + 2 * U + 1}px`);
+  bottom(text);
 }
 
 /** A day strip: on the grid like a text panel, its extra height shared above and below the text (centred). */
@@ -438,7 +445,9 @@ const handlers: [string, (el: HTMLElement) => void][] = [
   ['main > header.intro', bottom],
   ['section.sheets > .cards', sheetCards],
   ['.region > .detail', detail],
-  ['figure.plate', (el) => !el.closest('.top') && plate(el)],
+  ['.col > .pair', pairRow],
+  // A pair's plate is placed with its pair (pairRow).
+  ['figure.plate', (el) => !el.closest('.top, .pair') && plate(el)],
   ['aside.tip', tip],
   ['aside.review', review],
   ['.col > :is(p, ul, ol), .prose > :is(p, ul, ol)', textRun],

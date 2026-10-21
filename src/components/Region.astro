@@ -19,6 +19,10 @@ const name = region.name[trip.lang];
 const [d1, d2] = region.days;
 const days = dayRange(trip.lang, region.days);
 const points = mapPoints(trip).filter((p) => p.regionId === id);
+// The region's days as the text marks them (<Day>), each a link to its strip; worth a list from two days up.
+const dayLinks = Array.from({ length: d2 - d1 + 1 }, (_, k) => d1 + k)
+  .filter((n) => trip.days.has(n))
+  .map((n) => ({ n, title: trip.days.get(n) ?? '' }));
 ---
 
 <section class="region" id={id} data-region={idx(index + 1)} aria-labelledby={`${id}-title`}>
@@ -26,6 +30,22 @@ const points = mapPoints(trip).filter((p) => p.regionId === id);
     <h2 id={`${id}-title`}>{name}</h2>
     <p class="meta label">{s.region} {idx(index + 1)} / {idx(trip.data.regions.length)} <i class="sep" aria-hidden="true"></i> {days}</p>
     <a class="back" href="#trip-map" data-highlight={id}><Icon name="arrow-up" size={16} />{s.backToMap}</a>
+    {
+      dayLinks.length > 1 && (
+        <nav class="day-nav" aria-label={s.dayNav}>
+          <ol>
+            {dayLinks.map(({ n, title }) => (
+              <li>
+                <a href={`#day-${idx(n)}`} aria-label={`${s.day} ${idx(n)}${title ? ` : ${title}` : ''}`} title={title || undefined}>
+                  <span class="n data">{idx(n)}</span>
+                  {title && <span class="t">{title}</span>}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
   </header>
   <div class="detail">
     <div class="map-cell">
@@ -54,6 +74,28 @@ const points = mapPoints(trip).filter((p) => p.regionId === id);
   .rhead h2 { font-size: var(--step-3); }
   .back { display: inline-flex; gap: 6px; align-items: center; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
   .back:hover { color: var(--gold-ink); }
+
+  /* The region's days, as a sheet's margin lists its contents: the day's number in mono, then its title, each a link
+     to its day strip. On phones, the numbers alone, as touch targets. */
+  .day-nav { grid-column: 1 / -1; margin-top: 4px; }
+  .day-nav ol { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 0; padding: 0; list-style: none; }
+  .day-nav a {
+    display: inline-flex; align-items: baseline; gap: 8px; min-height: 28px; padding-block: 4px;
+    color: var(--ink-2); font-size: 14px; font-weight: 600; text-decoration: none;
+  }
+  .day-nav .n { color: var(--ink-3); font-size: 12px; }
+  .day-nav .t { text-decoration: underline; text-decoration-color: var(--hair-strong); text-underline-offset: 3px; }
+  .day-nav a:hover .t, .day-nav a:hover .n { color: var(--gold-ink); }
+  .day-nav a:hover .t { text-decoration-color: currentColor; }
+  @media (max-width: 640px) {
+    .day-nav ol { gap: 0 4px; }
+    .day-nav .t { display: none; }
+    .day-nav a { justify-content: center; align-items: center; min-width: 44px; min-height: 44px; padding: 0; }
+    .day-nav .n {
+      color: var(--ink-2); font-size: 14px;
+      text-decoration: underline; text-decoration-color: var(--hair-strong); text-underline-offset: 3px;
+    }
+  }
 
   .detail { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(420px, 1fr); border-block: 1px solid var(--ink); background: var(--paper); }
   /* Above the points list: the map's outline overlaps the list's edge, and the list's sticky heads would cover it. */

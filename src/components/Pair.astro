@@ -1,0 +1,68 @@
+---
+/**
+ * A text | portrait pair: the paragraphs it wraps, beside one portrait plate, as two plates of a pair would sit.
+ *
+ *   <Pair photo="KGZ-01">
+ *
+ *   The text that goes with the photo.
+ *
+ *   </Pair>
+ *
+ * The author says which text goes with which portrait; nothing is guessed from what follows. From 1100px the text
+ * panel takes the left half of the wide column and the plate the right half, one row of two boxes ending on the same
+ * line, like a pair of plates (a short text leaves its panel's fill under it, not the drafting grid); narrower, the plate comes
+ * first, centred at half width, and the text runs full width under it. A portrait outside a pair stands centred on its
+ * own (global.css).
+ */
+import Photo from './Photo.astro';
+
+interface Props {
+  /** The portrait's photo id in trip.yaml. */
+  photo: string;
+}
+const { photo } = Astro.props;
+---
+
+<div class="pair">
+  <div class="pair-photo"><Photo id={photo} /></div>
+  <div class="pair-text"><slot /></div>
+</div>
+
+<style>
+  .pair {
+    width: var(--wide);
+    margin: var(--gap) 0 var(--gap) calc((100% - var(--wide)) / 2);
+  }
+  .pair-photo :global(.plate) { margin: 0 auto; max-width: var(--half); }
+  /* On phones a half-width portrait is too small to read: it takes the column, like one plate of a stacked pair. */
+  @media (max-width: 640px) {
+    .pair-photo :global(.plate) { max-width: none; }
+  }
+  /* The text panel: like a run of paragraphs on the sheet (global.css), as one box of its own. Border plus padding is
+     two squares, so the text starts on a grid line. */
+  .pair-text {
+    margin-top: var(--gap);
+    padding: calc(2 * var(--grid-unit) - 1px) var(--text-pad) calc(2 * var(--grid-unit) - 1px);
+    background: var(--paper);
+    border: 1px solid var(--hair-strong);
+  }
+  .pair-text :global(> :last-child) { margin-bottom: 0; }
+  @media (max-width: 640px) {
+    .pair-text { padding: calc(var(--grid-unit) - 1px); }
+  }
+  @media (min-width: 1100px) {
+    .pair {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--half);
+      gap: var(--pair-gap);
+      /* stretch: the two boxes end on the same line, whichever is taller. */
+      align-items: stretch;
+    }
+    .pair-photo { display: flex; }
+    .pair-photo :global(.plate) { flex: 1; }
+    /* Text on the left, the plate on the right; in the page the plate comes first, as it is read on a phone. */
+    .pair-photo { grid-column: 2; grid-row: 1; }
+    .pair-photo :global(.plate) { max-width: none; }
+    .pair-text { grid-column: 1; grid-row: 1; margin-top: 0; padding-inline: calc(2 * var(--grid-unit) - 1px); }
+  }
+</style>
