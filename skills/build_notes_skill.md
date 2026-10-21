@@ -216,6 +216,14 @@ Line format, which `create-blogpost` parses:
      night on a plane is not a stage night.
    - A visited place that isn't a town and isn't within 1.5 km of a point already ticked: `sight`, ticked.
    - Everything else is unticked: `detour` if never visited.
+   - The author numbers only the places worth going to on purpose. Make these ticked `detour`s (unnumbered, named on
+     the map):
+     - towns only driven through;
+     - a viewpoint or pass on the way;
+     - a car park;
+     - a waterfall at the end of a short walk;
+     - a site the user stopped at briefly or found closed.
+   - Name a point after the place ("Naryn", "Cascades de Barskoön"), not after what was done there.
    - Then use judgement, and say why when it isn't obvious:
      - Between two pins for one place, keep the one where the photos are.
      - Untick places with no photo.
@@ -224,9 +232,10 @@ Line format, which `create-blogpost` parses:
      - Coordinates known to be wrong get corrected: the Kyrgyzstan travelbook's Burana is off, the tower is at 42.746,
        75.25.
 6. **Order** each region's list by when each place was reached: sights are numbered in that order. A stage counts at
-   23:00 of its first night.
+   23:00 of its first night. A place reached with no phone point nearby would otherwise sort to its planned day. Give
+   it the time from the user's notes (a `when: [day, "hh:mm"]` override in the generator).
 7. **Write the line:**
-   - The `en:` name only when you have one; otherwise it is translated at generation.
+   - The `en:` name. Every ticked point needs one before the sheet is generated: translate it here.
    - Positions to 4 decimals.
    - The ids are slugs, unique across the trip.
 
@@ -267,7 +276,9 @@ Line format, which `create-blogpost` parses:
   - The camera data comes from the file's XMP or EXIF.
   - Everything starts ticked. The user unticks the ones not to publish.
 - **Then two sub-lines:**
-  - `alt`: what the photo shows, for someone who can't see it. Concrete, no interpretation.
+  - `alt`: what the photo shows, for someone who can't see it. Concrete, no interpretation. It is published as it
+    is, so no working notes: no "(format vertical)", no "(copie retouchée…)", and no "?" left once the user has
+    answered it.
   - `légende`: the caption displayed under it. Short, and it may name the place. Only name what the GPS, the day's
     route or the image itself confirms; when unsure, stay general or add "?". Nothing the sources don't support (no
     "dernier vestige de…" when the program only says "minaret").

@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import { badgeSpan, t } from '../i18n';
+import { badgeSpan, idx, t } from '../i18n';
 import { pointHref, tipId, type TipKind } from '../lib/trips';
 
 type Level = 'easy' | 'medium' | 'hard';
@@ -21,8 +21,10 @@ interface Props {
   course?: Course;
   /** A GPX file in the trip's `gpx/` folder. */
   gpx?: string;
+  /** night: the one night this box is about, when its stay has several ("Nuit 10", with an id of its own). */
+  night?: number;
 }
-const { kind = 'tip', at, name, duration, distance, ascent, difficulty, course, gpx } = Astro.props;
+const { kind = 'tip', at, name, duration, distance, ascent, difficulty, course, gpx, night } = Astro.props;
 const trip = Astro.locals.trip;
 if (!trip) throw new Error('<Tip> must be rendered inside a trip page');
 const s = t(trip.lang);
@@ -30,7 +32,8 @@ const point = at ? trip.points.find((p) => p.id === at) : undefined;
 if (at && !point) throw new Error(`[${trip.slug}] <Tip at="${at}">: no such point in trip.yaml`);
 if (kind === 'night' && !point) throw new Error(`[${trip.slug}] <Tip kind="night">: needs at="<stage id>" for its place`);
 if (kind === 'hike' && !name) throw new Error(`[${trip.slug}] <Tip kind="hike">: needs a name`);
-const id = tipId(kind, at, at ? '' : await Astro.slots.render('default'));
+if (night != null && (kind !== 'night' || !point?.nights?.includes(night))) throw new Error(`[${trip.slug}] <Tip night={${night}}>: a night box's night must be one of its stay's nights`);
+const id = tipId(kind, at, at ? '' : await Astro.slots.render('default'), night);
 const nf = new Intl.NumberFormat(trip.lang, { maximumFractionDigits: 1 });
 
 // A hike's figures, formatted for the page's language: "5 h 30", "12,5 km", "+900 m" (the gain only).
@@ -51,7 +54,9 @@ const facts = [
 ].filter(Boolean) as { k: string; v: string }[];
 const icon = { warning: 'warning', tip: 'info', detour: 'detour', hike: 'hike', night: 'sleep' } as const;
 const nights = point?.nights?.length ?? 0;
-const label = kind === 'night' && nights > 1 ? s.nights : s.tipKinds[kind];
+const label = kind === 'night' && nights > 1 && night == null ? s.nights : s.tipKinds[kind];
+// A box about one night of a longer stay shows that night alone.
+const stayLabel = night != null ? idx(night) : point?.label ?? '';
 ---
 
 <!-- The outer element places the box: on its own in the column, or as a stretch of the text panel next to it
@@ -67,7 +72,7 @@ const label = kind === 'night' && nights > 1 ? s.nights : s.tipKinds[kind];
       kind === 'night' && point && (
         <p class="where">
           <a class="place" href={pointHref(point)} data-place={point.id}>
-            <span class="badge stay" style={`--span: ${badgeSpan(point.label)}`} aria-hidden="true"><span>{point.label}</span></span>
+            <span class="badge stay" style={`--span: ${badgeSpan(stayLabel)}`} aria-hidden="true"><span>{stayLabel}</span></span>
             <span class="name">{point.name}</span>
           </a>
           <span class="data ll">{point.at[0].toFixed(4)}, {point.at[1].toFixed(4)}</span>
