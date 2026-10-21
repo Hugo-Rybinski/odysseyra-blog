@@ -29,3 +29,6 @@ pnpm-debug.log*
 
 # Reference images (third-party, not for publishing)
 paperexample/
+
+# Raw trip material (notes, maps, phone photos): never committed
+private/
