@@ -5,6 +5,7 @@ import Progress from '../../../components/Progress.astro';
 import SheetMap from '../../../components/SheetMap.astro';
 import Photo from '../../../components/Photo.astro';
 import Plates from '../../../components/Plates.astro';
+import Pair from '../../../components/Pair.astro';
 import Region from '../../../components/Region.astro';
 import Tip from '../../../components/Tip.astro';
 import Review from '../../../components/Review.astro';
@@ -148,7 +149,7 @@ const allCoords = view.points.map((p) => `${p.ref}${p.name}\t${p.at[0].toFixed(5
     />
 
     <article class="prose">
-      <Content components={{ Before, Region, Day, Photo, Plates, Tip, Review, Good, Redo, Place }} />
+      <Content components={{ Before, Region, Day, Photo, Plates, Pair, Tip, Review, Good, Redo, Place }} />
     </article>
 
     {

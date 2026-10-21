@@ -68,6 +68,8 @@ export interface TripView {
   photos: Map<string, Photo>;
   points: NumberedPoint[];
   tips: TipRef[];
+  /** Each <Day>'s title, by day number, as the text gives it. */
+  days: Map<number, string>;
   distanceKm: number;
   center: [number, number];
 }
@@ -165,6 +167,13 @@ export function parseTips(body: string): TipRef[] {
 }
 
 
+/** The days the text marks with <Day n={…} title="…" />: their number and title. */
+export function parseDays(body: string): Map<number, string> {
+  const days = new Map<number, string>();
+  for (const m of body.matchAll(/<Day\s+n=\{(\d+)\}(?:\s+title="([^"]*)")?/g)) days.set(Number(m[1]), m[2] ?? '');
+  return days;
+}
+
 export async function getTripView(trip: Trip, lang: Lang, body = ''): Promise<TripView> {
   const slug = trip.id;
   const photos = new Map<string, Photo>();
@@ -194,7 +203,7 @@ export async function getTripView(trip: Trip, lang: Lang, body = ''): Promise<Tr
     (sum, r) => sum + r.route.reduce((s, seg) => s + seg.path.slice(1).reduce((d, c, i) => d + haversine(seg.path[i], c), 0), 0),
     0,
   );
-  return { slug, lang, data: trip.data, photos, points, tips: parseTips(body), distanceKm: trip.data.distanceKm ?? Math.round(computed), center };
+  return { slug, lang, data: trip.data, photos, points, tips: parseTips(body), days: parseDays(body), distanceKm: trip.data.distanceKm ?? Math.round(computed), center };
 }
 
 /** Published trips, each verified to have every language; newest first. */
